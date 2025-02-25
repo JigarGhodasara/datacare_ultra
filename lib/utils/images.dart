@@ -1,0 +1,41 @@
+import 'dart:ui';
+
+class AppImage{
+  static var base = "assets/";
+  static var appLogo = "${base}bg_remove.png";
+  static var splashBackGround = "${base}bg_splash.jpg";
+  static var user = "${base}user.png";
+  static var padlock = "${base}padlock.png";
+  static var show = "${base}show.png";
+  static var hide = "${base}hide.png";
+  static var ipaddress = "${base}ipaddress.png";
+  static var database = "${base}database.png";
+  static var businessAndTrade = "${base}business-and-trade.png";
+  static var branch = "${base}branch.png";
+  static var calendar = "${base}calendar.png";
+  static var gold = "${base}gold.png";
+  static var notebook = "${base}notebook.gif";
+  static var databaseGif = "${base}databaseGif.gif";
+  static var statistics = "${base}statistics.gif";
+  static var contactBook = "${base}contact-book.gif";
+  static var costBook = "${base}cost-book.gif";
+  static var whatsapp = "${base}whatsapp.png";
+  static var telephone = "${base}telephone.png";
+  static var chat = "${base}chat.png";
+  static var share = "${base}share.png";
+  static var ring = "${base}ring.gif";
+  static var placeHolder = "${base}placeHolder.png";
+  static var goldChart = "${base}goldChart.png";
+  static var qr = "${base}qr.png";
+  static var tag = "${base}tag.png";
+  static var calculation = "${base}calculation.png";
+  static var phonebook = "${base}phonebook.png";
+  static var ledger = "${base}ledger.png";
+  static var stock = "${base}stock.png";
+  static var sales = "${base}sales.png";
+  static var silver = "${base}silver.png";
+  static var whSales = "${base}whSales.png";
+  static var salesOrder = "${base}salesOrder.png";
+
+
+}
