@@ -36,6 +36,7 @@ class _CompanyYearSelectionState extends State<CompanyYearSelection> {
     // {"Year": "Select Your Year"}
   ];
   dynamic selectedCompany = "";
+  dynamic sName = "";
   dynamic selectedLocation = "";
   dynamic selectedYear = "";
   dynamic data;
@@ -62,15 +63,25 @@ class _CompanyYearSelectionState extends State<CompanyYearSelection> {
     loadingProvider.startLoading();
   if (Platform.isAndroid) {
       data = await sqlConnection.queryDatabase(
-          "SELECT CO_CODE As CoCode,CO_NAME as NameT FROM CO_MAST ORDER BY CO_CODE");
+          "SELECT CO_CODE As CoCode,CO_NAME as NameT,CO_SNAME FROM CO_MAST ORDER BY CO_CODE");
+
+      print("Year Data");
+      print(data);
+      // Provider.of<CommonCompanyYearSelectionProvider>(
+      //     context,
+      //     listen: false)
+      //     .changeCO_year(selectedYear);
       companyName.addAll(jsonDecode(data).map((val) {
+        print("aabbcc ${val['CO_SNAME']}");
         return {
           "CoCode": val['CoCode'].toString(),
           "NameT": val['NameT'],
-          "Show": "${val['CoCode']}-${val['NameT']}"
+          "Show": "${val['CoCode']}-${val['NameT']}",
+          "sName": val['CO_SNAME'] ?? ''
         };
       }).toList());
       selectedCompany = companyName[0]['Show'];
+      sName = companyName[0]['sName'];
 
       locationData = await sqlConnection.queryDatabase(
           "SELECT LC_CODE,LC_NAME FROM LOCT_MAST WHERE CO_CODE = '" +
@@ -94,14 +105,19 @@ class _CompanyYearSelectionState extends State<CompanyYearSelection> {
     } else {
       dynamic companyData = await MySQLService().getCompanyData();
       data = companyData[0];
+      print("data");
+      print("$data");
       companyName.addAll(data.map((val) {
         return {
           "CoCode": val['CoCode'].toString(),
           "NameT": val['NameT'],
-          "Show": "${val['CoCode']}-${val['NameT']}"
+          "Show": "${val['CoCode']}-${val['NameT']}",
+          "sName": val['CO_SNAME']
         };
       }).toList());
+      print("${companyName}");
       selectedCompany = companyName[0]['Show'];
+      sName = companyName[0]['sName'];
 
       print("com ${data[0]["CoCode"]}");
 
@@ -238,6 +254,11 @@ class _CompanyYearSelectionState extends State<CompanyYearSelection> {
                                           }).toList(),
                                           onChanged: (value) {
                                             selectedCompany = value;
+                                            companyName.forEach((data){
+                                              if(data['Show'] == value){
+                                                sName = data['sName'];
+                                              }
+                                            });
                                             setState(() {});
                                           }),
                                     ),
@@ -353,7 +374,7 @@ class _CompanyYearSelectionState extends State<CompanyYearSelection> {
                               connectionStatus = sqlConnection
                                   .connect(
                                       ip: host!,
-                                      port: '1433',
+                                      port: host.contains(":") ? host.split(":")[1].toString():"1433",
                                       databaseName: db!,
                                       username: userName!,
                                       password: password!)
@@ -391,7 +412,12 @@ class _CompanyYearSelectionState extends State<CompanyYearSelection> {
                                       context,
                                       listen: false)
                                   .changeCO_year(selectedYear);
+                              print("click submit $sName");
 
+                              Provider.of<CommonCompanyYearSelectionProvider>(
+                                  context,
+                                  listen: false)
+                                  .changeCoSName(sName);
                               dynamic SoftTypedata;
                               if (Platform.isAndroid) {
                                 String softTypeQuery =

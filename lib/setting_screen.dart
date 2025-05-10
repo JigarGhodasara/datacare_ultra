@@ -275,20 +275,20 @@ class _SettingScreenState extends State<SettingScreen> {
   String? host = await Preffrance().getString(Keys.HOST);
   String? username = await Preffrance().getString(Keys.USERNAME);
   String? dbPass = await Preffrance().getString(Keys.PASSWORD);
-  String? dbName = await Preffrance().getString(Keys.DATABASE);
+  // String? dbName = null;
   if(host != '' || host != null){
-    ipController.text = host!;
+    ipController.text = host??"";
 
   }
   if(username != "" || username != null){
-  userNameController.text = username ?? "";
+  userNameController.text = username ?? "sa";
   }
   if(dbPass != "" || dbPass != null){
-    passwordController.text = dbPass ?? "";
+    passwordController.text = dbPass ?? "datacare@123";
   }
-  if(dbName != "" || dbName != null){
-  databaseController.text = dbName ?? "";
-  }
+  // if(dbName != "" || dbName != null){
+  databaseController.text = "NextMain";
+  // }
   setState(() {
   });
   }

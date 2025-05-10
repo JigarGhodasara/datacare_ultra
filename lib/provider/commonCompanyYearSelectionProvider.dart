@@ -12,6 +12,7 @@ class CommonCompanyYearSelectionProvider extends ChangeNotifier{
   String webPath = "";
   String userType = "";
   String amountType = "";
+  String CoSname = "";
 
   void changeCO_name(String name){
     co_name = name;
@@ -55,5 +56,8 @@ class CommonCompanyYearSelectionProvider extends ChangeNotifier{
     amountType = name;
   }
 
-
+  void changeCoSName(String name){
+    CoSname = name;
+    print(CoSname);
+  }
 }

@@ -289,11 +289,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
             SizedBox(
               height: 10,
             ),
-            rateContainer(title: 'Gold Rate', rate: todayGoldRate, image: AppImage.gold),
+            rateContainer(title: 'Gold Rate${Provider.of<CommonCompanyYearSelectionProvider>(context, listen: false).CoSname == "UAE"?"(AED)":""}', rate: todayGoldRate, image: AppImage.gold),
             SizedBox(
               height: 15,
             ),
-            rateContainer(title: 'Silver Rate', rate: todaySilverRate, image: AppImage.silver),
+            rateContainer(title: 'Silver Rate${Provider.of<CommonCompanyYearSelectionProvider>(context, listen: false).CoSname == "UAE"?"(AED)":""}', rate: todaySilverRate, image: AppImage.silver),
             SizedBox(
               height: 10,
             ),

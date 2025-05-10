@@ -189,7 +189,7 @@ class AppDelegate: FlutterAppDelegate {
     private func getCompanyData(result: @escaping FlutterResult) {
         print("INside getCompanyData from xcode")
         sqlClient = SQLClient.sharedInstance()
-        sqlClient?.execute("SELECT CO_CODE As CoCode,CO_NAME as NameT FROM CO_MAST ORDER BY CO_CODE") { results in
+        sqlClient?.execute("SELECT CO_CODE As CoCode,CO_NAME as NameT,CO_SNAME FROM CO_MAST ORDER BY CO_CODE") { results in
             result(results)
         };
     }
@@ -462,7 +462,6 @@ class AppDelegate: FlutterAppDelegate {
             "'  GROUP BY A.TAG_NO,A.IT_CODE,C.DESIGN_NO,C.ITM_SIZE,C.ITM_PCS,C.ITM_GWT,C.ITM_NWT,C.ITM_FINE,C.LBR_AMT,C.OTH_AMT,C.VCH_SRNO,B.PR_CODE,B.IT_NAME,B.GR_CODE,D.GR_RATE,C.LBR_PRC,C.ITM_GHT_PRC,C.ITM_GHT_WT,C.ITM_MRP, C.LBR_RATE HAVING SUM(CASE WHEN ITM_SIGN='+' THEN A.VCH_SRNO ELSE -A.VCH_SRNO END) > 0 "
         }
         print("query")
-        print(query)
         sqlClient?.execute(query) { results in
             result(results)
         };

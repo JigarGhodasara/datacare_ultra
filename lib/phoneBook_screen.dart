@@ -261,7 +261,7 @@ class _PhonebookScreenState extends State<PhonebookScreen> {
                                     ],
                                   ),
                                   SizedBox(
-                                    width: 40,
+                                    width: 10,
                                   ),
                                   Column(
                                     crossAxisAlignment:
@@ -330,7 +330,7 @@ class _PhonebookScreenState extends State<PhonebookScreen> {
                                     ],
                                   ),
                                   SizedBox(
-                                    width: 40,
+                                    width: 8,
                                   ),
                                   Column(
                                     crossAxisAlignment:
