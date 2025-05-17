@@ -373,7 +373,7 @@ class _CompanyYearSelectionState extends State<CompanyYearSelection> {
                               sqlConnection.disconnect();
                               connectionStatus = sqlConnection
                                   .connect(
-                                      ip: host!,
+                                      ip:host!.contains(":") ? host.split(":")[0].toString():host,
                                       port: host.contains(":") ? host.split(":")[1].toString():"1433",
                                       databaseName: db!,
                                       username: userName!,

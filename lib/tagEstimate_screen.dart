@@ -1702,7 +1702,7 @@ printingLable = result;
                         child: Row(
                           children: [
                             Text(
-                            commonCompanyYearSelectionProvider.CoSname == "UAE" ? "Vat(AED) :" :"GST Tax :",
+                            commonCompanyYearSelectionProvider.CoSname == "UAE" ? "VAT 5% (AED) :" :"GST Tax :",
                               style: GoogleFonts.nunito(
                                   fontWeight: FontWeight.w900, fontSize: 12),
                             ),
@@ -1857,7 +1857,7 @@ printingLable = result;
                   ),
                   pw.SizedBox(height: 10),
                   pw.Text(
-                    "Date : ${DateFormat("MM/dd/yyyy").format(DateTime.now())}",
+                    "Date : ${DateFormat("dd/MM/yyyy").format(DateTime.now())}",
                     style: pw.TextStyle(fontSize: 18),
                   ),
                   pw.SizedBox(height: 8),
