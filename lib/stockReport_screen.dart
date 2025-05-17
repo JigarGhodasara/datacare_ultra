@@ -396,7 +396,7 @@ class _StockreportScreenState extends State<StockreportScreen> {
                                       height: 40,
                                       child: Row(
                                         children: [
-                                          Text(DateFormat("yyyy-MM-dd")
+                                          Text(DateFormat("dd-MM-yyyy")
                                               .format(from)),
                                           Spacer(),
                                           Icon(Icons.keyboard_arrow_down)
@@ -426,7 +426,7 @@ class _StockreportScreenState extends State<StockreportScreen> {
                                       height: 40,
                                       child: Row(
                                         children: [
-                                          Text(DateFormat("yyyy-MM-dd")
+                                          Text(DateFormat("dd-MM-yyyy")
                                               .format(to)),
                                           Spacer(),
                                           Icon(Icons.keyboard_arrow_down)

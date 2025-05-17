@@ -2048,12 +2048,12 @@ printingLable = result;
                                 ),)
                             )
                           ]),
-                          pw.TableRow(verticalAlignment: pw.TableCellVerticalAlignment.middle,children: [
-                            pw.Align(alignment: pw.Alignment.centerRight,child: pw.Padding(padding: pw.EdgeInsets.only(right: 10),child:  pw.Text(
+                           pw.TableRow(verticalAlignment: pw.TableCellVerticalAlignment.middle,children: [
+                             lbrPrc == "0.0" ? pw.SizedBox() :  pw.Align(alignment: pw.Alignment.centerRight,child: pw.Padding(padding: pw.EdgeInsets.only(right: 10),child:  pw.Text(
                               "${commonCompanyYearSelectionProvider.CoSname == "UAE"?"Making":"Lbr"} prc % :",
                               style: pw.TextStyle(fontSize: 18),
                             ))),
-                            pw.Align(alignment: pw.Alignment.centerRight,
+                             lbrPrc == "0.0" ? pw.SizedBox() : pw.Align(alignment: pw.Alignment.centerRight,
                                 child: pw.Padding(padding: pw.EdgeInsets.symmetric(horizontal: 20,vertical: 5),child:  pw.Text(
                                   double.parse(lbrPrc.toString())
                                       .toStringAsFixed(2) ??
@@ -2064,11 +2064,11 @@ printingLable = result;
 
                           ]),
                           pw.TableRow(verticalAlignment: pw.TableCellVerticalAlignment.middle,children: [
-                            pw.Align(alignment: pw.Alignment.centerRight,child: pw.Padding(padding: pw.EdgeInsets.only(right: 10),child:  pw.Text(
+                            lbrRate == "0.00" ? pw.SizedBox() :  pw.Align(alignment: pw.Alignment.centerRight,child: pw.Padding(padding: pw.EdgeInsets.only(right: 10),child:  pw.Text(
                               "${commonCompanyYearSelectionProvider.CoSname == "UAE"?"Making":"Lbr"} Rate :",
                               style: pw.TextStyle(fontSize: 18),
                             ))),
-                            pw.Align(alignment: pw.Alignment.centerRight,
+                            lbrRate == "0.00" ? pw.SizedBox() : pw.Align(alignment: pw.Alignment.centerRight,
                                 child: pw.Padding(padding: pw.EdgeInsets.symmetric(horizontal: 20,vertical: 5),child:  pw.Text(
                                   double.parse(lbrRate.toString())
                                       .toStringAsFixed(2) ??
@@ -2079,11 +2079,11 @@ printingLable = result;
 
                           ]),
                           pw.TableRow(verticalAlignment: pw.TableCellVerticalAlignment.middle,children: [
-                            pw.Align(alignment: pw.Alignment.centerRight,child: pw.Padding(padding: pw.EdgeInsets.only(right: 10,left: 3),child:  pw.Text(
+                            lbrAmmount == "0.0" ? pw.SizedBox() :  pw.Align(alignment: pw.Alignment.centerRight,child: pw.Padding(padding: pw.EdgeInsets.only(right: 10,left: 3),child:  pw.Text(
                               "${commonCompanyYearSelectionProvider.CoSname == "UAE"?"Making":"Lbr"} ${commonCompanyYearSelectionProvider.CoSname == "UAE"?"Charges(AED)":"Amt"} :",
                               style: pw.TextStyle(fontSize: 18),
                             ))),
-                            pw.Align(alignment: pw.Alignment.centerRight,
+                            lbrAmmount == "0.0" ? pw.SizedBox() :  pw.Align(alignment: pw.Alignment.centerRight,
                                 child: pw.Padding(padding: pw.EdgeInsets.symmetric(horizontal: 20,vertical: 5),child:  pw.Text(
                                   double.parse(lbrAmmount.toString())
                                       .toStringAsFixed(2) ??
@@ -2094,11 +2094,11 @@ printingLable = result;
 
                           ]),
                           pw.TableRow(verticalAlignment: pw.TableCellVerticalAlignment.middle,children: [
-                            pw.Align(alignment: pw.Alignment.centerRight,child: pw.Padding(padding: pw.EdgeInsets.only(right: 10,left: 3),child:  pw.Text(
+                            othAmmount == "0.0" ? pw.SizedBox() :  pw.Align(alignment: pw.Alignment.centerRight,child: pw.Padding(padding: pw.EdgeInsets.only(right: 10,left: 3),child:  pw.Text(
                               "Oth ${commonCompanyYearSelectionProvider.CoSname == "UAE"?"Charges(AED)":"Amt"} :",
                               style: pw.TextStyle(fontSize: 18),
                             ))),
-                            pw.Align(alignment: pw.Alignment.centerRight,
+                            othAmmount == "0.0" ? pw.SizedBox() :  pw.Align(alignment: pw.Alignment.centerRight,
                                 child: pw.Padding(padding: pw.EdgeInsets.symmetric(horizontal: 20,vertical: 5),child:  pw.Text(
                                   double.parse(othAmmount.toString())
                                       .toStringAsFixed(2) ??
@@ -2107,6 +2107,23 @@ printingLable = result;
                                 ),)
                             )
                           ]),
+
+                          pw.TableRow(verticalAlignment: pw.TableCellVerticalAlignment.middle,children: [
+                            mrp == "0.0" ? pw.SizedBox() :  pw.Align(alignment: pw.Alignment.centerRight,child: pw.Padding(padding: pw.EdgeInsets.only(right: 10,left: 3),child:  pw.Text(
+                              "${commonCompanyYearSelectionProvider.CoSname == "UAE"?"AED":"MRP"} :",
+                              style: pw.TextStyle(fontSize: 18),
+                            ))),
+                            mrp == "0.0" ? pw.SizedBox() : pw.Align(alignment: pw.Alignment.centerRight,
+                                child: pw.Padding(padding: pw.EdgeInsets.symmetric(horizontal: 20,vertical: 5),child:  pw.Text(
+                                  double.parse(mrp.toString())
+                                      .toStringAsFixed(2) ??
+                                      "-:-",
+                                  style: pw.TextStyle(fontSize: 18),
+                                ),)
+                            )
+                          ]),
+
+
                           pw.TableRow(verticalAlignment: pw.TableCellVerticalAlignment.middle,children: [
                             pw.Align(alignment: pw.Alignment.centerRight,child: pw.Padding(padding: pw.EdgeInsets.only(right: 10),child:  pw.Text(
                               "Net ${commonCompanyYearSelectionProvider.CoSname == "UAE"?"Value(AED)":"Amt"} :",

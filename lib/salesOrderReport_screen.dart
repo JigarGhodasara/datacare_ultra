@@ -236,7 +236,7 @@ class _SalesOrderReportScreenState extends State<SalesOrderReportScreen> {
                                           height: 40,
                                           child: Row(
                                             children: [
-                                              Text(DateFormat("MM/dd/yyyy")
+                                              Text(DateFormat("dd/MM/yyyy")
                                                   .format(from)),
                                               Spacer(),
                                               Icon(Icons.keyboard_arrow_down)
@@ -266,7 +266,7 @@ class _SalesOrderReportScreenState extends State<SalesOrderReportScreen> {
                                           height: 40,
                                           child: Row(
                                             children: [
-                                              Text(DateFormat("MM/dd/yyyy")
+                                              Text(DateFormat("dd/MM/yyyy")
                                                   .format(to)),
                                               Spacer(),
                                               Icon(Icons.keyboard_arrow_down)

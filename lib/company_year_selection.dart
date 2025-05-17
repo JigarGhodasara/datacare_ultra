@@ -417,7 +417,7 @@ class _CompanyYearSelectionState extends State<CompanyYearSelection> {
                               Provider.of<CommonCompanyYearSelectionProvider>(
                                   context,
                                   listen: false)
-                                  .changeCoSName(sName);
+                                  .changeCoSName(sName == null ? "":sName );
                               dynamic SoftTypedata;
                               if (Platform.isAndroid) {
                                 String softTypeQuery =

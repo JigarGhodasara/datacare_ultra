@@ -46,7 +46,7 @@ class _DailyrateScreenState extends State<DailyrateScreen> {
       var query =
           "SELECT A.GR_CODE,B.GR_NAME,A.GR_TOUCH,A.GR_RATE,A.GR_TAX_RATE,A.GR_TAX_PRC FROM RATE_MAST AS A " +
               "LEFT JOIN GROUP_MAST AS B ON A.CO_CODE = B.CO_CODE AND A.GR_CODE = B.GR_CODE " +
-              "WHERE A.CO_CODE='"+ co_code +"' AND A.LC_CODE='"+ lc_code +"' AND VCH_DATE = '"+ DateFormat("MM/dd/yyyy").format(DateTime.now()) +"'\n";
+              "WHERE A.CO_CODE='"+ co_code +"' AND A.LC_CODE='"+ lc_code +"' AND VCH_DATE = '"+ DateFormat("dd/MM/yyyy").format(DateTime.now()) +"'\n";
       log("Query $query");
       dynamic dRate = await sqlConnection.queryDatabase(query);
       print("result $dRate");
@@ -54,7 +54,7 @@ class _DailyrateScreenState extends State<DailyrateScreen> {
       // searchWhSalesReport = jsonDecode(whSaleData);
     } else {
       dynamic result = await MySQLService().getDailyRates(
-          co_code, lc_code,DateFormat("MM/dd/yyyy").format(DateTime.now()));
+          co_code, lc_code,DateFormat("dd/MM/yyyy").format(DateTime.now()));
       // print("Here value $result");
       dailyRate = result[0];
       // searchWhSalesReport = result[0];
