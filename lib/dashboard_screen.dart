@@ -63,7 +63,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
               "' AND A.LC_CODE = '" +
               lc_code +
               "' AND A.VCH_DATE <= '" +
-              DateFormat("MM/dd/yyyy").format(DateTime.now()) +
+              DateFormat("dd/MM/yyyy").format(DateTime.now()) +
               "' AND B.RATE_DISPLAY = 'Y'GROUP BY FINE_GL_RATE,FINE_SL_RATE,A.VCH_DATE ORDER BY A.VCH_DATE DESC ");
       print("result for rate $result");
       if(jsonDecode(result).length != 0){
@@ -91,7 +91,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
       print("RateSetting result ${ Provider.of<CommonCompanyYearSelectionProvider>(context, listen: false).amountType}");
     } else {
       dynamic result = await MySQLService().getRates(
-          co_code, lc_code, DateFormat("MM/dd/yyyy").format(DateTime.now()));
+          co_code, lc_code, DateFormat("dd/MM/yyyy").format(DateTime.now()));
       print("Here value $result");
       if(result[0].length != 0){
         todayGoldRate = result[0][0]['FINE_GL_RATE'].toString();

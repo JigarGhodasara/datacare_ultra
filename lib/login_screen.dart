@@ -198,7 +198,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                     await sqlConnection.connect(
                                   ip: host!.contains(":") ? host.split(":")[0].toString():host,
                                   port: host.contains(":") ? host.split(":")[1].toString():"1433",
-                                  databaseName: db!,
+                                  databaseName: 'NextMain',
                                   username: userName!,
                                   password: password!,
                                 );
@@ -258,7 +258,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                 // var conn = await MySqlConnection.connect(settings);
                                 // var connectionStatus = await sqlConnection.connect(
                               } else {
-                              dynamic isConnect =  MySQLService().connectToDatabase();
+                              dynamic isConnect =  MySQLService().connectToDatabase(dbName: "NextMain");
                               if(await  isConnect){
                                 dynamic result = await MySQLService().Login(userNameController.text);
                                 print("Login Data ${result}");
