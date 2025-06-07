@@ -117,7 +117,7 @@ class _CategoryproductScreenState extends State<CategoryproductScreen> {
 //        }
 
       query +=
-          "GROUP BY D.PR_CODE,A.TAG_NO,B.IT_NAME,B.IT_CODE,C.ITM_SIZE,C.ITM_PCS,C.ITM_GWT,C.ITM_NWT,C.LBR_PRC,C.LBR_RATE,C.LBR_AMT,C.OTH_AMT,  C.ITM_MRP,C.VCH_SRNO,C.LBR_TYPE,C.RATE_TYPE, B.GR_CODE HAVING SUM(CASE WHEN ITM_SIGN='+' THEN A.VCH_SRNO ELSE -A.VCH_SRNO END) > 0  ORDER BY A.TAG_NO";
+          "GROUP BY D.PR_CODE,A.TAG_NO,B.IT_NAME,B.IT_CODE,C.ITM_SIZE,C.ITM_PCS,C.ITM_GWT,C.ITM_NWT,C.LBR_PRC,C.LBR_RATE,C.LBR_AMT,C.OTH_AMT,  C.ITM_MRP,C.VCH_SRNO,C.LBR_TYPE,C.RATE_TYPE, B.GR_CODE HAVING SUM(CASE WHEN ITM_SIGN='+' THEN A.VCH_SRNO ELSE -A.VCH_SRNO END) > 0  ORDER BY A.TAG_NO DESC";
       log("query ${query}");
       dynamic result = await sqlConnection.queryDatabase(query);
       log("Resuult ${result}");

@@ -137,11 +137,11 @@ class AppDelegate: FlutterAppDelegate {
                         }
             else if call.method == "getCity" {
                             let args = call.arguments as! Dictionary<String, Any>
-                            self?.getCity(result: result, coCode: args["coCode"] as! String)
+                self?.getCity(result: result, coCode: args["coCode"] as! String, lcCode: args["lcCode"] as! String)
                         }
             else if call.method == "getArea" {
                             let args = call.arguments as! Dictionary<String, Any>
-                            self?.getArea(result: result, coCode: args["coCode"] as! String)
+                self?.getArea(result: result, coCode: args["coCode"] as! String,lcCode: args["lcCode"] as! String)
                         }
             else if call.method == "getDailyRates" {
                 let args = call.arguments as! Dictionary<String, Any>
@@ -277,7 +277,7 @@ class AppDelegate: FlutterAppDelegate {
     private func getProducts(result: @escaping FlutterResult,coCode:String,lcCode:String,year:String,prCode:String,itType:String,grpCode:String) {
         print("INside getProducts from xcode")
         sqlClient = SQLClient.sharedInstance()
-    var runQuery = "SELECT A.TAG_NO As TagNo,B.IT_NAME As ItmName,D.PR_CODE,C.ITM_SIZE As Size,C.ITM_PCS as Pcs,C.ITM_GWT As Grwt,C.ITM_NWT AS NetWt,C.LBR_PRC As LbrPrc,C.LBR_RATE As LRate,C.LBR_AMT LbrAmt,C.OTH_AMT OthAmt,C.ITM_MRP As Mrp,C.VCH_SRNO,C.LBR_TYPE AS LbrType,C.RATE_TYPE AS RateType,B.GR_CODE as GrCode from ((MAIN_STOCK AS A INNER JOIN BAR_DETL AS C ON A.CO_CODE = C.CO_CODE  And A.TAG_NO = C.TAG_NO And A.VCH_SRNO = C.VCH_SRNO And A.IT_CODE = C.IT_CODE) LEFT JOIN  ITEM_MAST AS B ON A.CO_CODE = B.CO_CODE And A.IT_CODE = B.IT_CODE) LEFT JOIN PRODUCT_MAST AS D ON B.CO_CODE = D.CO_CODE And B.PR_CODE = D.PR_CODE WHERE A.CO_CODE = '"+coCode+"' AND A.LC_CODE = '"+lcCode+"' AND A.CO_YEAR = '"+year+"' ";
+    var runQuery = "SELECT A.TAG_NO As TagNo,B.IT_NAME As ItmName,D.PR_CODE,C.ITM_SIZE As Size,C.ITM_PCS as Pcs,C.ITM_GWT As Grwt,C.ITM_NWT AS NetWt,C.LBR_PRC As LbrPrc,C.LBR_RATE As LRate,C.LBR_AMT LbrAmt,C.OTH_AMT OthAmt,C.ITM_MRP As Mrp,C.VCH_SRNO,C.LBR_TYPE AS LbrType,C.RATE_TYPE AS RateType,B.GR_CODE as GrCode from ((MAIN_STOCK AS A INNER JOIN BAR_DETL AS C ON A.CO_CODE = C.CO_CODE  And A.TAG_NO = C.TAG_NO And A.VCH_SRNO = C.VCH_SRNO And A.IT_CODE = C.IT_CODE) LEFT JOIN  ITEM_MAST AS B ON A.CO_CODE = B.CO_CODE And A.IT_CODE = B.IT_CODE) LEFT JOIN PRODUCT_MAST AS D ON B.CO_CODE = D.CO_CODE And B.PR_CODE = D.PR_CODE WHERE A.CO_CODE = '"+coCode+"' AND A.LC_CODE = '"+lcCode+"' AND A.CO_YEAR = '"+year+"'";
         
         if itType != "" {
             runQuery += " AND B.IT_TYPE = '" + itType + "'"
@@ -288,7 +288,7 @@ class AppDelegate: FlutterAppDelegate {
         if grpCode != "" {
             runQuery += "AND B.GR_CODE = '" + grpCode + "' "
         }
-        runQuery += "GROUP BY D.PR_CODE,A.TAG_NO,B.IT_NAME,B.IT_CODE,C.ITM_SIZE,C.ITM_PCS,C.ITM_GWT,C.ITM_NWT,C.LBR_PRC,C.LBR_RATE,C.LBR_AMT,C.OTH_AMT,  C.ITM_MRP,C.VCH_SRNO,C.LBR_TYPE,C.RATE_TYPE, B.GR_CODE HAVING SUM(CASE WHEN ITM_SIGN='+' THEN A.VCH_SRNO ELSE -A.VCH_SRNO END) > 0  ORDER BY A.TAG_NO";
+        runQuery += "GROUP BY D.PR_CODE,A.TAG_NO,B.IT_NAME,B.IT_CODE,C.ITM_SIZE,C.ITM_PCS,C.ITM_GWT,C.ITM_NWT,C.LBR_PRC,C.LBR_RATE,C.LBR_AMT,C.OTH_AMT,  C.ITM_MRP,C.VCH_SRNO,C.LBR_TYPE,C.RATE_TYPE, B.GR_CODE HAVING SUM(CASE WHEN ITM_SIGN='+' THEN A.VCH_SRNO ELSE -A.VCH_SRNO END) > 0  ORDER BY A.TAG_NO DESC";
         sqlClient?.execute(runQuery) { results in
          print(results)
             result(results)
@@ -518,22 +518,21 @@ class AppDelegate: FlutterAppDelegate {
                 result(results)
             };
         }
-    private func getCity(result: @escaping FlutterResult,coCode:String) {
+    private func getCity(result: @escaping FlutterResult,coCode:String,lcCode:String) {
             print("INside getCity from xcode")
             sqlClient = SQLClient.sharedInstance()
-            let query = "Select LC_CODE As CodeL,LC_NAME As NameL,LC_ADD1 As AddressL,LC_CITY As CityL FROM LOCT_MAST WHERE CO_CODE = '" +
-            coCode +
-            "' ORDER BY LC_CODE"
+        let query = "Select AC_CITY FROM AC_MAST WHERE CO_CODE = '"+coCode+"' AND LC_CODE = '"+lcCode+"' AND AC_CITY<> '' GROUP BY AC_CITY"
             
             print(query)
             sqlClient?.execute(query) { results in
                 result(results)
             };
         }
-    private func getArea(result: @escaping FlutterResult,coCode:String) {
+
+    private func getArea(result: @escaping FlutterResult,coCode:String,lcCode:String) {
             print("INside getArea from xcode")
             sqlClient = SQLClient.sharedInstance()
-            let query = "SELECT AC_GR,AC_GR_NAME FROM AC_GROUP WHERE CO_CODE='"+coCode+"'ORDER BY AC_GR"
+        let query = "Select AC_AREA FROM AC_MAST WHERE CO_CODE = '"+coCode+"' AND LC_CODE = '"+lcCode+"' AND AC_AREA<> '' GROUP BY AC_AREA"
             
             print(query)
             sqlClient?.execute(query) { results in

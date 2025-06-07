@@ -34,18 +34,13 @@ class _LedgerreportScreenState extends State<LedgerreportScreen> {
   ];
   dynamic selectedGroup = {"AC_GR": "", "AC_GR_NAME": "Select Group"};
   List<dynamic> accountCity = [
-    {"CodeL": "", "NameL": "", "AddressL": "", "CityL": "Select City"}
+     "Select City"
   ];
-  dynamic selectedCity = {
-    "CodeL": "",
-    "NameL": "",
-    "AddressL": "",
-    "CityL": "Select City"
-  };
+  dynamic selectedCity = "Select City";
   List<dynamic> accountArea = [
-    {"AC_GR": "", "AC_GR_NAME": "Select Area"}
+    "Select Area"
   ];
-  dynamic selectedArea = {"AC_GR": "", "AC_GR_NAME": "Select Area"};
+  dynamic selectedArea = "Select Area";
   bool checkBox = false;
   String co_code = "";
   String lc_code = "";
@@ -75,33 +70,29 @@ class _LedgerreportScreenState extends State<LedgerreportScreen> {
               co_code +
               "' ORDER BY AC_GR";
       String accountCityQuery =
-          "Select LC_CODE As CodeL,LC_NAME As NameL,LC_ADD1 As AddressL,LC_CITY As CityL FROM LOCT_MAST WHERE CO_CODE = '" +
-              co_code +
-              "' ORDER BY LC_CODE";
+          "Select AC_CITY FROM AC_MAST WHERE CO_CODE = '$co_code' AND LC_CODE = '$lc_code' AND AC_CITY<> '' GROUP BY AC_CITY";
       String accountAreaQuery =
-          "SELECT AC_GR,AC_GR_NAME FROM AC_GROUP WHERE CO_CODE='" +
-              co_code +
-              "' ORDER BY AC_GR";
+          "Select AC_AREA FROM AC_MAST WHERE CO_CODE = '$co_code' AND LC_CODE = '$lc_code' AND AC_AREA<> '' GROUP BY AC_AREA";
       dynamic accountGroupData =
       await sqlConnection.queryDatabase(accountGroupQuery);
       accountGroup.addAll(jsonDecode(accountGroupData));
       dynamic accountCityData =
       await sqlConnection.queryDatabase(accountCityQuery);
-      accountCity.addAll(jsonDecode(accountCityData));
+      accountCity.addAll(jsonDecode(accountCityData).map((e) => e['AC_CITY'] as String));
       dynamic accountAreaData =
       await sqlConnection.queryDatabase(accountAreaQuery);
-      accountArea.addAll(jsonDecode(accountAreaData));
+      accountArea.addAll(jsonDecode(accountAreaData).map((e) => e['AC_AREA'] as String));
 
       log("Result1 ${accountGroupData}");
       log("Result2 ${accountCityData}");
       log("Result3 ${accountAreaData}");
     }else{
       dynamic grp = await MySQLService().getGroup(co_code);
-      dynamic city = await MySQLService().getCity(co_code);
-      dynamic area = await MySQLService().getArea(co_code);
+      dynamic city = await MySQLService().getCity(co_code,lc_code);
+      dynamic area = await MySQLService().getArea(co_code,lc_code);
       accountGroup.addAll(grp[0]);
-      accountCity.addAll(city[0]);
-      accountArea.addAll(area[0]);
+      accountCity.addAll(city[0].map((e) => e['AC_CITY'] as String));
+      accountArea.addAll(area[0].map((e) => e['AC_AREA'] as String));
       log("Result1 ${grp}");
       log("Result2 ${city}");
       log("Result3 ${area}");
@@ -135,20 +126,30 @@ class _LedgerreportScreenState extends State<LedgerreportScreen> {
         }
       }
 
-      if(selectedCity["CityL"] != "Select City") {
+      if(selectedCity != "Select City") {
         var cityCode = "";
 
-        accountCity.forEach((it){
-          if(it["CityL"] == selectedCity["CityL"]){
-            cityCode = it["CityL"];
-          }
-        });
-        if(cityCode != ""){
-          query += "AND B.AC_CITY = '"+cityCode+"' ";
+        // accountCity.forEach((it){
+        //   if(it == selectedCity){
+        //     cityCode = it;
+        //   }
+        // });
+        if(selectedCity != "" && selectedCity != "Select City"){
+          query += "AND B.AC_CITY = '"+selectedCity+"' ";
         }
       }
 
 
+      if(selectedArea != "Select Area") {
+        // accountCity.forEach((it){
+        //   if(it == selectedCity){
+        //     cityCode = it;
+        //   }
+        // });
+        if(selectedArea != "" && selectedArea != "Select Area"){
+          query += "AND B.AC_AREA = '"+selectedArea+"' ";
+        }
+      }
       // if(selectedArea["CityL"] != "Select Area") {
       //   var cityCode = "";
       //
@@ -173,7 +174,7 @@ class _LedgerreportScreenState extends State<LedgerreportScreen> {
       }else{
         query += "GROUP BY A.AC_CODE,B.AC_NAME,B.AC_ADD1,B.AC_MOBILE,B.AC_REF_NAME,B.AC_CITY,B.AC_KHATA_NO  HAVING (round(Case When SUM(A.CR_AMT-A.DR_AMT) < 0 Then abs(SUM(A.CR_AMT-A.DR_AMT)) Else 0 End,2)) +  (round(Case WHEN SUM(A.CR_AMT-A.DR_AMT) > 0 Then abs(SUM(A.CR_AMT-A.DR_AMT)) Else 0 End,2)) +  (format(Case WHEN SUM(CASE WHEN A.IT_TYPE = 'G' THEN (CASE WHEN A.SIGN = '+' THEN A.FINE_WT ELSE -A.FINE_WT END )ELSE 0 END) < 0 then abs(SUM(CASE WHEN A.IT_TYPE = 'G' THEN (CASE WHEN A.SIGN = '+' THEN A.FINE_WT ELSE -A.FINE_WT END )ELSE 0 END)) else 0 end,'0.000')) +  (format(Case When SUM(Case When A.IT_TYPE = 'G' THEN (CASE WHEN A.SIGN = '+' THEN A.FINE_WT ELSE -A.FINE_WT END )ELSE 0 END) > 0 then abs(SUM(CASE WHEN A.IT_TYPE = 'G' THEN (CASE WHEN A.SIGN = '+' THEN A.FINE_WT ELSE -A.FINE_WT END )ELSE 0 END)) else 0 end,'0.000')) +  (format(Case WHEN SUM(CASE WHEN A.IT_TYPE = 'S' THEN (CASE WHEN A.SIGN = '+' THEN A.FINE_WT ELSE -A.FINE_WT END )ELSE 0 END) < 0 then abs(SUM(CASE WHEN A.IT_TYPE = 'S' THEN (CASE WHEN A.SIGN = '+' THEN A.FINE_WT ELSE -A.FINE_WT END )ELSE 0 END)) else 0 end,'0.00'))+  (format(Case WHEN SUM(CASE WHEN A.IT_TYPE = 'S' THEN (CASE WHEN A.SIGN = '+' THEN A.FINE_WT ELSE -A.FINE_WT END )ELSE 0 END) > 0 then abs(SUM(CASE WHEN A.IT_TYPE = 'S' THEN (CASE WHEN A.SIGN = '+' THEN A.FINE_WT ELSE -A.FINE_WT END )ELSE 0 END)) else 0 end,'0.00')) <> 0  ORDER BY B.AC_NAME ";
       }
-      log(query);
+      print(query);
       dynamic result = await sqlConnection.queryDatabase(query);
       log("Result ${result}");
       ledgerReport = jsonDecode(result);
@@ -192,14 +193,15 @@ class _LedgerreportScreenState extends State<LedgerreportScreen> {
         });
       }
 
-      if(selectedCity["CityL"] != "Select City") {
+      if(selectedCity != "Select City" && selectedCity != "") {
 
 
-        accountCity.forEach((it){
-          if(it["CityL"] == selectedCity["CityL"]){
-            city = it["CityL"];
-          }
-        });
+        // accountCity.forEach((it){
+        //   if(it["CityL"] == selectedCity["CityL"]){
+        //     city = it["CityL"];
+        //   }
+        // });
+        city = selectedCity;
       }
 
 
@@ -275,13 +277,8 @@ class _LedgerreportScreenState extends State<LedgerreportScreen> {
                       GestureDetector(
                         onTap: (){
                            selectedGroup = {"AC_GR": "", "AC_GR_NAME": "Select Group"};
-                           selectedCity = {
-                             "CodeL": "",
-                             "NameL": "",
-                             "AddressL": "",
-                             "CityL": "Select City"
-                           };
-                           selectedArea = {"AC_GR": "", "AC_GR_NAME": "Select Area"};
+                           selectedCity = "Select City";
+                           selectedArea =  "Select Area";
 
                            getLedgerData();
                            Navigator.pop(context);
@@ -387,20 +384,16 @@ class _LedgerreportScreenState extends State<LedgerreportScreen> {
                                 child: DropdownButton2(
                                     dropdownStyleData: DropdownStyleData(),
                                     isExpanded: true,
-                                    value: selectedCt["CityL"],
+                                    value: selectedCt,
                                     items: city.map((dynamic items) {
+                                      log(items);
                                       return DropdownMenuItem(
-                                        value: items["CityL"],
-                                        child: Text(items["CityL"]),
+                                        value: items,
+                                        child: Text(items),
                                       );
                                     }).toList(),
                                     onChanged: (value) {
-                                      selectedCt = {
-                                        "CodeL": "",
-                                        "NameL": "",
-                                        "AddressL": "",
-                                        "CityL": "$value"
-                                      };
+                                      selectedCt = value.toString();
                                       setStateModal(() {});
                                     }),
                               ),
@@ -429,18 +422,15 @@ class _LedgerreportScreenState extends State<LedgerreportScreen> {
                                 child: DropdownButton2(
                                     dropdownStyleData: DropdownStyleData(),
                                     isExpanded: true,
-                                    value: selectedAr["AC_GR_NAME"],
+                                    value: selectedAr,
                                     items: area.map((dynamic items) {
                                       return DropdownMenuItem(
-                                        value: items["AC_GR_NAME"],
-                                        child: Text(items["AC_GR_NAME"]),
+                                        value: items,
+                                        child: Text(items),
                                       );
                                     }).toList(),
                                     onChanged: (value) {
-                                      selectedAr = {
-                                        "AC_GR": "",
-                                        "AC_GR_NAME": "$value"
-                                      };
+                                      selectedAr = value;
                                       setStateModal(() {});
                                     }),
                               ),

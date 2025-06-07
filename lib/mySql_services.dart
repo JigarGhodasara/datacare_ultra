@@ -268,17 +268,19 @@ class MySQLService {
     return getGroup;
   }
 
-  Future<dynamic> getCity(String coCode) async {
+  Future<dynamic> getCity(String coCode,String lcCode) async {
     final getCity = await _channel.invokeMethod('getCity',{
-      "coCode": coCode
+      "coCode": coCode,
+      "lcCode": lcCode
     });
     print("getCity $getCity");
     return getCity;
   }
 
-  Future<dynamic> getArea(String coCode) async {
+  Future<dynamic> getArea(String coCode,String lcCode) async {
     final getArea = await _channel.invokeMethod('getArea',{
-      "coCode": coCode
+      "coCode": coCode,
+      "lcCode": lcCode
     });
     print("getArea $getArea");
     return getArea;
