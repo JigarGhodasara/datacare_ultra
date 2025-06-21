@@ -63,8 +63,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
               "' AND A.LC_CODE = '" +
               lc_code +
               "' AND A.VCH_DATE <= '" +
-              DateFormat("dd/MM/yyyy").format(DateTime.now()) +
-              "' AND B.RATE_DISPLAY = 'Y'GROUP BY FINE_GL_RATE,FINE_SL_RATE,A.VCH_DATE ORDER BY A.VCH_DATE DESC ");
+              DateFormat("MM/dd/yyyy").format(DateTime.now()) +
+              "' AND B.RATE_DISPLAY = 'Y' GROUP BY FINE_GL_RATE,FINE_SL_RATE,A.VCH_DATE ORDER BY A.VCH_DATE DESC ");
       print("result for rate $result");
       if(jsonDecode(result).length != 0){
         todayGoldRate = jsonDecode(result)[0]['FINE_GL_RATE'].toString();
@@ -98,6 +98,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
         todaySilverRate = result[0][0]['FINE_SL_RATE'].toString();
       }
       dynamic image = await MySQLService().getForImage(co_code);
+      print("IMagesss $image");
       Provider.of<CommonCompanyYearSelectionProvider>(context, listen: false)
           .changeWebImage(image[0][0]["WEB_IMAGE"]);
       Provider.of<CommonCompanyYearSelectionProvider>(context, listen: false)

@@ -333,4 +333,14 @@ class MySQLService {
     print("getCompanyDetail $getCompanyDetail");
     return getCompanyDetail;
   }
+
+  Future<dynamic> getZoomingLedgerReport(String coCode,String lcCode,String acCode) async {
+    final getZoomingLedgerReport = await _channel.invokeMethod('getZoomingLedgerReport',{
+      "coCode": coCode,
+      "lcCode": lcCode,
+      "acCode": acCode
+    });
+    print("getZoomingLedgerReport $getZoomingLedgerReport");
+    return getZoomingLedgerReport;
+  }
   }

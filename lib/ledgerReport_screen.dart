@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:developer';
 import 'dart:io';
 
+import 'package:DataCareUltra/ledgerZoomingReport.dart';
 import 'package:DataCareUltra/mySql_services.dart';
 import 'package:DataCareUltra/provider/commonCompanyYearSelectionProvider.dart';
 import 'package:DataCareUltra/provider/loading_provider.dart';
@@ -562,350 +563,355 @@ class _LedgerreportScreenState extends State<LedgerreportScreen> {
           Expanded(
               child: ListView.builder(
                   itemCount: searchFillteredLedgerReport.length,
-                  itemBuilder: (context, index) => Padding(
-                        padding: EdgeInsets.only(
-                            top: 15.0,
-                            left: 15,
-                            right: 15,
-                            bottom:
-                                searchFillteredLedgerReport.length - 1 == index
-                                    ? 15
-                                    : 0),
-                        child: Container(
-                          padding: const EdgeInsets.all(15),
-                          decoration: BoxDecoration(
-                              color: Colors.grey[200],
-                              borderRadius: BorderRadius.circular(18),
-                              boxShadow: [
-                                BoxShadow(
-                                    blurRadius: 10,
-                                    spreadRadius: -10,
-                                    offset: Offset(2, 3))
-                              ]),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                searchFillteredLedgerReport[index]['AC_NAME'],
-                                style: GoogleFonts.nunito(
-                                    color: Color(0xFF006EB7),
-                                    fontWeight: FontWeight.bold,
-                                    fontSize: 18),
-                              ),
-                              SizedBox(
-                                height: 10,
-                              ),
-                              Divider(
-                                height: 2,
-                                color: Colors.grey,
-                              ),
-                              SizedBox(
-                                height: 8,
-                              ),
-                              Row(
-                                children: [
-                                  Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: [
-                                      Text(
-                                        "Amount",
-                                        style: GoogleFonts.nunito(
-                                            color: Color(0xFF006EB7),
-                                            fontWeight: FontWeight.w500,
-                                            fontSize: 15),
-                                      ),
-                                      SizedBox(
-                                        height: 3.5,
-                                      ),
-                                      Text(
-                                        "Gold Fine",
-                                        style: GoogleFonts.nunito(
-                                            color: Color(0xFF006EB7),
-                                            fontWeight: FontWeight.w500,
-                                            fontSize: 15),
-                                      ),
-                                      SizedBox(
-                                        height: 3.5,
-                                      ),
-                                      Text(
-                                        "Silver Fine",
-                                        style: GoogleFonts.nunito(
-                                            color: Color(0xFF006EB7),
-                                            fontWeight: FontWeight.w500,
-                                            fontSize: 15),
-                                      ),
-                                      SizedBox(
-                                        height: 3.5,
-                                      ),
-                                      Text(
-                                        "Mobile",
-                                        style: GoogleFonts.nunito(
-                                            color: Color(0xFF006EB7),
-                                            fontWeight: FontWeight.w500,
-                                            fontSize: 15),
-                                      ),
-                                      SizedBox(
-                                        height: 3.5,
-                                      ),
-                                      Text(
-                                        "City",
-                                        style: GoogleFonts.nunito(
-                                            color: Color(0xFF006EB7),
-                                            fontWeight: FontWeight.w500,
-                                            fontSize: 15),
-                                      ),
-                                    ],
-                                  ),
-                                  SizedBox(
-                                    width: 28,
-                                  ),
-                                  Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: [
-                                      Text(
-                                        ":",
-                                        style: GoogleFonts.nunito(
-                                            fontWeight: FontWeight.w500,
-                                            fontSize: 15),
-                                      ),
-                                      SizedBox(
-                                        height: 3.5,
-                                      ),
-                                      Text(
-                                        ":",
-                                        style: GoogleFonts.nunito(
-                                            fontWeight: FontWeight.w500,
-                                            fontSize: 15),
-                                      ),
-                                      SizedBox(
-                                        height: 3.5,
-                                      ),
-                                      Text(
-                                        ":",
-                                        style: GoogleFonts.nunito(
-                                            fontWeight: FontWeight.w500,
-                                            fontSize: 15),
-                                      ),
-                                      SizedBox(
-                                        height: 3.5,
-                                      ),
-                                      Text(
-                                        ":",
-                                        style: GoogleFonts.nunito(
-                                            fontWeight: FontWeight.w500,
-                                            fontSize: 15),
-                                      ),
-                                      SizedBox(
-                                        height: 3.5,
-                                      ),
-                                      Text(
-                                        ":",
-                                        style: GoogleFonts.nunito(
-                                            fontWeight: FontWeight.w500,
-                                            fontSize: 15),
-                                      ),
-                                    ],
-                                  ),
-                                  SizedBox(
-                                    width: 28,
-                                  ),
-                                  Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: [
-                                      Text(
-                                        searchFillteredLedgerReport[index]
-                                                    ['CrAmt'] ==
-                                                0
-                                            ? searchFillteredLedgerReport[index]
-                                                        ['DrAmt'] ==
-                                                    0
-                                                ? ""
-                                                : double.parse(searchFillteredLedgerReport[
-                                        index]['DrAmt']
-                                            .toString()).toStringAsFixed(2) +
-                                                    ' Dr'
-                                            : double.parse(searchFillteredLedgerReport[index]
-                                        ['CrAmt']
-                                            .toString()).toStringAsFixed(2) +
-                                                ' Cr',
-                                        style: GoogleFonts.nunito(
-                                            fontWeight: FontWeight.bold,
-                                            fontSize: 15,
-                                            color: searchFillteredLedgerReport[
-                                                        index]['CrAmt'] ==
-                                                    0
-                                                ? Colors.red
-                                                : Colors.green),
-                                      ),
-                                      SizedBox(
-                                        height: 3.5,
-                                      ),
-                                      Text(
-                                        searchFillteredLedgerReport[index]
-                                                    ['CrGold'] ==
-                                                0
-                                            ? searchFillteredLedgerReport[index]
-                                                        ['DrGold'] ==
-                                                    0
-                                                ? ""
-                                                : double.parse(searchFillteredLedgerReport[
-                                        index]['DrGold'].toString()).toStringAsFixed(3)
-                                            +
-                                                    ' Dr'
-                                            : double.parse(searchFillteredLedgerReport[index]
-                                        ['CrGold']
-                                            .toString()).toStringAsFixed(3) +
-                                                ' Cr',
-                                        style: GoogleFonts.nunito(
-                                            fontWeight: FontWeight.bold,
-                                            fontSize: 15,
-                                            color: searchFillteredLedgerReport[
-                                                        index]['CrGold'] ==
-                                                    0
-                                                ? Colors.red
-                                                : Colors.green),
-                                      ),
-                                      SizedBox(
-                                        height: 3.5,
-                                      ),
-                                      Text(
-                                        searchFillteredLedgerReport[index]
-                                                    ['CrSilver'] ==
-                                                0
-                                            ? searchFillteredLedgerReport[index]
-                                                        ['DrSilver'] ==
-                                                    0
-                                                ? ""
-                                                : double.parse(searchFillteredLedgerReport[
-                                        index]['DrSilver']
-                                            .toString()).toStringAsFixed(3) +
-                                                    ' Dr'
-                                            : double.parse(searchFillteredLedgerReport[index]
-                                        ['CrSilver']
-                                            .toString()).toStringAsFixed(3) +
-                                                ' Cr',
-                                        style: GoogleFonts.nunito(
-                                            fontWeight: FontWeight.bold,
-                                            color: searchFillteredLedgerReport[
-                                            index]['CrSilver'] ==
-                                                0
-                                                ? Colors.red
-                                                : Colors.green,
-                                            fontSize: 15),
-                                      ),
-                                      SizedBox(
-                                        height: 3.5,
-                                      ),
-                                      Text(
-                                        searchFillteredLedgerReport[index]
-                                            ['AC_MOBILE'],
-                                        style: GoogleFonts.nunito(
-                                            fontWeight: FontWeight.w500,
-                                            fontSize: 15),
-                                      ),
-                                      SizedBox(
-                                        height: 3.5,
-                                      ),
-                                      Text(
-                                        searchFillteredLedgerReport[index]
-                                            ['AC_CITY'],
-                                        style: GoogleFonts.nunito(
-                                            fontWeight: FontWeight.w500,
-                                            fontSize: 15),
-                                      ),
-                                    ],
-                                  ),
-                                ],
-                              ),
-                              SizedBox(
-                                height: 8,
-                              ),
-                              Divider(
-                                height: 2,
-                                color: Colors.grey,
-                              ),
-                              SizedBox(
-                                height: 10,
-                              ),
-                              Row(
-                                mainAxisAlignment:
-                                    MainAxisAlignment.spaceEvenly,
-                                children: [
-                                  GestureDetector(
-                                    onTap: () async {
-                                      if (searchFillteredLedgerReport[index]
-                                              ['AC_MOBILE'] !=
-                                          '') {
-                                        final link = WhatsAppUnilink(
-                                            phoneNumber:
-                                                '+91${searchFillteredLedgerReport[index]['AC_MOBILE']}',
-                                            text:
-                                                "Amount : ${searchFillteredLedgerReport[index]['CrAmt'] == 0 ? searchFillteredLedgerReport[index]['DrAmt'] == 0 ? "" : double.parse(searchFillteredLedgerReport[index]['DrAmt'].toString()).toStringAsFixed(2) + ' Dr' : double.parse(searchFillteredLedgerReport[index]['CrAmt'].toString()).toStringAsFixed(2) + ' Cr'} \n Gold : ${searchFillteredLedgerReport[index]['CrGold'] == 0 ? searchFillteredLedgerReport[index]['DrGold'] == 0 ? "" : double.parse(searchFillteredLedgerReport[index]['DrGold'].toString()).toStringAsFixed(3) + ' Dr' : double.parse(searchFillteredLedgerReport[index]['CrGold'].toString()).toStringAsFixed(3) + ' Cr'} \n Silver : ${searchFillteredLedgerReport[index]['CrSilver'] == 0 ? searchFillteredLedgerReport[index]['DrSilver'] == 0 ? "" : double.parse(searchFillteredLedgerReport[index]['DrGold'].toString()).toStringAsFixed(3) + ' Dr' : double.parse(searchFillteredLedgerReport[index]['CrGold'].toString()).toStringAsFixed(3) + ' Cr'} \n ${Provider.of<CommonCompanyYearSelectionProvider>(context, listen: false).co_name}");
-                                        await launchUrlString('$link');
-                                      } else {
-                                        ScaffoldMessenger.of(context)
-                                            .showSnackBar(const SnackBar(
-                                          content: Text(
-                                              "Mobile Number is not exits"),
-                                        ));
-                                      }
+                  itemBuilder: (context, index) => InkWell(
+                    onTap: (){
+                      Navigator.push(context, MaterialPageRoute(builder: (context)=>Ledgerzoomingreport(name: "${searchFillteredLedgerReport[index]['AC_NAME']}",acCode: "${searchFillteredLedgerReport[index]['AC_CODE']}")));
+                    },
+                    child: Padding(
+                          padding: EdgeInsets.only(
+                              top: 15.0,
+                              left: 15,
+                              right: 15,
+                              bottom:
+                                  searchFillteredLedgerReport.length - 1 == index
+                                      ? 15
+                                      : 0),
+                          child: Container(
+                            padding: const EdgeInsets.all(15),
+                            decoration: BoxDecoration(
+                                color: Colors.grey[200],
+                                borderRadius: BorderRadius.circular(18),
+                                boxShadow: [
+                                  BoxShadow(
+                                      blurRadius: 10,
+                                      spreadRadius: -10,
+                                      offset: Offset(2, 3))
+                                ]),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  searchFillteredLedgerReport[index]['AC_NAME'],
+                                  style: GoogleFonts.nunito(
+                                      color: Color(0xFF006EB7),
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 18),
+                                ),
+                                SizedBox(
+                                  height: 10,
+                                ),
+                                Divider(
+                                  height: 2,
+                                  color: Colors.grey,
+                                ),
+                                SizedBox(
+                                  height: 8,
+                                ),
+                                Row(
+                                  children: [
+                                    Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          "Amount",
+                                          style: GoogleFonts.nunito(
+                                              color: Color(0xFF006EB7),
+                                              fontWeight: FontWeight.w500,
+                                              fontSize: 15),
+                                        ),
+                                        SizedBox(
+                                          height: 3.5,
+                                        ),
+                                        Text(
+                                          "Gold Fine",
+                                          style: GoogleFonts.nunito(
+                                              color: Color(0xFF006EB7),
+                                              fontWeight: FontWeight.w500,
+                                              fontSize: 15),
+                                        ),
+                                        SizedBox(
+                                          height: 3.5,
+                                        ),
+                                        Text(
+                                          "Silver Fine",
+                                          style: GoogleFonts.nunito(
+                                              color: Color(0xFF006EB7),
+                                              fontWeight: FontWeight.w500,
+                                              fontSize: 15),
+                                        ),
+                                        SizedBox(
+                                          height: 3.5,
+                                        ),
+                                        Text(
+                                          "Mobile",
+                                          style: GoogleFonts.nunito(
+                                              color: Color(0xFF006EB7),
+                                              fontWeight: FontWeight.w500,
+                                              fontSize: 15),
+                                        ),
+                                        SizedBox(
+                                          height: 3.5,
+                                        ),
+                                        Text(
+                                          "City",
+                                          style: GoogleFonts.nunito(
+                                              color: Color(0xFF006EB7),
+                                              fontWeight: FontWeight.w500,
+                                              fontSize: 15),
+                                        ),
+                                      ],
+                                    ),
+                                    SizedBox(
+                                      width: 28,
+                                    ),
+                                    Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          ":",
+                                          style: GoogleFonts.nunito(
+                                              fontWeight: FontWeight.w500,
+                                              fontSize: 15),
+                                        ),
+                                        SizedBox(
+                                          height: 3.5,
+                                        ),
+                                        Text(
+                                          ":",
+                                          style: GoogleFonts.nunito(
+                                              fontWeight: FontWeight.w500,
+                                              fontSize: 15),
+                                        ),
+                                        SizedBox(
+                                          height: 3.5,
+                                        ),
+                                        Text(
+                                          ":",
+                                          style: GoogleFonts.nunito(
+                                              fontWeight: FontWeight.w500,
+                                              fontSize: 15),
+                                        ),
+                                        SizedBox(
+                                          height: 3.5,
+                                        ),
+                                        Text(
+                                          ":",
+                                          style: GoogleFonts.nunito(
+                                              fontWeight: FontWeight.w500,
+                                              fontSize: 15),
+                                        ),
+                                        SizedBox(
+                                          height: 3.5,
+                                        ),
+                                        Text(
+                                          ":",
+                                          style: GoogleFonts.nunito(
+                                              fontWeight: FontWeight.w500,
+                                              fontSize: 15),
+                                        ),
+                                      ],
+                                    ),
+                                    SizedBox(
+                                      width: 28,
+                                    ),
+                                    Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          searchFillteredLedgerReport[index]
+                                                      ['CrAmt'] ==
+                                                  0
+                                              ? searchFillteredLedgerReport[index]
+                                                          ['DrAmt'] ==
+                                                      0
+                                                  ? ""
+                                                  : double.parse(searchFillteredLedgerReport[
+                                          index]['DrAmt']
+                                              .toString()).toStringAsFixed(2) +
+                                                      ' Dr'
+                                              : double.parse(searchFillteredLedgerReport[index]
+                                          ['CrAmt']
+                                              .toString()).toStringAsFixed(2) +
+                                                  ' Cr',
+                                          style: GoogleFonts.nunito(
+                                              fontWeight: FontWeight.bold,
+                                              fontSize: 15,
+                                              color: searchFillteredLedgerReport[
+                                                          index]['CrAmt'] ==
+                                                      0
+                                                  ? Colors.red
+                                                  : Colors.green),
+                                        ),
+                                        SizedBox(
+                                          height: 3.5,
+                                        ),
+                                        Text(
+                                          searchFillteredLedgerReport[index]
+                                                      ['CrGold'] ==
+                                                  0
+                                              ? searchFillteredLedgerReport[index]
+                                                          ['DrGold'] ==
+                                                      0
+                                                  ? ""
+                                                  : double.parse(searchFillteredLedgerReport[
+                                          index]['DrGold'].toString()).toStringAsFixed(3)
+                                              +
+                                                      ' Dr'
+                                              : double.parse(searchFillteredLedgerReport[index]
+                                          ['CrGold']
+                                              .toString()).toStringAsFixed(3) +
+                                                  ' Cr',
+                                          style: GoogleFonts.nunito(
+                                              fontWeight: FontWeight.bold,
+                                              fontSize: 15,
+                                              color: searchFillteredLedgerReport[
+                                                          index]['CrGold'] ==
+                                                      0
+                                                  ? Colors.red
+                                                  : Colors.green),
+                                        ),
+                                        SizedBox(
+                                          height: 3.5,
+                                        ),
+                                        Text(
+                                          searchFillteredLedgerReport[index]
+                                                      ['CrSilver'] ==
+                                                  0
+                                              ? searchFillteredLedgerReport[index]
+                                                          ['DrSilver'] ==
+                                                      0
+                                                  ? ""
+                                                  : double.parse(searchFillteredLedgerReport[
+                                          index]['DrSilver']
+                                              .toString()).toStringAsFixed(3) +
+                                                      ' Dr'
+                                              : double.parse(searchFillteredLedgerReport[index]
+                                          ['CrSilver']
+                                              .toString()).toStringAsFixed(3) +
+                                                  ' Cr',
+                                          style: GoogleFonts.nunito(
+                                              fontWeight: FontWeight.bold,
+                                              color: searchFillteredLedgerReport[
+                                              index]['CrSilver'] ==
+                                                  0
+                                                  ? Colors.red
+                                                  : Colors.green,
+                                              fontSize: 15),
+                                        ),
+                                        SizedBox(
+                                          height: 3.5,
+                                        ),
+                                        Text(
+                                          searchFillteredLedgerReport[index]
+                                              ['AC_MOBILE'],
+                                          style: GoogleFonts.nunito(
+                                              fontWeight: FontWeight.w500,
+                                              fontSize: 15),
+                                        ),
+                                        SizedBox(
+                                          height: 3.5,
+                                        ),
+                                        Text(
+                                          searchFillteredLedgerReport[index]
+                                              ['AC_CITY'],
+                                          style: GoogleFonts.nunito(
+                                              fontWeight: FontWeight.w500,
+                                              fontSize: 15),
+                                        ),
+                                      ],
+                                    ),
+                                  ],
+                                ),
+                                SizedBox(
+                                  height: 8,
+                                ),
+                                Divider(
+                                  height: 2,
+                                  color: Colors.grey,
+                                ),
+                                SizedBox(
+                                  height: 10,
+                                ),
+                                Row(
+                                  mainAxisAlignment:
+                                      MainAxisAlignment.spaceEvenly,
+                                  children: [
+                                    GestureDetector(
+                                      onTap: () async {
+                                        if (searchFillteredLedgerReport[index]
+                                                ['AC_MOBILE'] !=
+                                            '') {
+                                          final link = WhatsAppUnilink(
+                                              phoneNumber:
+                                                  '+91${searchFillteredLedgerReport[index]['AC_MOBILE']}',
+                                              text:
+                                                  "Amount : ${searchFillteredLedgerReport[index]['CrAmt'] == 0 ? searchFillteredLedgerReport[index]['DrAmt'] == 0 ? "" : double.parse(searchFillteredLedgerReport[index]['DrAmt'].toString()).toStringAsFixed(2) + ' Dr' : double.parse(searchFillteredLedgerReport[index]['CrAmt'].toString()).toStringAsFixed(2) + ' Cr'} \n Gold : ${searchFillteredLedgerReport[index]['CrGold'] == 0 ? searchFillteredLedgerReport[index]['DrGold'] == 0 ? "" : double.parse(searchFillteredLedgerReport[index]['DrGold'].toString()).toStringAsFixed(3) + ' Dr' : double.parse(searchFillteredLedgerReport[index]['CrGold'].toString()).toStringAsFixed(3) + ' Cr'} \n Silver : ${searchFillteredLedgerReport[index]['CrSilver'] == 0 ? searchFillteredLedgerReport[index]['DrSilver'] == 0 ? "" : double.parse(searchFillteredLedgerReport[index]['DrGold'].toString()).toStringAsFixed(3) + ' Dr' : double.parse(searchFillteredLedgerReport[index]['CrGold'].toString()).toStringAsFixed(3) + ' Cr'} \n ${Provider.of<CommonCompanyYearSelectionProvider>(context, listen: false).co_name}");
+                                          await launchUrlString('$link');
+                                        } else {
+                                          ScaffoldMessenger.of(context)
+                                              .showSnackBar(const SnackBar(
+                                            content: Text(
+                                                "Mobile Number is not exits"),
+                                          ));
+                                        }
 
-                                      // Convert the WhatsAppUnilink instance to a Uri.
-                                      // The "launch" method is part of "url_launcher".
-                                    },
-                                    child: Image.asset(
-                                      AppImage.whatsapp,
-                                      scale: 18,
+                                        // Convert the WhatsAppUnilink instance to a Uri.
+                                        // The "launch" method is part of "url_launcher".
+                                      },
+                                      child: Image.asset(
+                                        AppImage.whatsapp,
+                                        scale: 18,
+                                      ),
                                     ),
-                                  ),
-                                  GestureDetector(
-                                    onTap: () {
-                                      if (searchFillteredLedgerReport[index]
-                                              ['AC_MOBILE'] !=
-                                          '') {
-                                        launchUrlString("tel://+91${searchFillteredLedgerReport[index]['AC_MOBILE']}");
-                                      } else {
-                                        ScaffoldMessenger.of(context)
-                                            .showSnackBar(const SnackBar(
-                                          content: Text(
-                                              "Mobile Number is not exits"),
-                                        ));
-                                      }
-                                    },
-                                    child: Image.asset(
-                                      AppImage.telephone,
-                                      scale: 18,
+                                    GestureDetector(
+                                      onTap: () {
+                                        if (searchFillteredLedgerReport[index]
+                                                ['AC_MOBILE'] !=
+                                            '') {
+                                          launchUrlString("tel://+91${searchFillteredLedgerReport[index]['AC_MOBILE']}");
+                                        } else {
+                                          ScaffoldMessenger.of(context)
+                                              .showSnackBar(const SnackBar(
+                                            content: Text(
+                                                "Mobile Number is not exits"),
+                                          ));
+                                        }
+                                      },
+                                      child: Image.asset(
+                                        AppImage.telephone,
+                                        scale: 18,
+                                      ),
                                     ),
-                                  ),
-                                  GestureDetector(
-                                    onTap: () {
-                                      launchUrlString(
-                                          'sms:+91${searchFillteredLedgerReport[index]['AC_MOBILE']}?body=Amount : ${searchFillteredLedgerReport[index]['CrAmt'] == 0 ? searchFillteredLedgerReport[index]['DrAmt'] == 0 ? "" : double.parse(searchFillteredLedgerReport[index]['DrAmt'].toString()).toStringAsFixed(2) + ' Dr' : double.parse(searchFillteredLedgerReport[index]['CrAmt'].toString()).toStringAsFixed(2) + ' Cr'} \n Gold : ${searchFillteredLedgerReport[index]['CrGold'] == 0 ? searchFillteredLedgerReport[index]['DrGold'] == 0 ? "" : double.parse(searchFillteredLedgerReport[index]['DrGold'].toString()).toStringAsFixed(3) + ' Dr' : double.parse(searchFillteredLedgerReport[index]['CrGold'].toString()).toStringAsFixed(3) + ' Cr'} \n Silver : ${searchFillteredLedgerReport[index]['CrSilver'] == 0 ? searchFillteredLedgerReport[index]['DrSilver'] == 0 ? "" : double.parse(searchFillteredLedgerReport[index]['DrGold'].toString()).toStringAsFixed(3) + ' Dr' : double.parse(searchFillteredLedgerReport[index]['CrGold'].toString()).toStringAsFixed(3) + ' Cr'} \n ${Provider.of<CommonCompanyYearSelectionProvider>(context, listen: false).co_name}');
-                                    },
-                                    child: Image.asset(
-                                      AppImage.chat,
-                                      scale: 18,
+                                    GestureDetector(
+                                      onTap: () {
+                                        launchUrlString(
+                                            'sms:+91${searchFillteredLedgerReport[index]['AC_MOBILE']}?body=Amount : ${searchFillteredLedgerReport[index]['CrAmt'] == 0 ? searchFillteredLedgerReport[index]['DrAmt'] == 0 ? "" : double.parse(searchFillteredLedgerReport[index]['DrAmt'].toString()).toStringAsFixed(2) + ' Dr' : double.parse(searchFillteredLedgerReport[index]['CrAmt'].toString()).toStringAsFixed(2) + ' Cr'} \n Gold : ${searchFillteredLedgerReport[index]['CrGold'] == 0 ? searchFillteredLedgerReport[index]['DrGold'] == 0 ? "" : double.parse(searchFillteredLedgerReport[index]['DrGold'].toString()).toStringAsFixed(3) + ' Dr' : double.parse(searchFillteredLedgerReport[index]['CrGold'].toString()).toStringAsFixed(3) + ' Cr'} \n Silver : ${searchFillteredLedgerReport[index]['CrSilver'] == 0 ? searchFillteredLedgerReport[index]['DrSilver'] == 0 ? "" : double.parse(searchFillteredLedgerReport[index]['DrGold'].toString()).toStringAsFixed(3) + ' Dr' : double.parse(searchFillteredLedgerReport[index]['CrGold'].toString()).toStringAsFixed(3) + ' Cr'} \n ${Provider.of<CommonCompanyYearSelectionProvider>(context, listen: false).co_name}');
+                                      },
+                                      child: Image.asset(
+                                        AppImage.chat,
+                                        scale: 18,
+                                      ),
                                     ),
-                                  ),
-                                  GestureDetector(
-                                    onTap: () {
-                                      Share.share(
-                                          'Amount : ${searchFillteredLedgerReport[index]['CrAmt'] == 0 ? searchFillteredLedgerReport[index]['DrAmt'] == 0 ? "" : double.parse(searchFillteredLedgerReport[index]['DrAmt'].toString()).toStringAsFixed(2) + ' Dr' : double.parse(searchFillteredLedgerReport[index]['CrAmt'].toString()).toStringAsFixed(2) + ' Cr'} \n Gold : ${searchFillteredLedgerReport[index]['CrGold'] == 0 ? searchFillteredLedgerReport[index]['DrGold'] == 0 ? "" : double.parse(searchFillteredLedgerReport[index]['DrGold'].toString()).toStringAsFixed(3) + ' Dr' : double.parse(searchFillteredLedgerReport[index]['CrGold'].toString()).toStringAsFixed(3) + ' Cr'} \n Silver : ${searchFillteredLedgerReport[index]['CrSilver'] == 0 ? searchFillteredLedgerReport[index]['DrSilver'] == 0 ? "" : double.parse(searchFillteredLedgerReport[index]['DrGold'].toString()).toStringAsFixed(3) + ' Dr' : double.parse(searchFillteredLedgerReport[index]['CrGold'].toString()).toStringAsFixed(3) + ' Cr'} \n ${Provider.of<CommonCompanyYearSelectionProvider>(context, listen: false).co_name}');
-                                    },
-                                    child: Image.asset(
-                                      AppImage.share,
-                                      scale: 18,
+                                    GestureDetector(
+                                      onTap: () {
+                                        Share.share(
+                                            'Amount : ${searchFillteredLedgerReport[index]['CrAmt'] == 0 ? searchFillteredLedgerReport[index]['DrAmt'] == 0 ? "" : double.parse(searchFillteredLedgerReport[index]['DrAmt'].toString()).toStringAsFixed(2) + ' Dr' : double.parse(searchFillteredLedgerReport[index]['CrAmt'].toString()).toStringAsFixed(2) + ' Cr'} \n Gold : ${searchFillteredLedgerReport[index]['CrGold'] == 0 ? searchFillteredLedgerReport[index]['DrGold'] == 0 ? "" : double.parse(searchFillteredLedgerReport[index]['DrGold'].toString()).toStringAsFixed(3) + ' Dr' : double.parse(searchFillteredLedgerReport[index]['CrGold'].toString()).toStringAsFixed(3) + ' Cr'} \n Silver : ${searchFillteredLedgerReport[index]['CrSilver'] == 0 ? searchFillteredLedgerReport[index]['DrSilver'] == 0 ? "" : double.parse(searchFillteredLedgerReport[index]['DrGold'].toString()).toStringAsFixed(3) + ' Dr' : double.parse(searchFillteredLedgerReport[index]['CrGold'].toString()).toStringAsFixed(3) + ' Cr'} \n ${Provider.of<CommonCompanyYearSelectionProvider>(context, listen: false).co_name}');
+                                      },
+                                      child: Image.asset(
+                                        AppImage.share,
+                                        scale: 18,
+                                      ),
                                     ),
-                                  ),
-                                ],
-                              )
-                            ],
+                                  ],
+                                )
+                              ],
+                            ),
                           ),
                         ),
-                      )))
+                  )))
         ],
       ),
     );

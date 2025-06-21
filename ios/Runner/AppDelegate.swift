@@ -162,6 +162,10 @@ class AppDelegate: FlutterAppDelegate {
                 let args = call.arguments as! Dictionary<String, Any>
                 self?.getCompanyDetail(result: result, coCode: args["coCode"] as! String)
             }
+            else if call.method == "getZoomingLedgerReport" {
+                let args = call.arguments as! Dictionary<String, Any>
+                self?.getZoomingLedgerReport(result: result, coCode: args["coCode"] as! String,lcCode: args["lcCode"] as! String,acCode: args["acCode"] as! String)
+            }
             else {
                 result(FlutterMethodNotImplemented)
             }
@@ -606,6 +610,16 @@ class AppDelegate: FlutterAppDelegate {
             print("INside getCompanyDetail from xcode")
             sqlClient = SQLClient.sharedInstance()
         let query = "SELECT CO_NAME,CO_ADD1,CO_ADD2,CO_ADD3,CO_CITY,CO_PIN,CO_MOBILE FROM CO_MAST WHERE CO_CODE = '"+coCode+"'"
+            print(query)
+        sqlClient?.execute(query) { results in
+            result(results)
+        }
+
+        }
+    private func getZoomingLedgerReport(result: @escaping FlutterResult,coCode:String,lcCode:String,acCode:String) {
+            print("INside getZoomingLedgerReport from xcode")
+            sqlClient = SQLClient.sharedInstance()
+        let query = "SELECT B.BOOK_NAME,A.CO_BOOK,A.VCH_NO,A.VCH_DATE,B.MAIN_BOOK,Case When SUM(A.CR_AMT-A.DR_AMT)<0 Then abs(SUM(A.CR_AMT-A.DR_AMT))Else 0 End As DrAmt,Case When SUM(A.CR_AMT-A.DR_AMT)>0 Then abs(SUM(A.CR_AMT-A.DR_AMT))Else 0 End As CrAmt,SUM(Case When SUM(A.CR_AMT-A.DR_AMT)>0 Then abs(SUM(A.CR_AMT-A.DR_AMT))Else 0 End-Case When SUM(A.CR_AMT-A.DR_AMT)<0 Then abs(SUM(A.CR_AMT-A.DR_AMT))Else 0 End)OVER(ORDER BY A.VCH_DATE,A.CO_BOOK,A.VCH_NO)AS BalAmt,Case When SUM(Case When A.IT_TYPE='G' THEN(CASE WHEN A.SIGN='+' THEN A.FINE_WT ELSE-A.FINE_WT END)ELSE 0 END)<0 then abs(SUM(CASE WHEN A.IT_TYPE='G' THEN(CASE WHEN A.SIGN='+' THEN A.FINE_WT ELSE-A.FINE_WT END)ELSE 0 END))else 0 end As DrGold,Case When SUM(Case When A.IT_TYPE='G' THEN(CASE WHEN A.SIGN='+' THEN A.FINE_WT ELSE-A.FINE_WT END)ELSE 0 END)>0 then abs(SUM(CASE WHEN A.IT_TYPE='G' THEN(CASE WHEN A.SIGN='+' THEN A.FINE_WT ELSE-A.FINE_WT END)ELSE 0 END))else 0 end As CrGold,SUM(Case When SUM(Case When A.IT_TYPE='G' THEN(CASE WHEN A.SIGN='+' THEN A.FINE_WT ELSE-A.FINE_WT END)ELSE 0 END)>0 then abs(SUM(CASE WHEN A.IT_TYPE='G' THEN(CASE WHEN A.SIGN='+' THEN A.FINE_WT ELSE-A.FINE_WT END)ELSE 0 END))else 0 end-Case When SUM(Case When A.IT_TYPE='G' THEN(CASE WHEN A.SIGN='+' THEN A.FINE_WT ELSE-A.FINE_WT END)ELSE 0 END)<0 then abs(SUM(CASE WHEN A.IT_TYPE='G' THEN(CASE WHEN A.SIGN='+' THEN A.FINE_WT ELSE-A.FINE_WT END)ELSE 0 END))else 0 end)OVER(ORDER BY A.VCH_DATE,A.CO_BOOK,A.VCH_NO)as BalGold,Case WHEN SUM(CASE WHEN A.IT_TYPE='S' THEN(CASE WHEN A.SIGN='+' THEN A.FINE_WT ELSE-A.FINE_WT END)ELSE 0 END)<0 then abs(SUM(CASE WHEN A.IT_TYPE='S' THEN(CASE WHEN A.SIGN='+' THEN A.FINE_WT ELSE-A.FINE_WT END)ELSE 0 END))else 0 end As DrSilver,Case WHEN SUM(CASE WHEN A.IT_TYPE='S' THEN(CASE WHEN A.SIGN='+' THEN A.FINE_WT ELSE-A.FINE_WT END)ELSE 0 END)>0 then abs(SUM(CASE WHEN A.IT_TYPE='S' THEN(CASE WHEN A.SIGN='+' THEN A.FINE_WT ELSE-A.FINE_WT END)ELSE 0 END))else 0 end As CrSilver,SUM(Case When SUM(Case When A.IT_TYPE='S' THEN(CASE WHEN A.SIGN='+' THEN A.FINE_WT ELSE-A.FINE_WT END)ELSE 0 END)>0 then abs(SUM(CASE WHEN A.IT_TYPE='S' THEN(CASE WHEN A.SIGN='+' THEN A.FINE_WT ELSE-A.FINE_WT END)ELSE 0 END))else 0 end-Case When SUM(Case When A.IT_TYPE='S' THEN(CASE WHEN A.SIGN='+' THEN A.FINE_WT ELSE-A.FINE_WT END)ELSE 0 END)<0 then abs(SUM(CASE WHEN A.IT_TYPE='S' THEN(CASE WHEN A.SIGN='+' THEN A.FINE_WT ELSE-A.FINE_WT END)ELSE 0 END))else 0 end)OVER(ORDER BY A.VCH_DATE,A.CO_BOOK,A.VCH_NO)as BalSilver FROM(AC_DATA AS A LEFT JOIN BOOK_DATA AS B ON A.CO_CODE=B.CO_CODE AND A.LC_CODE=B.LC_CODE AND A.CO_BOOK=B.CO_BOOK)LEFT JOIN AC_MAST AS C ON A.CO_CODE=C.CO_CODE And A.AC_CODE=C.AC_CODE WHERE A.CO_CODE='"+coCode+"' AND A.LC_CODE='"+lcCode+"' AND A.AC_CODE='"+acCode+"' GROUP BY B.BOOK_NAME,A.CO_BOOK,A.VCH_NO,A.VCH_DATE,B.MAIN_BOOK ORDER BY A.VCH_DATE,A.CO_BOOK,A.VCH_NO"
             print(query)
         sqlClient?.execute(query) { results in
             result(results)
