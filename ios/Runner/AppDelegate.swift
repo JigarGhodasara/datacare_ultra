@@ -168,15 +168,15 @@ class AppDelegate: FlutterAppDelegate {
             }
             else if call.method == "getZoomingStockReport" {
                 let args = call.arguments as! Dictionary<String, Any>
-                self?.getZoomingStockReport(result: result, coCode: args['coCode'] as! String , lcCode: args['lcCode'] as! String, itCode: args['itCode'] as! String,fromDate: args['fromDate'] as! String, toDate: args['toDate'] as! String,selectedValue: args['selectedValue'] as! String)
+                self?.getZoomingStockReport(result: result, coCode: args["coCode"] as! String , lcCode: args["lcCode"] as! String, itCode: args["itCode"] as! String,fromDate: args["fromDate"] as! String, toDate: args["toDate"] as! String,selectedValue: args["selectedValue"] as! String)
             }
             else if call.method == "getZoomingSalesInvoiceDetails" {
                 let args = call.arguments as! Dictionary<String, Any>
-                self?.getZoomingSalesInvoiceDetails(result: result, coCode: args['coCode'] as! String , lcCode: args['lcCode'] as! String, vchNo: args['vchNo'] as! String,coBook: args['coBook'] as! String)
+                self?.getZoomingSalesInvoiceDetails(result: result, coCode: args["coCode"] as! String , lcCode: args["lcCode"] as! String, vchNo: args["vchNo"] as! String,coBook: args["coBook"] as! String)
             }
             else if call.method == "getZoomingSalesProductDetails" {
                 let args = call.arguments as! Dictionary<String, Any>
-                self?.getZoomingSalesProductDetails(result: result, coCode: args['coCode'] as! String , lcCode: args['lcCode'] as! String, vchNo: args['vchNo'] as! String,coBook: args['coBook'] as! String)
+                self?.getZoomingSalesProductDetails(result: result, coCode: args["coCode"] as! String , lcCode: args["lcCode"] as! String, vchNo: args["vchNo"] as! String,coBook: args["coBook"] as! String)
             }
             else {
                 result(FlutterMethodNotImplemented)
@@ -642,12 +642,12 @@ class AppDelegate: FlutterAppDelegate {
     private func getZoomingStockReport(result: @escaping FlutterResult,coCode:String,lcCode:String,itCode:String,fromDate:String,toDate:String,selectedValue:String) {
             print("INside getZoomingStockReport from xcode")
             sqlClient = SQLClient.sharedInstance()
-        let query = "SELECT A.IT_CODE,B.IT_NAME,A.CO_BOOK,A.VCH_NO,A.VCH_DATE,A.BOOK_NAME,A.TAG_NO,A.ITM_PCS,A.ITM_GWT,A.ITM_NWT,A.ITM_SIGN \nFROM MAIN_STOCK AS A LEFT JOIN ITEM_MAST AS B ON A.CO_CODE =B.CO_CODE AND A.IT_CODE =B.IT_CODE \nWHERE A.CO_CODE='"+coCode+"' AND A.LC_CODE='"+lcCode+"' AND A.IT_CODE ='"+itCode+"' AND A.VCH_DATE BETWEEN '"+fromDate+"' AND '"+toDate+"'"
+        var query = "SELECT A.IT_CODE,B.IT_NAME,A.CO_BOOK,A.VCH_NO,A.VCH_DATE,A.BOOK_NAME,A.TAG_NO,A.ITM_PCS,A.ITM_GWT,A.ITM_NWT,A.ITM_SIGN \nFROM MAIN_STOCK AS A LEFT JOIN ITEM_MAST AS B ON A.CO_CODE =B.CO_CODE AND A.IT_CODE =B.IT_CODE \nWHERE A.CO_CODE='"+coCode+"' AND A.LC_CODE='"+lcCode+"' AND A.IT_CODE ='"+itCode+"' AND A.VCH_DATE BETWEEN '"+fromDate+"' AND '"+toDate+"'"
         
-        if selectedValue == '1' {
+        if selectedValue == "1" {
             query += "AND A.ITM_SIGN = '+' "
         }
-        if selectedValue == '2' {
+        if selectedValue == "2" {
             query += "AND A.ITM_SIGN = '-' "
         }
             print(query)

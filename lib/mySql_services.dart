@@ -358,7 +358,8 @@ class MySQLService {
       "lcCode": lcCode,
       "itCode": itCode,
       "fromDate": fromDate,
-      "toDate": toDate
+      "toDate": toDate,
+      "selectedValue": selectedValue
     });
     print("getZoomingStockReport $getZoomingStockReport");
     return getZoomingStockReport;
