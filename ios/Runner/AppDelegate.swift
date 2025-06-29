@@ -166,6 +166,18 @@ class AppDelegate: FlutterAppDelegate {
                 let args = call.arguments as! Dictionary<String, Any>
                 self?.getZoomingLedgerReport(result: result, coCode: args["coCode"] as! String,lcCode: args["lcCode"] as! String,acCode: args["acCode"] as! String)
             }
+            else if call.method == "getZoomingStockReport" {
+                let args = call.arguments as! Dictionary<String, Any>
+                self?.getZoomingStockReport(result: result, coCode: args['coCode'] as! String , lcCode: args['lcCode'] as! String, itCode: args['itCode'] as! String,fromDate: args['fromDate'] as! String, toDate: args['toDate'] as! String,selectedValue: args['selectedValue'] as! String)
+            }
+            else if call.method == "getZoomingSalesInvoiceDetails" {
+                let args = call.arguments as! Dictionary<String, Any>
+                self?.getZoomingSalesInvoiceDetails(result: result, coCode: args['coCode'] as! String , lcCode: args['lcCode'] as! String, vchNo: args['vchNo'] as! String,coBook: args['coBook'] as! String)
+            }
+            else if call.method == "getZoomingSalesProductDetails" {
+                let args = call.arguments as! Dictionary<String, Any>
+                self?.getZoomingSalesProductDetails(result: result, coCode: args['coCode'] as! String , lcCode: args['lcCode'] as! String, vchNo: args['vchNo'] as! String,coBook: args['coBook'] as! String)
+            }
             else {
                 result(FlutterMethodNotImplemented)
             }
@@ -178,6 +190,7 @@ class AppDelegate: FlutterAppDelegate {
         sqlClient = SQLClient.sharedInstance()
         sqlClient?.disconnect()
         sqlClient?.connect(host, username: username, password: password, database: database, completion: { isSuccess in
+//            print(self.sqlClient.debugDescription)
             result(isSuccess)
         })
     }
@@ -330,7 +343,7 @@ class AppDelegate: FlutterAppDelegate {
             runQuery += "AND B.GR_CODE = '" + grpCode + "' ";
         }
         if itmCode != ""{
-            runQuery += "AND B.IT_NAME <> '" + itmCode + "' ";
+            runQuery += "AND B.IT_NAME = '" + itmCode + "' ";
         }
         if prdCode != ""{
             runQuery += "AND B.PR_CODE = '" + prdCode + "' ";
@@ -620,6 +633,47 @@ class AppDelegate: FlutterAppDelegate {
             print("INside getZoomingLedgerReport from xcode")
             sqlClient = SQLClient.sharedInstance()
         let query = "SELECT B.BOOK_NAME,A.CO_BOOK,A.VCH_NO,A.VCH_DATE,B.MAIN_BOOK,Case When SUM(A.CR_AMT-A.DR_AMT)<0 Then abs(SUM(A.CR_AMT-A.DR_AMT))Else 0 End As DrAmt,Case When SUM(A.CR_AMT-A.DR_AMT)>0 Then abs(SUM(A.CR_AMT-A.DR_AMT))Else 0 End As CrAmt,SUM(Case When SUM(A.CR_AMT-A.DR_AMT)>0 Then abs(SUM(A.CR_AMT-A.DR_AMT))Else 0 End-Case When SUM(A.CR_AMT-A.DR_AMT)<0 Then abs(SUM(A.CR_AMT-A.DR_AMT))Else 0 End)OVER(ORDER BY A.VCH_DATE,A.CO_BOOK,A.VCH_NO)AS BalAmt,Case When SUM(Case When A.IT_TYPE='G' THEN(CASE WHEN A.SIGN='+' THEN A.FINE_WT ELSE-A.FINE_WT END)ELSE 0 END)<0 then abs(SUM(CASE WHEN A.IT_TYPE='G' THEN(CASE WHEN A.SIGN='+' THEN A.FINE_WT ELSE-A.FINE_WT END)ELSE 0 END))else 0 end As DrGold,Case When SUM(Case When A.IT_TYPE='G' THEN(CASE WHEN A.SIGN='+' THEN A.FINE_WT ELSE-A.FINE_WT END)ELSE 0 END)>0 then abs(SUM(CASE WHEN A.IT_TYPE='G' THEN(CASE WHEN A.SIGN='+' THEN A.FINE_WT ELSE-A.FINE_WT END)ELSE 0 END))else 0 end As CrGold,SUM(Case When SUM(Case When A.IT_TYPE='G' THEN(CASE WHEN A.SIGN='+' THEN A.FINE_WT ELSE-A.FINE_WT END)ELSE 0 END)>0 then abs(SUM(CASE WHEN A.IT_TYPE='G' THEN(CASE WHEN A.SIGN='+' THEN A.FINE_WT ELSE-A.FINE_WT END)ELSE 0 END))else 0 end-Case When SUM(Case When A.IT_TYPE='G' THEN(CASE WHEN A.SIGN='+' THEN A.FINE_WT ELSE-A.FINE_WT END)ELSE 0 END)<0 then abs(SUM(CASE WHEN A.IT_TYPE='G' THEN(CASE WHEN A.SIGN='+' THEN A.FINE_WT ELSE-A.FINE_WT END)ELSE 0 END))else 0 end)OVER(ORDER BY A.VCH_DATE,A.CO_BOOK,A.VCH_NO)as BalGold,Case WHEN SUM(CASE WHEN A.IT_TYPE='S' THEN(CASE WHEN A.SIGN='+' THEN A.FINE_WT ELSE-A.FINE_WT END)ELSE 0 END)<0 then abs(SUM(CASE WHEN A.IT_TYPE='S' THEN(CASE WHEN A.SIGN='+' THEN A.FINE_WT ELSE-A.FINE_WT END)ELSE 0 END))else 0 end As DrSilver,Case WHEN SUM(CASE WHEN A.IT_TYPE='S' THEN(CASE WHEN A.SIGN='+' THEN A.FINE_WT ELSE-A.FINE_WT END)ELSE 0 END)>0 then abs(SUM(CASE WHEN A.IT_TYPE='S' THEN(CASE WHEN A.SIGN='+' THEN A.FINE_WT ELSE-A.FINE_WT END)ELSE 0 END))else 0 end As CrSilver,SUM(Case When SUM(Case When A.IT_TYPE='S' THEN(CASE WHEN A.SIGN='+' THEN A.FINE_WT ELSE-A.FINE_WT END)ELSE 0 END)>0 then abs(SUM(CASE WHEN A.IT_TYPE='S' THEN(CASE WHEN A.SIGN='+' THEN A.FINE_WT ELSE-A.FINE_WT END)ELSE 0 END))else 0 end-Case When SUM(Case When A.IT_TYPE='S' THEN(CASE WHEN A.SIGN='+' THEN A.FINE_WT ELSE-A.FINE_WT END)ELSE 0 END)<0 then abs(SUM(CASE WHEN A.IT_TYPE='S' THEN(CASE WHEN A.SIGN='+' THEN A.FINE_WT ELSE-A.FINE_WT END)ELSE 0 END))else 0 end)OVER(ORDER BY A.VCH_DATE,A.CO_BOOK,A.VCH_NO)as BalSilver FROM(AC_DATA AS A LEFT JOIN BOOK_DATA AS B ON A.CO_CODE=B.CO_CODE AND A.LC_CODE=B.LC_CODE AND A.CO_BOOK=B.CO_BOOK)LEFT JOIN AC_MAST AS C ON A.CO_CODE=C.CO_CODE And A.AC_CODE=C.AC_CODE WHERE A.CO_CODE='"+coCode+"' AND A.LC_CODE='"+lcCode+"' AND A.AC_CODE='"+acCode+"' GROUP BY B.BOOK_NAME,A.CO_BOOK,A.VCH_NO,A.VCH_DATE,B.MAIN_BOOK ORDER BY A.VCH_DATE,A.CO_BOOK,A.VCH_NO"
+            print(query)
+        sqlClient?.execute(query) { results in
+            result(results)
+        }
+
+        }
+    private func getZoomingStockReport(result: @escaping FlutterResult,coCode:String,lcCode:String,itCode:String,fromDate:String,toDate:String,selectedValue:String) {
+            print("INside getZoomingStockReport from xcode")
+            sqlClient = SQLClient.sharedInstance()
+        let query = "SELECT A.IT_CODE,B.IT_NAME,A.CO_BOOK,A.VCH_NO,A.VCH_DATE,A.BOOK_NAME,A.TAG_NO,A.ITM_PCS,A.ITM_GWT,A.ITM_NWT,A.ITM_SIGN \nFROM MAIN_STOCK AS A LEFT JOIN ITEM_MAST AS B ON A.CO_CODE =B.CO_CODE AND A.IT_CODE =B.IT_CODE \nWHERE A.CO_CODE='"+coCode+"' AND A.LC_CODE='"+lcCode+"' AND A.IT_CODE ='"+itCode+"' AND A.VCH_DATE BETWEEN '"+fromDate+"' AND '"+toDate+"'"
+        
+        if selectedValue == '1' {
+            query += "AND A.ITM_SIGN = '+' "
+        }
+        if selectedValue == '2' {
+            query += "AND A.ITM_SIGN = '-' "
+        }
+            print(query)
+        sqlClient?.execute(query) { results in
+            result(results)
+        }
+
+        }
+    
+    private func getZoomingSalesInvoiceDetails(result: @escaping FlutterResult,coCode:String,lcCode:String,vchNo:String,coBook:String) {
+            print("INside getZoomingSalesInvoiceDetails from xcode")
+            sqlClient = SQLClient.sharedInstance()
+        let query = "SELECT VCH_NO,VCH_DATE,MOBILE,NET_AMT,DISC_AMT,TOT_AMT,OLD_GL_AMT,CASH_AMT,KASAR_AMT,OS_ADJ_AMT,AC_NAME FROM SL_DATA WHERE CO_CODE='"+coCode+"' AND LC_CODE='"+lcCode+"' AND VCH_NO='"+vchNo+"' AND CO_BOOK='"+coBook+"'"
+       
+            print(query)
+        sqlClient?.execute(query) { results in
+            result(results)
+        }
+
+        }
+    
+    private func getZoomingSalesProductDetails(result: @escaping FlutterResult,coCode:String,lcCode:String,vchNo:String,coBook:String) {
+            print("INside getZoomingSalesProductDetails from xcode")
+            sqlClient = SQLClient.sharedInstance()
+        let query = "SELECT IT_CODE,ITM_REMARK,TAG_NO,ITM_PCS,ITM_GWT,ITM_OTH_WT,ITM_NWT,ITM_RATE,ITM_AMT,LBR_PRC,LBR_RATE,LBR_AMT,OTH_AMT,ITM_MRP,TOT_AMT FROM SL_DETL WHERE CO_CODE = '"+coCode+"' AND LC_CODE = '"+lcCode+"' AND CO_BOOK = '"+coBook+"' AND VCH_NO = '"+vchNo+"' ORDER BY SR_NO"
+       
             print(query)
         sqlClient?.execute(query) { results in
             result(results)

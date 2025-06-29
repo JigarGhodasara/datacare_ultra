@@ -4,6 +4,7 @@ import 'dart:io';
 import 'package:DataCareUltra/mySql_services.dart';
 import 'package:DataCareUltra/provider/commonCompanyYearSelectionProvider.dart';
 import 'package:DataCareUltra/provider/loading_provider.dart';
+import 'package:DataCareUltra/salesZoomingReport.dart';
 import 'package:DataCareUltra/utils/colors.dart';
 import 'package:DataCareUltra/utils/images.dart';
 import 'package:dropdown_button2/dropdown_button2.dart';
@@ -496,7 +497,7 @@ class _SalesreportScreenState extends State<SalesReportScreen> {
                   child: Center(
                     child: Text(
                       "No record found",
-                      style: GoogleFonts.nunito(
+                          style: GoogleFonts.nunito(
                           color: Color(0xFF006EB7),
                           fontWeight: FontWeight.bold,
                           fontSize: 18),
@@ -506,361 +507,366 @@ class _SalesreportScreenState extends State<SalesReportScreen> {
               : Expanded(
                   child: ListView.builder(
                       itemCount: searchSalesReport.length,
-                      itemBuilder: (context, index) => Padding(
-                            padding: EdgeInsets.only(
-                                top: 15.0,
-                                left: 15,
-                                right: 15,
-                                bottom: index == searchSalesReport.length - 1
-                                    ? 15
-                                    : 0),
-                            child: Container(
-                              padding: const EdgeInsets.all(15),
-                              decoration: BoxDecoration(
-                                  color: Colors.grey[200],
-                                  borderRadius: BorderRadius.circular(18),
-                                  boxShadow: [
-                                    BoxShadow(
-                                        blurRadius: 10,
-                                        spreadRadius: -10,
-                                        offset: Offset(2, 3))
-                                  ]),
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    searchSalesReport[index]["AC_NAME"],
-                                    style: GoogleFonts.nunito(
-                                        color: Color(0xFF006EB7),
-                                        fontWeight: FontWeight.bold,
-                                        fontSize: 18),
-                                  ),
-                                  SizedBox(
-                                    height: 10,
-                                  ),
-                                  Divider(
-                                    height: 2,
-                                    color: Colors.grey,
-                                  ),
-                                  SizedBox(
-                                    height: 8,
-                                  ),
-                                  Row(
-                                    children: [
-                                      Column(
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.start,
-                                        children: [
-                                          Text(
-                                            "Mobile",
-                                            style: GoogleFonts.nunito(
-                                                color: Color(0xFF006EB7),
-                                                fontWeight: FontWeight.w500,
-                                                fontSize: 15),
-                                          ),
-                                          SizedBox(
-                                            height: 3.5,
-                                          ),
-                                          Text(
-                                            "Invoice Date",
-                                            style: GoogleFonts.nunito(
-                                                color: Color(0xFF006EB7),
-                                                fontWeight: FontWeight.w500,
-                                                fontSize: 15),
-                                          ),
-                                          SizedBox(
-                                            height: 3.5,
-                                          ),
-                                          Text(
-                                            "Book Name",
-                                            style: GoogleFonts.nunito(
-                                                color: Color(0xFF006EB7),
-                                                fontWeight: FontWeight.w500,
-                                                fontSize: 15),
-                                          ),
-                                          SizedBox(
-                                            height: 3.5,
-                                          ),
-                                          Text(
-                                            "Sales Weight",
-                                            style: GoogleFonts.nunito(
-                                                color: Color(0xFF006EB7),
-                                                fontWeight: FontWeight.w500,
-                                                fontSize: 15),
-                                          ),
-                                          SizedBox(
-                                            height: 3.5,
-                                          ),
-                                          Text(
-                                            "Sales Amount",
-                                            style: GoogleFonts.nunito(
-                                                color: Color(0xFF006EB7),
-                                                fontWeight: FontWeight.w500,
-                                                fontSize: 15),
-                                          ),
-                                          SizedBox(
-                                            height: 3.5,
-                                          ),
-                                          Text(
-                                            "Os Amount",
-                                            style: GoogleFonts.nunito(
-                                                color: Color(0xFF006EB7),
-                                                fontWeight: FontWeight.w500,
-                                                fontSize: 15),
-                                          ),
-                                          SizedBox(
-                                            height: 3.5,
-                                          ),
-                                          Text(
-                                            "Entry User",
-                                            style: GoogleFonts.nunito(
-                                                color: Color(0xFF006EB7),
-                                                fontWeight: FontWeight.w500,
-                                                fontSize: 15),
-                                          ),
-                                        ],
-                                      ),
-                                      SizedBox(
-                                        width: 40,
-                                      ),
-                                      Column(
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.start,
-                                        children: [
-                                          Text(
-                                            ":",
-                                            style: GoogleFonts.nunito(
-                                                fontWeight: FontWeight.w500,
-                                                fontSize: 15),
-                                          ),
-                                          SizedBox(
-                                            height: 3.5,
-                                          ),
-                                          Text(
-                                            ":",
-                                            style: GoogleFonts.nunito(
-                                                fontWeight: FontWeight.w500,
-                                                fontSize: 15),
-                                          ),
-                                          SizedBox(
-                                            height: 3.5,
-                                          ),
-                                          Text(
-                                            ":",
-                                            style: GoogleFonts.nunito(
-                                                fontWeight: FontWeight.w500,
-                                                fontSize: 15),
-                                          ),
-                                          SizedBox(
-                                            height: 3.5,
-                                          ),
-                                          Text(
-                                            ":",
-                                            style: GoogleFonts.nunito(
-                                                fontWeight: FontWeight.w500,
-                                                fontSize: 15),
-                                          ),
-                                          SizedBox(
-                                            height: 3.5,
-                                          ),
-                                          Text(
-                                            ":",
-                                            style: GoogleFonts.nunito(
-                                                fontWeight: FontWeight.w500,
-                                                fontSize: 15),
-                                          ),
-                                          SizedBox(
-                                            height: 3.5,
-                                          ),
-                                          Text(
-                                            ":",
-                                            style: GoogleFonts.nunito(
-                                                fontWeight: FontWeight.w500,
-                                                fontSize: 15),
-                                          ),
-                                          SizedBox(
-                                            height: 3.5,
-                                          ),
-                                          Text(
-                                            ":",
-                                            style: GoogleFonts.nunito(
-                                                fontWeight: FontWeight.w500,
-                                                fontSize: 15),
-                                          ),
-                                        ],
-                                      ),
-                                      SizedBox(
-                                        width: 40,
-                                      ),
-                                      Column(
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.start,
-                                        children: [
-                                          Text(
-                                            searchSalesReport[index]
-                                                ["AC_MOBILE"],
-                                            style: GoogleFonts.nunito(
-                                                fontWeight: FontWeight.w500,
-                                                fontSize: 15),
-                                          ),
-                                          SizedBox(
-                                            height: 3.5,
-                                          ),
-                                          Text(
-                                            searchSalesReport[index]
-                                                ["VCH_DATE"],
-                                            style: GoogleFonts.nunito(
-                                                fontWeight: FontWeight.w500,
-                                                fontSize: 15),
-                                          ),
-                                          SizedBox(
-                                            height: 3.5,
-                                          ),
-                                          Text(
-                                            searchSalesReport[index]
-                                                ["BOOK_NAME"],
-                                            style: GoogleFonts.nunito(
-                                                fontWeight: FontWeight.w500,
-                                                fontSize: 15),
-                                          ),
-                                          SizedBox(
-                                            height: 3.5,
-                                          ),
-                                          Text(
-                                            searchSalesReport[index]["Nwt"] == 0
-                                                ? ""
-                                                : double.parse(
-                                                        searchSalesReport[index]
-                                                                ["Nwt"]
-                                                            .toString())
-                                                    .toStringAsFixed(3),
-                                            style: GoogleFonts.nunito(
-                                                fontWeight: FontWeight.w500,
-                                                fontSize: 15),
-                                          ),
-                                          SizedBox(
-                                            height: 3.5,
-                                          ),
-                                          Text(
-                                            searchSalesReport[index]
-                                                        ["NetAmt"] ==
-                                                    null
-                                                ? ""
-                                                : searchSalesReport[index]
-                                                            ["NetAmt"] ==
-                                                        0
-                                                    ? ""
-                                                    : double.parse(
-                                                            searchSalesReport[
-                                                                        index]
-                                                                    ["NetAmt"]
-                                                                .toString())
-                                                        .toStringAsFixed(2),
-                                            style: GoogleFonts.nunito(
-                                                fontWeight: FontWeight.w500,
-                                                fontSize: 15),
-                                          ),
-                                          SizedBox(
-                                            height: 3.5,
-                                          ),
-                                          Text(
-                                            searchSalesReport[index]["OsAmt"] ==
-                                                    null
-                                                ? ""
-                                                : searchSalesReport[index]
-                                                            ["OsAmt"] ==
-                                                        0
-                                                    ? ""
-                                                    : double.parse(
-                                                            searchSalesReport[
-                                                                        index]
-                                                                    ["OsAmt"]
-                                                                .toString())
-                                                        .toStringAsFixed(2),
-                                            style: GoogleFonts.nunito(
-                                                fontWeight: FontWeight.w500,
-                                                fontSize: 15),
-                                          ),
-                                          SizedBox(
-                                            height: 3.5,
-                                          ),
-                                          Text(
-                                            searchSalesReport[index]
-                                                ["MAIN_USER"],
-                                            style: GoogleFonts.nunito(
-                                                fontWeight: FontWeight.w500,
-                                                fontSize: 15),
-                                          ),
-                                        ],
-                                      ),
-                                    ],
-                                  ),
-                                  SizedBox(
-                                    height: 8,
-                                  ),
-                                  Divider(
-                                    height: 2,
-                                    color: Colors.grey,
-                                  ),
-                                  SizedBox(
-                                    height: 10,
-                                  ),
-                                  Row(
-                                    mainAxisAlignment:
-                                        MainAxisAlignment.spaceEvenly,
-                                    children: [
-                                      GestureDetector(
-                                        onTap: () async {
-                                          final link = WhatsAppUnilink(
-                                              phoneNumber:
-                                                  '+91${searchSalesReport[index]["AC_MOBILE"]}',
-                                              text:
-                                                  "*Thanks For Buying Ornaments* \n Invoice No : ${searchSalesReport[index]["VCH_NO"]} \n Invoice Date : ${searchSalesReport[index]["VCH_DATE"]} \n Sales Amount : ${searchSalesReport[index]["NetAmt"] == 0 ? "" : double.parse(searchSalesReport[index]["NetAmt"].toString()).toStringAsFixed(2)} \n Os Amount :  ${searchSalesReport[index]["OsAmt"] == 0 ? "" : double.parse(searchSalesReport[index]["OsAmt"].toString()).toStringAsFixed(2)} \n ${searchSalesReport[index]["AC_NAME"]}");
-                                          // Convert the WhatsAppUnilink instance to a Uri.
-                                          // The "launch" method is part of "url_launcher".
-                                          await launchUrlString('$link');
-                                        },
-                                        child: Image.asset(
-                                          AppImage.whatsapp,
-                                          scale: 18,
+                      itemBuilder: (context, index) => InkWell(
+                        onTap: (){
+                          Navigator.push(context, MaterialPageRoute(builder: (context)=>SalesZoomingReport(vchNo: searchSalesReport[index]["VCH_NO"], coBook: searchSalesReport[index]["CO_BOOK"],bookName:searchSalesReport[index]["BOOK_NAME"])));
+                        },
+                        child: Padding(
+                              padding: EdgeInsets.only(
+                                  top: 15.0,
+                                  left: 15,
+                                  right: 15,
+                                  bottom: index == searchSalesReport.length - 1
+                                      ? 15
+                                      : 0),
+                              child: Container(
+                                padding: const EdgeInsets.all(15),
+                                decoration: BoxDecoration(
+                                    color: Colors.grey[200],
+                                    borderRadius: BorderRadius.circular(18),
+                                    boxShadow: [
+                                      BoxShadow(
+                                          blurRadius: 10,
+                                          spreadRadius: -10,
+                                          offset: Offset(2, 3))
+                                    ]),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      searchSalesReport[index]["AC_NAME"],
+                                      style: GoogleFonts.nunito(
+                                          color: Color(0xFF006EB7),
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: 18),
+                                    ),
+                                    SizedBox(
+                                      height: 10,
+                                    ),
+                                    Divider(
+                                      height: 2,
+                                      color: Colors.grey,
+                                    ),
+                                    SizedBox(
+                                      height: 8,
+                                    ),
+                                    Row(
+                                      children: [
+                                        Column(
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
+                                          children: [
+                                            Text(
+                                              "Mobile",
+                                              style: GoogleFonts.nunito(
+                                                  color: Color(0xFF006EB7),
+                                                  fontWeight: FontWeight.w500,
+                                                  fontSize: 15),
+                                            ),
+                                            SizedBox(
+                                              height: 3.5,
+                                            ),
+                                            Text(
+                                              "Invoice Date",
+                                              style: GoogleFonts.nunito(
+                                                  color: Color(0xFF006EB7),
+                                                  fontWeight: FontWeight.w500,
+                                                  fontSize: 15),
+                                            ),
+                                            SizedBox(
+                                              height: 3.5,
+                                            ),
+                                            Text(
+                                              "Book Name",
+                                              style: GoogleFonts.nunito(
+                                                  color: Color(0xFF006EB7),
+                                                  fontWeight: FontWeight.w500,
+                                                  fontSize: 15),
+                                            ),
+                                            SizedBox(
+                                              height: 3.5,
+                                            ),
+                                            Text(
+                                              "Sales Weight",
+                                              style: GoogleFonts.nunito(
+                                                  color: Color(0xFF006EB7),
+                                                  fontWeight: FontWeight.w500,
+                                                  fontSize: 15),
+                                            ),
+                                            SizedBox(
+                                              height: 3.5,
+                                            ),
+                                            Text(
+                                              "Sales Amount",
+                                              style: GoogleFonts.nunito(
+                                                  color: Color(0xFF006EB7),
+                                                  fontWeight: FontWeight.w500,
+                                                  fontSize: 15),
+                                            ),
+                                            SizedBox(
+                                              height: 3.5,
+                                            ),
+                                            Text(
+                                              "Os Amount",
+                                              style: GoogleFonts.nunito(
+                                                  color: Color(0xFF006EB7),
+                                                  fontWeight: FontWeight.w500,
+                                                  fontSize: 15),
+                                            ),
+                                            SizedBox(
+                                              height: 3.5,
+                                            ),
+                                            Text(
+                                              "Entry User",
+                                              style: GoogleFonts.nunito(
+                                                  color: Color(0xFF006EB7),
+                                                  fontWeight: FontWeight.w500,
+                                                  fontSize: 15),
+                                            ),
+                                          ],
                                         ),
-                                      ),
-                                      GestureDetector(
-                                        onTap: () {
-                                          launchUrlString(
-                                              "tel://+91${searchSalesReport[index]["AC_MOBILE"]}");
-                                        },
-                                        child: Image.asset(
-                                          AppImage.telephone,
-                                          scale: 18,
+                                        SizedBox(
+                                          width: 40,
                                         ),
-                                      ),
-                                      GestureDetector(
-                                        onTap: () {
-                                          launchUrlString(
-                                              'sms:+91${searchSalesReport[index]["AC_MOBILE"]}?body=*Thanks For Buying Ornaments* \n Invoice No : ${searchSalesReport[index]["VCH_NO"]} \n Invoice Date : ${searchSalesReport[index]["VCH_DATE"]} \n Sales Amount : ${searchSalesReport[index]["NetAmt"] == 0 ? "" : double.parse(searchSalesReport[index]["NetAmt"].toString()).toStringAsFixed(2)} \n Os Amount :  ${searchSalesReport[index]["OsAmt"] == 0 ? "" : double.parse(searchSalesReport[index]["OsAmt"].toString()).toStringAsFixed(2)} \n ${searchSalesReport[index]["AC_NAME"]}');
-                                        },
-                                        child: Image.asset(
-                                          AppImage.chat,
-                                          scale: 18,
+                                        Column(
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
+                                          children: [
+                                            Text(
+                                              ":",
+                                              style: GoogleFonts.nunito(
+                                                  fontWeight: FontWeight.w500,
+                                                  fontSize: 15),
+                                            ),
+                                            SizedBox(
+                                              height: 3.5,
+                                            ),
+                                            Text(
+                                              ":",
+                                              style: GoogleFonts.nunito(
+                                                  fontWeight: FontWeight.w500,
+                                                  fontSize: 15),
+                                            ),
+                                            SizedBox(
+                                              height: 3.5,
+                                            ),
+                                            Text(
+                                              ":",
+                                              style: GoogleFonts.nunito(
+                                                  fontWeight: FontWeight.w500,
+                                                  fontSize: 15),
+                                            ),
+                                            SizedBox(
+                                              height: 3.5,
+                                            ),
+                                            Text(
+                                              ":",
+                                              style: GoogleFonts.nunito(
+                                                  fontWeight: FontWeight.w500,
+                                                  fontSize: 15),
+                                            ),
+                                            SizedBox(
+                                              height: 3.5,
+                                            ),
+                                            Text(
+                                              ":",
+                                              style: GoogleFonts.nunito(
+                                                  fontWeight: FontWeight.w500,
+                                                  fontSize: 15),
+                                            ),
+                                            SizedBox(
+                                              height: 3.5,
+                                            ),
+                                            Text(
+                                              ":",
+                                              style: GoogleFonts.nunito(
+                                                  fontWeight: FontWeight.w500,
+                                                  fontSize: 15),
+                                            ),
+                                            SizedBox(
+                                              height: 3.5,
+                                            ),
+                                            Text(
+                                              ":",
+                                              style: GoogleFonts.nunito(
+                                                  fontWeight: FontWeight.w500,
+                                                  fontSize: 15),
+                                            ),
+                                          ],
                                         ),
-                                      ),
-                                      GestureDetector(
-                                        onTap: () {
-                                          Share.share(
-                                              "*Thanks For Buying Ornaments* \n Invoice No : ${searchSalesReport[index]["VCH_NO"]} \n Invoice Date : ${searchSalesReport[index]["VCH_DATE"]} \n Sales Amount : ${searchSalesReport[index]["NetAmt"] == 0 ? "" : double.parse(searchSalesReport[index]["NetAmt"].toString()).toStringAsFixed(2)} \n Os Amount :  ${searchSalesReport[index]["OsAmt"] == 0 ? "" : double.parse(searchSalesReport[index]["OsAmt"].toString()).toStringAsFixed(2)} \n ${searchSalesReport[index]["AC_NAME"]}");
-                                        },
-                                        child: Image.asset(
-                                          AppImage.share,
-                                          scale: 18,
+                                        SizedBox(
+                                          width: 40,
                                         ),
-                                      ),
-                                    ],
-                                  )
-                                ],
+                                        Column(
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
+                                          children: [
+                                            Text(
+                                              searchSalesReport[index]
+                                                  ["AC_MOBILE"],
+                                              style: GoogleFonts.nunito(
+                                                  fontWeight: FontWeight.w500,
+                                                  fontSize: 15),
+                                            ),
+                                            SizedBox(
+                                              height: 3.5,
+                                            ),
+                                            Text(
+                                              searchSalesReport[index]
+                                                  ["VCH_DATE"],
+                                              style: GoogleFonts.nunito(
+                                                  fontWeight: FontWeight.w500,
+                                                  fontSize: 15),
+                                            ),
+                                            SizedBox(
+                                              height: 3.5,
+                                            ),
+                                            Text(
+                                              searchSalesReport[index]
+                                                  ["BOOK_NAME"],
+                                              style: GoogleFonts.nunito(
+                                                  fontWeight: FontWeight.w500,
+                                                  fontSize: 15),
+                                            ),
+                                            SizedBox(
+                                              height: 3.5,
+                                            ),
+                                            Text(
+                                              searchSalesReport[index]["Nwt"] == 0
+                                                  ? ""
+                                                  : double.parse(
+                                                          searchSalesReport[index]
+                                                                  ["Nwt"]
+                                                              .toString())
+                                                      .toStringAsFixed(3),
+                                              style: GoogleFonts.nunito(
+                                                  fontWeight: FontWeight.w500,
+                                                  fontSize: 15),
+                                            ),
+                                            SizedBox(
+                                              height: 3.5,
+                                            ),
+                                            Text(
+                                              searchSalesReport[index]
+                                                          ["NetAmt"] ==
+                                                      null
+                                                  ? ""
+                                                  : searchSalesReport[index]
+                                                              ["NetAmt"] ==
+                                                          0
+                                                      ? ""
+                                                      : double.parse(
+                                                              searchSalesReport[
+                                                                          index]
+                                                                      ["NetAmt"]
+                                                                  .toString())
+                                                          .toStringAsFixed(2),
+                                              style: GoogleFonts.nunito(
+                                                  fontWeight: FontWeight.w500,
+                                                  fontSize: 15),
+                                            ),
+                                            SizedBox(
+                                              height: 3.5,
+                                            ),
+                                            Text(
+                                              searchSalesReport[index]["OsAmt"] ==
+                                                      null
+                                                  ? ""
+                                                  : searchSalesReport[index]
+                                                              ["OsAmt"] ==
+                                                          0
+                                                      ? ""
+                                                      : double.parse(
+                                                              searchSalesReport[
+                                                                          index]
+                                                                      ["OsAmt"]
+                                                                  .toString())
+                                                          .toStringAsFixed(2),
+                                              style: GoogleFonts.nunito(
+                                                  fontWeight: FontWeight.w500,
+                                                  fontSize: 15),
+                                            ),
+                                            SizedBox(
+                                              height: 3.5,
+                                            ),
+                                            Text(
+                                              searchSalesReport[index]
+                                                  ["MAIN_USER"],
+                                              style: GoogleFonts.nunito(
+                                                  fontWeight: FontWeight.w500,
+                                                  fontSize: 15),
+                                            ),
+                                          ],
+                                        ),
+                                      ],
+                                    ),
+                                    SizedBox(
+                                      height: 8,
+                                    ),
+                                    Divider(
+                                      height: 2,
+                                      color: Colors.grey,
+                                    ),
+                                    SizedBox(
+                                      height: 10,
+                                    ),
+                                    Row(
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.spaceEvenly,
+                                      children: [
+                                        GestureDetector(
+                                          onTap: () async {
+                                            final link = WhatsAppUnilink(
+                                                phoneNumber:
+                                                    '+91${searchSalesReport[index]["AC_MOBILE"]}',
+                                                text:
+                                                    "*Thanks For Buying Ornaments* \n Invoice No : ${searchSalesReport[index]["VCH_NO"]} \n Invoice Date : ${searchSalesReport[index]["VCH_DATE"]} \n Sales Amount : ${searchSalesReport[index]["NetAmt"] == 0 ? "" : double.parse(searchSalesReport[index]["NetAmt"].toString()).toStringAsFixed(2)} \n Os Amount :  ${searchSalesReport[index]["OsAmt"] == 0 ? "" : double.parse(searchSalesReport[index]["OsAmt"].toString()).toStringAsFixed(2)} \n ${searchSalesReport[index]["AC_NAME"]}");
+                                            // Convert the WhatsAppUnilink instance to a Uri.
+                                            // The "launch" method is part of "url_launcher".
+                                            await launchUrlString('$link');
+                                          },
+                                          child: Image.asset(
+                                            AppImage.whatsapp,
+                                            scale: 18,
+                                          ),
+                                        ),
+                                        GestureDetector(
+                                          onTap: () {
+                                            launchUrlString(
+                                                "tel://+91${searchSalesReport[index]["AC_MOBILE"]}");
+                                          },
+                                          child: Image.asset(
+                                            AppImage.telephone,
+                                            scale: 18,
+                                          ),
+                                        ),
+                                        GestureDetector(
+                                          onTap: () {
+                                            launchUrlString(
+                                                'sms:+91${searchSalesReport[index]["AC_MOBILE"]}?body=*Thanks For Buying Ornaments* \n Invoice No : ${searchSalesReport[index]["VCH_NO"]} \n Invoice Date : ${searchSalesReport[index]["VCH_DATE"]} \n Sales Amount : ${searchSalesReport[index]["NetAmt"] == 0 ? "" : double.parse(searchSalesReport[index]["NetAmt"].toString()).toStringAsFixed(2)} \n Os Amount :  ${searchSalesReport[index]["OsAmt"] == 0 ? "" : double.parse(searchSalesReport[index]["OsAmt"].toString()).toStringAsFixed(2)} \n ${searchSalesReport[index]["AC_NAME"]}');
+                                          },
+                                          child: Image.asset(
+                                            AppImage.chat,
+                                            scale: 18,
+                                          ),
+                                        ),
+                                        GestureDetector(
+                                          onTap: () {
+                                            Share.share(
+                                                "*Thanks For Buying Ornaments* \n Invoice No : ${searchSalesReport[index]["VCH_NO"]} \n Invoice Date : ${searchSalesReport[index]["VCH_DATE"]} \n Sales Amount : ${searchSalesReport[index]["NetAmt"] == 0 ? "" : double.parse(searchSalesReport[index]["NetAmt"].toString()).toStringAsFixed(2)} \n Os Amount :  ${searchSalesReport[index]["OsAmt"] == 0 ? "" : double.parse(searchSalesReport[index]["OsAmt"].toString()).toStringAsFixed(2)} \n ${searchSalesReport[index]["AC_NAME"]}");
+                                          },
+                                          child: Image.asset(
+                                            AppImage.share,
+                                            scale: 18,
+                                          ),
+                                        ),
+                                      ],
+                                    )
+                                  ],
+                                ),
                               ),
                             ),
-                          )))
+                      )))
         ],
       ),
     );

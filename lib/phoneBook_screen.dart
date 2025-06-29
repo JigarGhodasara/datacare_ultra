@@ -97,7 +97,7 @@ class _PhonebookScreenState extends State<PhonebookScreen> {
                 // textCapitalization: textCapitalization ?? TextCapitalization.none,
                 // maxLength: maxLength,
                 decoration: InputDecoration(
-                  hintText: "Search with account name",
+                  hintText: "Search  with A/C Name or Mobile",
                   counterText: '',
                   contentPadding: EdgeInsets.only(left: 8, top: 0),
                   enabledBorder: OutlineInputBorder(
@@ -128,16 +128,15 @@ class _PhonebookScreenState extends State<PhonebookScreen> {
                 onChanged: (value) {
                   if (value != "") {
                     searchPhoneBook = phoneBook
-                        .where((text) =>
-                    text.containsKey("AC_NAME") &&
+                        .where((text) => (text.containsKey("AC_NAME") &&
                         text["AC_NAME"].toString().toLowerCase().contains(
-                            value.trim().toLowerCase()))
+                            value.trim().toLowerCase()) || text.containsKey("AC_MOBILE") &&
+                        text["AC_MOBILE"].toString().toLowerCase().contains(
+                            value.trim().toLowerCase())))
                         .toList();
                     setState(() {
-
                     });
                   }else{
-
                     searchPhoneBook.clear();
                     searchPhoneBook.addAll(phoneBook);
                     setState(() {
@@ -391,7 +390,7 @@ class _PhonebookScreenState extends State<PhonebookScreen> {
                                         height: 3.5,
                                       ),
                                       Text(
-                                        searchPhoneBook[index]["AC_EMAIL"],
+                                        searchPhoneBook[index]["AC_EMAIL"] ??"",
                                         style: GoogleFonts.nunito(
                                             fontWeight: FontWeight.w500,
                                             fontSize: 15),

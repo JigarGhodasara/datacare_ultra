@@ -5,6 +5,7 @@ import 'dart:io';
 import 'package:DataCareUltra/mySql_services.dart';
 import 'package:DataCareUltra/provider/commonCompanyYearSelectionProvider.dart';
 import 'package:DataCareUltra/provider/loading_provider.dart';
+import 'package:DataCareUltra/stockZoomingReport.dart';
 import 'package:DataCareUltra/utils/images.dart';
 import 'package:dropdown_button2/dropdown_button2.dart';
 import 'package:flutter/material.dart';
@@ -76,9 +77,7 @@ class _StockreportScreenState extends State<StockreportScreen> {
 
   void getStockReport() async {
     loadingProvider.startLoading();
-    setState(() {
-
-    });
+    setState(() {});
     String grpCode = "";
     String itmCode = "";
     String prCode = "";
@@ -141,7 +140,7 @@ class _StockreportScreenState extends State<StockreportScreen> {
       }
 
       if (itmCode != "") {
-        query += "AND B.IT_NAME <> '$itmCode' ";
+        query += "AND B.IT_NAME = '$itmCode' ";
       }
 
       if (prCode != "") {
@@ -877,550 +876,623 @@ class _StockreportScreenState extends State<StockreportScreen> {
                   }
                 }),
           ),
-          loadingProvider.isLoading ? SizedBox() :
-          searchStockReport.length == 0
-              ? Expanded(
-                  child: Center(
-                  child: Text(
-                    "No record found",
-                    style: GoogleFonts.nunito(
-                        color: Color(0xFF006EB7),
-                        fontWeight: FontWeight.bold,
-                        fontSize: 18),
-                  ),
-                ))
-              : Expanded(
-                  child: ListView.builder(
-                      itemCount: searchStockReport.length,
-                      itemBuilder: (context, index) => Padding(
-                            padding: EdgeInsets.only(
-                                top: 15.0,
-                                left: 15,
-                                right: 15,
-                                bottom: index == searchStockReport.length - 1
-                                    ? 15
-                                    : 0),
-                            child: Container(
-                              padding: const EdgeInsets.all(15),
-                              decoration: BoxDecoration(
-                                  color: Colors.grey[200],
-                                  borderRadius: BorderRadius.circular(18),
-                                  boxShadow: [
-                                    BoxShadow(
-                                        blurRadius: 10,
-                                        spreadRadius: -10,
-                                        offset: Offset(2, 3))
-                                  ]),
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Row(
-                                    children: [
-                                      Text(
-                                        "Name : ",
-                                        style: GoogleFonts.nunito(
-                                            color: Color(0xFF006EB7),
-                                            fontWeight: FontWeight.bold,
-                                            fontSize: 15),
-                                      ),
-                                      Text(
-                                        searchStockReport[index]["ItName"],
-                                        style: GoogleFonts.nunito(
-                                            fontWeight: FontWeight.w700,
-                                            fontSize: 15),
-                                      )
-                                    ],
+          loadingProvider.isLoading
+              ? SizedBox()
+              : searchStockReport.length == 0
+                  ? Expanded(
+                      child: Center(
+                      child: Text(
+                        "No record found",
+                        style: GoogleFonts.nunito(
+                            color: Color(0xFF006EB7),
+                            fontWeight: FontWeight.bold,
+                            fontSize: 18),
+                      ),
+                    ))
+                  : Expanded(
+                      child: ListView.builder(
+                          itemCount: searchStockReport.length,
+                          itemBuilder: (context, index) => InkWell(
+                                onTap: () {
+                                  Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                          builder: (context) =>
+                                              StockzoomingReport(
+                                                ItCOode:
+                                                    searchStockReport[index]
+                                                        ['ItCode'],
+                                                fromDate: fromDate.toString(),
+                                                toDate: toDate.toString(),
+                                              )));
+                                },
+                                child: Padding(
+                                  padding: EdgeInsets.only(
+                                      top: 15.0,
+                                      left: 15,
+                                      right: 15,
+                                      bottom:
+                                          index == searchStockReport.length - 1
+                                              ? 15
+                                              : 0),
+                                  child: Container(
+                                    padding: const EdgeInsets.all(15),
+                                    decoration: BoxDecoration(
+                                        color: Colors.grey[200],
+                                        borderRadius: BorderRadius.circular(18),
+                                        boxShadow: [
+                                          BoxShadow(
+                                              blurRadius: 10,
+                                              spreadRadius: -10,
+                                              offset: Offset(2, 3))
+                                        ]),
+                                    child: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        Row(
+                                          children: [
+                                            Text(
+                                              "Name : ",
+                                              style: GoogleFonts.nunito(
+                                                  color: Color(0xFF006EB7),
+                                                  fontWeight: FontWeight.bold,
+                                                  fontSize: 15),
+                                            ),
+                                            Text(
+                                              searchStockReport[index]
+                                                  ["ItName"],
+                                              style: GoogleFonts.nunito(
+                                                  fontWeight: FontWeight.w700,
+                                                  fontSize: 15),
+                                            )
+                                          ],
+                                        ),
+                                        SizedBox(
+                                          height: 10,
+                                        ),
+                                        Divider(
+                                          height: 2,
+                                          color: Colors.grey,
+                                        ),
+                                        SizedBox(
+                                          height: 8,
+                                        ),
+                                        Row(
+                                          children: [
+                                            Expanded(
+                                                child: Row(
+                                              children: [
+                                                Column(
+                                                  crossAxisAlignment:
+                                                      CrossAxisAlignment.start,
+                                                  children: [
+                                                    Text(
+                                                      "Op Pcs",
+                                                      style: GoogleFonts.nunito(
+                                                          color:
+                                                              Color(0xFF006EB7),
+                                                          fontWeight:
+                                                              FontWeight.bold,
+                                                          fontSize: 15),
+                                                    ),
+                                                    SizedBox(
+                                                      height: 3.5,
+                                                    ),
+                                                    Text(
+                                                      "Pr Pcs",
+                                                      style: GoogleFonts.nunito(
+                                                          color:
+                                                              Color(0xFF006EB7),
+                                                          fontWeight:
+                                                              FontWeight.bold,
+                                                          fontSize: 15),
+                                                    ),
+                                                    SizedBox(
+                                                      height: 3.5,
+                                                    ),
+                                                    Text(
+                                                      "In Pcs",
+                                                      style: GoogleFonts.nunito(
+                                                          color:
+                                                              Color(0xFF006EB7),
+                                                          fontWeight:
+                                                              FontWeight.bold,
+                                                          fontSize: 15),
+                                                    ),
+                                                    SizedBox(
+                                                      height: 3.5,
+                                                    ),
+                                                    Text(
+                                                      "Out Pcs",
+                                                      style: GoogleFonts.nunito(
+                                                          color:
+                                                              Color(0xFF006EB7),
+                                                          fontWeight:
+                                                              FontWeight.bold,
+                                                          fontSize: 15),
+                                                    ),
+                                                    SizedBox(
+                                                      height: 3.5,
+                                                    ),
+                                                    Text(
+                                                      "Sl Pcs",
+                                                      style: GoogleFonts.nunito(
+                                                          color:
+                                                              Color(0xFF006EB7),
+                                                          fontWeight:
+                                                              FontWeight.bold,
+                                                          fontSize: 15),
+                                                    ),
+                                                    SizedBox(
+                                                      height: 3.5,
+                                                    ),
+                                                    Text(
+                                                      "Cl Pcs",
+                                                      style: GoogleFonts.nunito(
+                                                          color:
+                                                              Color(0xFF006EB7),
+                                                          fontWeight:
+                                                              FontWeight.bold,
+                                                          fontSize: 15),
+                                                    ),
+                                                  ],
+                                                ),
+                                                SizedBox(
+                                                  width: 10,
+                                                ),
+                                                Column(
+                                                  crossAxisAlignment:
+                                                      CrossAxisAlignment.start,
+                                                  children: [
+                                                    Text(
+                                                      ":",
+                                                      style: GoogleFonts.nunito(
+                                                          fontWeight:
+                                                              FontWeight.w500,
+                                                          fontSize: 15),
+                                                    ),
+                                                    SizedBox(
+                                                      height: 3.5,
+                                                    ),
+                                                    Text(
+                                                      ":",
+                                                      style: GoogleFonts.nunito(
+                                                          fontWeight:
+                                                              FontWeight.w500,
+                                                          fontSize: 15),
+                                                    ),
+                                                    SizedBox(
+                                                      height: 3.5,
+                                                    ),
+                                                    Text(
+                                                      ":",
+                                                      style: GoogleFonts.nunito(
+                                                          fontWeight:
+                                                              FontWeight.w500,
+                                                          fontSize: 15),
+                                                    ),
+                                                    SizedBox(
+                                                      height: 3.5,
+                                                    ),
+                                                    Text(
+                                                      ":",
+                                                      style: GoogleFonts.nunito(
+                                                          fontWeight:
+                                                              FontWeight.w500,
+                                                          fontSize: 15),
+                                                    ),
+                                                    SizedBox(
+                                                      height: 3.5,
+                                                    ),
+                                                    Text(
+                                                      ":",
+                                                      style: GoogleFonts.nunito(
+                                                          fontWeight:
+                                                              FontWeight.w500,
+                                                          fontSize: 15),
+                                                    ),
+                                                    SizedBox(
+                                                      height: 3.5,
+                                                    ),
+                                                    Text(
+                                                      ":",
+                                                      style: GoogleFonts.nunito(
+                                                          fontWeight:
+                                                              FontWeight.w500,
+                                                          fontSize: 15),
+                                                    ),
+                                                    SizedBox(
+                                                      height: 3.5,
+                                                    ),
+                                                  ],
+                                                ),
+                                                SizedBox(
+                                                  width: 5,
+                                                ),
+                                                Column(
+                                                  crossAxisAlignment:
+                                                      CrossAxisAlignment.start,
+                                                  children: [
+                                                    Text(
+                                                      searchStockReport[index]
+                                                                  ["OpPcs"] ==
+                                                              0
+                                                          ? ""
+                                                          : searchStockReport[
+                                                                      index]
+                                                                  ["OpPcs"]
+                                                              .toString(),
+                                                      style: GoogleFonts.nunito(
+                                                          fontWeight:
+                                                              FontWeight.w500,
+                                                          fontSize: 15),
+                                                    ),
+                                                    SizedBox(
+                                                      height: 3.5,
+                                                    ),
+                                                    Text(
+                                                      searchStockReport[index]
+                                                                  ["PrPcs"] ==
+                                                              0
+                                                          ? ""
+                                                          : searchStockReport[
+                                                                      index]
+                                                                  ["PrPcs"]
+                                                              .toString(),
+                                                      style: GoogleFonts.nunito(
+                                                          fontWeight:
+                                                              FontWeight.w500,
+                                                          fontSize: 15),
+                                                    ),
+                                                    SizedBox(
+                                                      height: 3.5,
+                                                    ),
+                                                    Text(
+                                                      searchStockReport[index]
+                                                                  ["InPcs"] ==
+                                                              0
+                                                          ? ""
+                                                          : searchStockReport[
+                                                                      index]
+                                                                  ["InPcs"]
+                                                              .toString(),
+                                                      style: GoogleFonts.nunito(
+                                                          fontWeight:
+                                                              FontWeight.w500,
+                                                          fontSize: 15),
+                                                    ),
+                                                    SizedBox(
+                                                      height: 3.5,
+                                                    ),
+                                                    Text(
+                                                      searchStockReport[index]
+                                                                  ["OutPcs"] ==
+                                                              0
+                                                          ? ""
+                                                          : searchStockReport[
+                                                                      index]
+                                                                  ["OutPcs"]
+                                                              .toString(),
+                                                      style: GoogleFonts.nunito(
+                                                          fontWeight:
+                                                              FontWeight.w500,
+                                                          fontSize: 15),
+                                                    ),
+                                                    SizedBox(
+                                                      height: 3.5,
+                                                    ),
+                                                    Text(
+                                                      searchStockReport[index]
+                                                                  ["SlPcs"] ==
+                                                              0
+                                                          ? ""
+                                                          : searchStockReport[
+                                                                      index]
+                                                                  ["SlPcs"]
+                                                              .toString(),
+                                                      style: GoogleFonts.nunito(
+                                                          fontWeight:
+                                                              FontWeight.w500,
+                                                          fontSize: 15),
+                                                    ),
+                                                    SizedBox(
+                                                      height: 3.5,
+                                                    ),
+                                                    Text(
+                                                      searchStockReport[index]
+                                                                  ["ClPcs"] ==
+                                                              0
+                                                          ? ""
+                                                          : searchStockReport[
+                                                                      index]
+                                                                  ["ClPcs"]
+                                                              .toString(),
+                                                      style: GoogleFonts.nunito(
+                                                          fontWeight:
+                                                              FontWeight.w500,
+                                                          fontSize: 15),
+                                                    ),
+                                                  ],
+                                                ),
+                                              ],
+                                            )),
+                                            Expanded(
+                                                child: Row(
+                                              children: [
+                                                Column(
+                                                  crossAxisAlignment:
+                                                      CrossAxisAlignment.start,
+                                                  children: [
+                                                    Text(
+                                                      "Op Weight",
+                                                      style: GoogleFonts.nunito(
+                                                          color:
+                                                              Color(0xFF006EB7),
+                                                          fontWeight:
+                                                              FontWeight.bold,
+                                                          fontSize: 15),
+                                                    ),
+                                                    SizedBox(
+                                                      height: 3.5,
+                                                    ),
+                                                    Text(
+                                                      "Pr Weight",
+                                                      style: GoogleFonts.nunito(
+                                                          color:
+                                                              Color(0xFF006EB7),
+                                                          fontWeight:
+                                                              FontWeight.bold,
+                                                          fontSize: 15),
+                                                    ),
+                                                    SizedBox(
+                                                      height: 3.5,
+                                                    ),
+                                                    Text(
+                                                      "In Weight",
+                                                      style: GoogleFonts.nunito(
+                                                          color:
+                                                              Color(0xFF006EB7),
+                                                          fontWeight:
+                                                              FontWeight.bold,
+                                                          fontSize: 15),
+                                                    ),
+                                                    SizedBox(
+                                                      height: 3.5,
+                                                    ),
+                                                    Text(
+                                                      "Out Weight",
+                                                      style: GoogleFonts.nunito(
+                                                          color:
+                                                              Color(0xFF006EB7),
+                                                          fontWeight:
+                                                              FontWeight.bold,
+                                                          fontSize: 15),
+                                                    ),
+                                                    SizedBox(
+                                                      height: 3.5,
+                                                    ),
+                                                    Text(
+                                                      "Sl Weight",
+                                                      style: GoogleFonts.nunito(
+                                                          color:
+                                                              Color(0xFF006EB7),
+                                                          fontWeight:
+                                                              FontWeight.bold,
+                                                          fontSize: 15),
+                                                    ),
+                                                    SizedBox(
+                                                      height: 3.5,
+                                                    ),
+                                                    Text(
+                                                      "Cl Weight",
+                                                      style: GoogleFonts.nunito(
+                                                          color:
+                                                              Color(0xFF006EB7),
+                                                          fontWeight:
+                                                              FontWeight.bold,
+                                                          fontSize: 15),
+                                                    ),
+                                                  ],
+                                                ),
+                                                SizedBox(
+                                                  width: 10,
+                                                ),
+                                                Column(
+                                                  crossAxisAlignment:
+                                                      CrossAxisAlignment.start,
+                                                  children: [
+                                                    Text(
+                                                      ":",
+                                                      style: GoogleFonts.nunito(
+                                                          fontWeight:
+                                                              FontWeight.w500,
+                                                          fontSize: 15),
+                                                    ),
+                                                    SizedBox(
+                                                      height: 3.5,
+                                                    ),
+                                                    Text(
+                                                      ":",
+                                                      style: GoogleFonts.nunito(
+                                                          fontWeight:
+                                                              FontWeight.w500,
+                                                          fontSize: 15),
+                                                    ),
+                                                    SizedBox(
+                                                      height: 3.5,
+                                                    ),
+                                                    Text(
+                                                      ":",
+                                                      style: GoogleFonts.nunito(
+                                                          fontWeight:
+                                                              FontWeight.w500,
+                                                          fontSize: 15),
+                                                    ),
+                                                    SizedBox(
+                                                      height: 3.5,
+                                                    ),
+                                                    Text(
+                                                      ":",
+                                                      style: GoogleFonts.nunito(
+                                                          fontWeight:
+                                                              FontWeight.w500,
+                                                          fontSize: 15),
+                                                    ),
+                                                    SizedBox(
+                                                      height: 3.5,
+                                                    ),
+                                                    Text(
+                                                      ":",
+                                                      style: GoogleFonts.nunito(
+                                                          fontWeight:
+                                                              FontWeight.w500,
+                                                          fontSize: 15),
+                                                    ),
+                                                    SizedBox(
+                                                      height: 3.5,
+                                                    ),
+                                                    Text(
+                                                      ":",
+                                                      style: GoogleFonts.nunito(
+                                                          fontWeight:
+                                                              FontWeight.w500,
+                                                          fontSize: 15),
+                                                    ),
+                                                  ],
+                                                ),
+                                                SizedBox(
+                                                  width: 5,
+                                                ),
+                                                Column(
+                                                  crossAxisAlignment:
+                                                      CrossAxisAlignment.start,
+                                                  children: [
+                                                    Text(
+                                                      searchStockReport[index]
+                                                                  ["OpWt"] ==
+                                                              0
+                                                          ? ""
+                                                          : double.parse(searchStockReport[
+                                                                          index]
+                                                                      ["OpWt"]
+                                                                  .toString())
+                                                              .toStringAsFixed(
+                                                                  3),
+                                                      style: GoogleFonts.nunito(
+                                                          fontWeight:
+                                                              FontWeight.w500,
+                                                          fontSize: 15),
+                                                    ),
+                                                    SizedBox(
+                                                      height: 3.5,
+                                                    ),
+                                                    Text(
+                                                      searchStockReport[index]
+                                                                  ["PrWt"] ==
+                                                              0
+                                                          ? ""
+                                                          : double.parse(searchStockReport[
+                                                                          index]
+                                                                      ["PrWt"]
+                                                                  .toString())
+                                                              .toStringAsFixed(
+                                                                  3),
+                                                      style: GoogleFonts.nunito(
+                                                          fontWeight:
+                                                              FontWeight.w500,
+                                                          fontSize: 15),
+                                                    ),
+                                                    SizedBox(
+                                                      height: 3.5,
+                                                    ),
+                                                    Text(
+                                                      searchStockReport[index]
+                                                                  ["InWt"] ==
+                                                              0
+                                                          ? ""
+                                                          : double.parse(searchStockReport[
+                                                                          index]
+                                                                      ["InWt"]
+                                                                  .toString())
+                                                              .toStringAsFixed(
+                                                                  3),
+                                                      style: GoogleFonts.nunito(
+                                                          fontWeight:
+                                                              FontWeight.w500,
+                                                          fontSize: 15),
+                                                    ),
+                                                    SizedBox(
+                                                      height: 3.5,
+                                                    ),
+                                                    Text(
+                                                      searchStockReport[index]
+                                                                  ["OutWt"] ==
+                                                              0
+                                                          ? ""
+                                                          : double.parse(searchStockReport[
+                                                                          index]
+                                                                      ["OutWt"]
+                                                                  .toString())
+                                                              .toStringAsFixed(
+                                                                  3),
+                                                      style: GoogleFonts.nunito(
+                                                          fontWeight:
+                                                              FontWeight.w500,
+                                                          fontSize: 15),
+                                                    ),
+                                                    SizedBox(
+                                                      height: 3.5,
+                                                    ),
+                                                    Text(
+                                                      searchStockReport[index]
+                                                                  ["SlWt"] ==
+                                                              0
+                                                          ? ""
+                                                          : double.parse(searchStockReport[
+                                                                          index]
+                                                                      ["SlWt"]
+                                                                  .toString())
+                                                              .toStringAsFixed(
+                                                                  3),
+                                                      style: GoogleFonts.nunito(
+                                                          fontWeight:
+                                                              FontWeight.w500,
+                                                          fontSize: 15),
+                                                    ),
+                                                    SizedBox(
+                                                      height: 3.5,
+                                                    ),
+                                                    Text(
+                                                      searchStockReport[index]
+                                                                  ["ClWt"] ==
+                                                              0
+                                                          ? ""
+                                                          : double.parse(searchStockReport[
+                                                                          index]
+                                                                      ["ClWt"]
+                                                                  .toString())
+                                                              .toStringAsFixed(
+                                                                  3),
+                                                      style: GoogleFonts.nunito(
+                                                          fontWeight:
+                                                              FontWeight.w500,
+                                                          fontSize: 15),
+                                                    ),
+                                                  ],
+                                                ),
+                                              ],
+                                            )),
+                                          ],
+                                        ),
+                                        SizedBox(
+                                          height: 8,
+                                        ),
+                                      ],
+                                    ),
                                   ),
-                                  SizedBox(
-                                    height: 10,
-                                  ),
-                                  Divider(
-                                    height: 2,
-                                    color: Colors.grey,
-                                  ),
-                                  SizedBox(
-                                    height: 8,
-                                  ),
-                                  Row(
-                                    children: [
-                                      Expanded(
-                                          child: Row(
-                                        children: [
-                                          Column(
-                                            crossAxisAlignment:
-                                                CrossAxisAlignment.start,
-                                            children: [
-                                              Text(
-                                                "Op Pcs",
-                                                style: GoogleFonts.nunito(
-                                                    color: Color(0xFF006EB7),
-                                                    fontWeight: FontWeight.bold,
-                                                    fontSize: 15),
-                                              ),
-                                              SizedBox(
-                                                height: 3.5,
-                                              ),
-                                              Text(
-                                                "Pr Pcs",
-                                                style: GoogleFonts.nunito(
-                                                    color: Color(0xFF006EB7),
-                                                    fontWeight: FontWeight.bold,
-                                                    fontSize: 15),
-                                              ),
-                                              SizedBox(
-                                                height: 3.5,
-                                              ),
-                                              Text(
-                                                "In Pcs",
-                                                style: GoogleFonts.nunito(
-                                                    color: Color(0xFF006EB7),
-                                                    fontWeight: FontWeight.bold,
-                                                    fontSize: 15),
-                                              ),
-                                              SizedBox(
-                                                height: 3.5,
-                                              ),
-                                              Text(
-                                                "Out Pcs",
-                                                style: GoogleFonts.nunito(
-                                                    color: Color(0xFF006EB7),
-                                                    fontWeight: FontWeight.bold,
-                                                    fontSize: 15),
-                                              ),
-                                              SizedBox(
-                                                height: 3.5,
-                                              ),
-                                              Text(
-                                                "Sl Pcs",
-                                                style: GoogleFonts.nunito(
-                                                    color: Color(0xFF006EB7),
-                                                    fontWeight: FontWeight.bold,
-                                                    fontSize: 15),
-                                              ),
-                                              SizedBox(
-                                                height: 3.5,
-                                              ),
-                                              Text(
-                                                "Cl Pcs",
-                                                style: GoogleFonts.nunito(
-                                                    color: Color(0xFF006EB7),
-                                                    fontWeight: FontWeight.bold,
-                                                    fontSize: 15),
-                                              ),
-                                            ],
-                                          ),
-                                          SizedBox(
-                                            width: 10,
-                                          ),
-                                          Column(
-                                            crossAxisAlignment:
-                                                CrossAxisAlignment.start,
-                                            children: [
-                                              Text(
-                                                ":",
-                                                style: GoogleFonts.nunito(
-                                                    fontWeight: FontWeight.w500,
-                                                    fontSize: 15),
-                                              ),
-                                              SizedBox(
-                                                height: 3.5,
-                                              ),
-                                              Text(
-                                                ":",
-                                                style: GoogleFonts.nunito(
-                                                    fontWeight: FontWeight.w500,
-                                                    fontSize: 15),
-                                              ),
-                                              SizedBox(
-                                                height: 3.5,
-                                              ),
-                                              Text(
-                                                ":",
-                                                style: GoogleFonts.nunito(
-                                                    fontWeight: FontWeight.w500,
-                                                    fontSize: 15),
-                                              ),
-                                              SizedBox(
-                                                height: 3.5,
-                                              ),
-                                              Text(
-                                                ":",
-                                                style: GoogleFonts.nunito(
-                                                    fontWeight: FontWeight.w500,
-                                                    fontSize: 15),
-                                              ),
-                                              SizedBox(
-                                                height: 3.5,
-                                              ),
-                                              Text(
-                                                ":",
-                                                style: GoogleFonts.nunito(
-                                                    fontWeight: FontWeight.w500,
-                                                    fontSize: 15),
-                                              ),
-                                              SizedBox(
-                                                height: 3.5,
-                                              ),
-                                              Text(
-                                                ":",
-                                                style: GoogleFonts.nunito(
-                                                    fontWeight: FontWeight.w500,
-                                                    fontSize: 15),
-                                              ),
-                                              SizedBox(
-                                                height: 3.5,
-                                              ),
-                                            ],
-                                          ),
-                                          SizedBox(
-                                            width: 5,
-                                          ),
-                                          Column(
-                                            crossAxisAlignment:
-                                                CrossAxisAlignment.start,
-                                            children: [
-                                              Text(
-                                                searchStockReport[index]
-                                                            ["OpPcs"] ==
-                                                        0
-                                                    ? ""
-                                                    : searchStockReport[index]
-                                                            ["OpPcs"]
-                                                        .toString(),
-                                                style: GoogleFonts.nunito(
-                                                    fontWeight: FontWeight.w500,
-                                                    fontSize: 15),
-                                              ),
-                                              SizedBox(
-                                                height: 3.5,
-                                              ),
-                                              Text(
-                                                searchStockReport[index]
-                                                            ["PrPcs"] ==
-                                                        0
-                                                    ? ""
-                                                    : searchStockReport[index]
-                                                            ["PrPcs"]
-                                                        .toString(),
-                                                style: GoogleFonts.nunito(
-                                                    fontWeight: FontWeight.w500,
-                                                    fontSize: 15),
-                                              ),
-                                              SizedBox(
-                                                height: 3.5,
-                                              ),
-                                              Text(
-                                                searchStockReport[index]
-                                                            ["InPcs"] ==
-                                                        0
-                                                    ? ""
-                                                    : searchStockReport[index]
-                                                            ["InPcs"]
-                                                        .toString(),
-                                                style: GoogleFonts.nunito(
-                                                    fontWeight: FontWeight.w500,
-                                                    fontSize: 15),
-                                              ),
-                                              SizedBox(
-                                                height: 3.5,
-                                              ),
-                                              Text(
-                                                searchStockReport[index]
-                                                            ["OutPcs"] ==
-                                                        0
-                                                    ? ""
-                                                    : searchStockReport[index]
-                                                            ["OutPcs"]
-                                                        .toString(),
-                                                style: GoogleFonts.nunito(
-                                                    fontWeight: FontWeight.w500,
-                                                    fontSize: 15),
-                                              ),
-                                              SizedBox(
-                                                height: 3.5,
-                                              ),
-                                              Text(
-                                                searchStockReport[index]
-                                                            ["SlPcs"] ==
-                                                        0
-                                                    ? ""
-                                                    : searchStockReport[index]
-                                                            ["SlPcs"]
-                                                        .toString(),
-                                                style: GoogleFonts.nunito(
-                                                    fontWeight: FontWeight.w500,
-                                                    fontSize: 15),
-                                              ),
-                                              SizedBox(
-                                                height: 3.5,
-                                              ),
-                                              Text(
-                                                searchStockReport[index]
-                                                            ["ClPcs"] ==
-                                                        0
-                                                    ? ""
-                                                    : searchStockReport[index]
-                                                            ["ClPcs"]
-                                                        .toString(),
-                                                style: GoogleFonts.nunito(
-                                                    fontWeight: FontWeight.w500,
-                                                    fontSize: 15),
-                                              ),
-                                            ],
-                                          ),
-                                        ],
-                                      )),
-                                      Expanded(
-                                          child: Row(
-                                        children: [
-                                          Column(
-                                            crossAxisAlignment:
-                                                CrossAxisAlignment.start,
-                                            children: [
-                                              Text(
-                                                "Op Weight",
-                                                style: GoogleFonts.nunito(
-                                                    color: Color(0xFF006EB7),
-                                                    fontWeight: FontWeight.bold,
-                                                    fontSize: 15),
-                                              ),
-                                              SizedBox(
-                                                height: 3.5,
-                                              ),
-                                              Text(
-                                                "Pr Weight",
-                                                style: GoogleFonts.nunito(
-                                                    color: Color(0xFF006EB7),
-                                                    fontWeight: FontWeight.bold,
-                                                    fontSize: 15),
-                                              ),
-                                              SizedBox(
-                                                height: 3.5,
-                                              ),
-                                              Text(
-                                                "In Weight",
-                                                style: GoogleFonts.nunito(
-                                                    color: Color(0xFF006EB7),
-                                                    fontWeight: FontWeight.bold,
-                                                    fontSize: 15),
-                                              ),
-                                              SizedBox(
-                                                height: 3.5,
-                                              ),
-                                              Text(
-                                                "Out Weight",
-                                                style: GoogleFonts.nunito(
-                                                    color: Color(0xFF006EB7),
-                                                    fontWeight: FontWeight.bold,
-                                                    fontSize: 15),
-                                              ),
-                                              SizedBox(
-                                                height: 3.5,
-                                              ),
-                                              Text(
-                                                "Sl Weight",
-                                                style: GoogleFonts.nunito(
-                                                    color: Color(0xFF006EB7),
-                                                    fontWeight: FontWeight.bold,
-                                                    fontSize: 15),
-                                              ),
-                                              SizedBox(
-                                                height: 3.5,
-                                              ),
-                                              Text(
-                                                "Cl Weight",
-                                                style: GoogleFonts.nunito(
-                                                    color: Color(0xFF006EB7),
-                                                    fontWeight: FontWeight.bold,
-                                                    fontSize: 15),
-                                              ),
-                                            ],
-                                          ),
-                                          SizedBox(
-                                            width: 10,
-                                          ),
-                                          Column(
-                                            crossAxisAlignment:
-                                                CrossAxisAlignment.start,
-                                            children: [
-                                              Text(
-                                                ":",
-                                                style: GoogleFonts.nunito(
-                                                    fontWeight: FontWeight.w500,
-                                                    fontSize: 15),
-                                              ),
-                                              SizedBox(
-                                                height: 3.5,
-                                              ),
-                                              Text(
-                                                ":",
-                                                style: GoogleFonts.nunito(
-                                                    fontWeight: FontWeight.w500,
-                                                    fontSize: 15),
-                                              ),
-                                              SizedBox(
-                                                height: 3.5,
-                                              ),
-                                              Text(
-                                                ":",
-                                                style: GoogleFonts.nunito(
-                                                    fontWeight: FontWeight.w500,
-                                                    fontSize: 15),
-                                              ),
-                                              SizedBox(
-                                                height: 3.5,
-                                              ),
-                                              Text(
-                                                ":",
-                                                style: GoogleFonts.nunito(
-                                                    fontWeight: FontWeight.w500,
-                                                    fontSize: 15),
-                                              ),
-                                              SizedBox(
-                                                height: 3.5,
-                                              ),
-                                              Text(
-                                                ":",
-                                                style: GoogleFonts.nunito(
-                                                    fontWeight: FontWeight.w500,
-                                                    fontSize: 15),
-                                              ),
-                                              SizedBox(
-                                                height: 3.5,
-                                              ),
-                                              Text(
-                                                ":",
-                                                style: GoogleFonts.nunito(
-                                                    fontWeight: FontWeight.w500,
-                                                    fontSize: 15),
-                                              ),
-                                            ],
-                                          ),
-                                          SizedBox(
-                                            width: 5,
-                                          ),
-                                          Column(
-                                            crossAxisAlignment:
-                                                CrossAxisAlignment.start,
-                                            children: [
-                                              Text(
-                                                searchStockReport[index]
-                                                            ["OpWt"] ==
-                                                        0
-                                                    ? ""
-                                                    : double.parse(
-                                                            searchStockReport[
-                                                                        index]
-                                                                    ["OpWt"]
-                                                                .toString())
-                                                        .toStringAsFixed(3),
-                                                style: GoogleFonts.nunito(
-                                                    fontWeight: FontWeight.w500,
-                                                    fontSize: 15),
-                                              ),
-                                              SizedBox(
-                                                height: 3.5,
-                                              ),
-                                              Text(
-                                                searchStockReport[index]
-                                                            ["PrWt"] ==
-                                                        0
-                                                    ? ""
-                                                    : double.parse(
-                                                            searchStockReport[
-                                                                        index]
-                                                                    ["PrWt"]
-                                                                .toString())
-                                                        .toStringAsFixed(3),
-                                                style: GoogleFonts.nunito(
-                                                    fontWeight: FontWeight.w500,
-                                                    fontSize: 15),
-                                              ),
-                                              SizedBox(
-                                                height: 3.5,
-                                              ),
-                                              Text(
-                                                searchStockReport[index]
-                                                            ["InWt"] ==
-                                                        0
-                                                    ? ""
-                                                    : double.parse(
-                                                            searchStockReport[
-                                                                        index]
-                                                                    ["InWt"]
-                                                                .toString())
-                                                        .toStringAsFixed(3),
-                                                style: GoogleFonts.nunito(
-                                                    fontWeight: FontWeight.w500,
-                                                    fontSize: 15),
-                                              ),
-                                              SizedBox(
-                                                height: 3.5,
-                                              ),
-                                              Text(
-                                                searchStockReport[index]
-                                                            ["OutWt"] ==
-                                                        0
-                                                    ? ""
-                                                    : double.parse(
-                                                            searchStockReport[
-                                                                        index]
-                                                                    ["OutWt"]
-                                                                .toString())
-                                                        .toStringAsFixed(3),
-                                                style: GoogleFonts.nunito(
-                                                    fontWeight: FontWeight.w500,
-                                                    fontSize: 15),
-                                              ),
-                                              SizedBox(
-                                                height: 3.5,
-                                              ),
-                                              Text(
-                                                searchStockReport[index]
-                                                            ["SlWt"] ==
-                                                        0
-                                                    ? ""
-                                                    : double.parse(
-                                                            searchStockReport[
-                                                                        index]
-                                                                    ["SlWt"]
-                                                                .toString())
-                                                        .toStringAsFixed(3),
-                                                style: GoogleFonts.nunito(
-                                                    fontWeight: FontWeight.w500,
-                                                    fontSize: 15),
-                                              ),
-                                              SizedBox(
-                                                height: 3.5,
-                                              ),
-                                              Text(
-                                                searchStockReport[index]
-                                                            ["ClWt"] ==
-                                                        0
-                                                    ? ""
-                                                    : double.parse(
-                                                            searchStockReport[
-                                                                        index]
-                                                                    ["ClWt"]
-                                                                .toString())
-                                                        .toStringAsFixed(3),
-                                                style: GoogleFonts.nunito(
-                                                    fontWeight: FontWeight.w500,
-                                                    fontSize: 15),
-                                              ),
-                                            ],
-                                          ),
-                                        ],
-                                      )),
-                                    ],
-                                  ),
-                                  SizedBox(
-                                    height: 8,
-                                  ),
-                                ],
-                              ),
-                            ),
-                          )))
+                                ),
+                              )))
         ],
       ),
     );

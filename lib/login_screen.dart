@@ -24,7 +24,7 @@ class LoginScreen extends StatefulWidget {
 }
 
 class _LoginScreenState extends State<LoginScreen> {
-  bool isShow = false;
+  bool isShow = true;
   final sqlConnection = SqlConnection.getInstance();
   TextEditingController userNameController = TextEditingController();
   TextEditingController passwordController = TextEditingController();

@@ -343,4 +343,60 @@ class MySQLService {
     print("getZoomingLedgerReport $getZoomingLedgerReport");
     return getZoomingLedgerReport;
   }
+
+  Future<dynamic> getZoomingStockReport(
+      {
+        required String coCode,
+        required String lcCode,
+        required String itCode,
+        required String fromDate,
+        required String toDate,
+        required String selectedValue,
+      }) async {
+    final getZoomingStockReport = await _channel.invokeMethod('getZoomingStockReport',{
+      "coCode": coCode,
+      "lcCode": lcCode,
+      "itCode": itCode,
+      "fromDate": fromDate,
+      "toDate": toDate
+    });
+    print("getZoomingStockReport $getZoomingStockReport");
+    return getZoomingStockReport;
+  }
+
+  Future<dynamic> getZoomingSalesInvoiceDetails(
+      {
+        required String coCode,
+        required String lcCode,
+        required String vchNo,
+        required String coBook,
+
+      }) async {
+    final getZoomingSalesInvoiceDetails = await _channel.invokeMethod('getZoomingSalesInvoiceDetails',{
+      "coCode": coCode,
+      "lcCode": lcCode,
+      "vchNo": vchNo,
+      "coBook": coBook
+    });
+    print("getZoomingSalesInvoiceDetails $getZoomingStockReport");
+    return getZoomingSalesInvoiceDetails;
+  }
+
+  Future<dynamic> getZoomingSalesProductDetails(
+      {
+        required String coCode,
+        required String lcCode,
+        required String vchNo,
+        required String coBook,
+
+      }) async {
+    final getZoomingSalesProductDetails = await _channel.invokeMethod('getZoomingSalesProductDetails',{
+      "coCode": coCode,
+      "lcCode": lcCode,
+      "vchNo": vchNo,
+      "coBook": coBook
+    });
+    print("getZoomingSalesProductDetails $getZoomingSalesProductDetails");
+    return getZoomingSalesProductDetails;
+  }
   }
