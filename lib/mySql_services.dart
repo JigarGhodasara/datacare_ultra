@@ -85,7 +85,6 @@ class MySQLService {
       "coCode": coCode,
       "lcCode": lcCode,
       "date": date,
-
     });
     print("rate $rates");
     return rates;
@@ -399,5 +398,26 @@ class MySQLService {
     });
     print("getZoomingSalesProductDetails $getZoomingSalesProductDetails");
     return getZoomingSalesProductDetails;
+  }
+
+  Future<dynamic> getCashOnHand(String coCode,String lcCode,String date) async {
+    final getCashOnHand = await _channel.invokeMethod('getCashOnHand',{
+      "coCode": coCode,
+      "lcCode": lcCode,
+      "date":date
+    });
+    print("getCashOnHand $getCashOnHand");
+    return getCashOnHand;
+  }
+
+  Future<dynamic> getReminder(String coCode,String lcCode,String fromDate,String toDate) async {
+    final getReminder = await _channel.invokeMethod('getReminder',{
+      "coCode": coCode,
+      "lcCode": lcCode,
+      "fromDate":fromDate,
+      "toDate":toDate
+    });
+    print("getReminder $getReminder");
+    return getReminder;
   }
   }

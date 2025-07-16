@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:developer';
 import 'dart:io';
 
 import 'package:DataCareUltra/dailyRate_screen.dart';
@@ -7,13 +8,16 @@ import 'package:DataCareUltra/mySql_services.dart';
 import 'package:DataCareUltra/phoneBook_screen.dart';
 import 'package:DataCareUltra/provider/commonCompanyYearSelectionProvider.dart';
 import 'package:DataCareUltra/qrCode_screen.dart';
+import 'package:DataCareUltra/reminder_screen.dart';
 import 'package:DataCareUltra/salesOrderReport_screen.dart';
 import 'package:DataCareUltra/salesReport_screen.dart';
 import 'package:DataCareUltra/stockReport_screen.dart';
 import 'package:DataCareUltra/tagEstimate_screen.dart';
 import 'package:DataCareUltra/tagImage_screen.dart';
+import 'package:DataCareUltra/utils/cashonhand.dart';
 import 'package:DataCareUltra/utils/colors.dart';
 import 'package:DataCareUltra/utils/images.dart';
+import 'package:DataCareUltra/utils/ratebox_screen.dart';
 import 'package:DataCareUltra/whSalesReport_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -33,6 +37,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
   String todayGoldRate = '';
   String todaySilverRate = '';
+  String cashOnHandAmount = '';
   List report = [
     {"name": "Ledger Report", "image": AppImage.notebook},
     {"name": "Stock Report", "image": AppImage.databaseGif},
@@ -47,6 +52,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
     // TODO: implement initState
     super.initState();
     getGoldSilverRate();
+
   }
 
   void getGoldSilverRate() async {
@@ -88,10 +94,14 @@ class _DashboardScreenState extends State<DashboardScreen> {
               "' ");
       Provider.of<CommonCompanyYearSelectionProvider>(context, listen: false)
           .changeAmountType(jsonDecode(rateSetting)[0]["SL_AMT_TYPE"]);
+      String cashOnHandQuery = "Select Sum(A.CR_AMT-A.DR_AMT) as BalAmt FROM AC_DATA AS A LEFT JOIN AC_MAST AS B ON A.CO_CODE = B.CO_CODE AND A.AC_CODE = B.AC_CODE WHERE A.CO_CODE = '$co_code' and A.LC_CODE = '$lc_code'  AND A.AC_CODE = '00001' and VCH_DATE <= '${DateFormat("MM/dd/yyyy").format(DateTime.now())}'";
+      dynamic resultOfCashonHand = await sqlConnection.queryDatabase(cashOnHandQuery);
+      log("Query $resultOfCashonHand");
+      cashOnHandAmount = jsonDecode(resultOfCashonHand)[0]['BalAmt'].toString();
       print("RateSetting result ${ Provider.of<CommonCompanyYearSelectionProvider>(context, listen: false).amountType}");
     } else {
       dynamic result = await MySQLService().getRates(
-          co_code, lc_code, DateFormat("dd/MM/yyyy").format(DateTime.now()));
+          co_code, lc_code, DateFormat("MM/dd/yyyy").format(DateTime.now()));
       print("Here value $result");
       if(result[0].length != 0){
         todayGoldRate = result[0][0]['FINE_GL_RATE'].toString();
@@ -106,6 +116,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
       dynamic rateSetting = await MySQLService().getRateSetting(co_code);
       Provider.of<CommonCompanyYearSelectionProvider>(context, listen: false)
           .changeAmountType(rateSetting[0][0]["SL_AMT_TYPE"]);
+      dynamic cashonhandResult = await MySQLService().getCashOnHand(co_code, lc_code,DateFormat("MM/dd/yyyy").format(DateTime.now()).toString());
+      cashOnHandAmount = cashonhandResult[0][0]['BalAmt'].toString();
     }
 
     setState(() {});
@@ -287,75 +299,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     color: Colors.blue[800]),
               ),
             ),
-            SizedBox(
-              height: 10,
-            ),
-            rateContainer(title: 'Gold Rate${Provider.of<CommonCompanyYearSelectionProvider>(context, listen: false).CoSname == "UAE"?"(AED)":""}', rate: todayGoldRate, image: AppImage.gold),
-            SizedBox(
-              height: 15,
-            ),
-            rateContainer(title: 'Silver Rate${Provider.of<CommonCompanyYearSelectionProvider>(context, listen: false).CoSname == "UAE"?"(AED)":""}', rate: todaySilverRate, image: AppImage.silver),
-            SizedBox(
-              height: 10,
-            ),
-            Padding(
-              padding: const EdgeInsets.only(left: 20.0),
-              child: Text(
-                "Quick Menu",
-                style: GoogleFonts.nunito(
-                    fontSize: 21,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.blue[800]),
-              ),
-            ),
-            SizedBox(
-              height: 10,
-            ),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20.0),
-              child: Row(
-                // spacing: ,
-                children: [
-                  Expanded(child: quickMenuItem(tittle: "Scan", image: AppImage.qr, ontap: ()async{
-
-                    Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                            builder: (context) => QRViewExample(isFromTagScreen: false,)));
-
-                  })),
-                  SizedBox(
-                    width: 5,
-                  ),
-                  Expanded(child: quickMenuItem(tittle: "Tag", image: AppImage.tag, ontap: (){                          Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                          builder: (context) => TagimageScreen()));})),
-                  SizedBox(
-                    width: 5,
-                  ),
-                  Expanded(child: quickMenuItem(tittle: "Estimate", image: AppImage.calculation, ontap: (){
-                    Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                            builder: (context) => TagestimateScreen()));
-                  })),
-                  SizedBox(
-                    width: 5,
-                  ),
-                  Expanded(child: quickMenuItem(tittle: "PhoneBook", image: AppImage.phonebook, ontap: (){
-                    Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                            builder: (context) => PhonebookScreen()));
-                  })),
-        
-                ],
-              ),
-            ),
+            // SizedBox(
+            //   height: 10,
+            // ),
             // Container(
-            //   padding: EdgeInsets.symmetric(horizontal: 10, vertical: 15),
-            //   margin: EdgeInsets.symmetric(horizontal: 15, vertical: 15),
+            //   padding: EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+            //   margin: EdgeInsets.symmetric(horizontal: 15, vertical: 10),
             //   decoration: BoxDecoration(
             //       borderRadius: BorderRadius.circular(12),
             //       color: Color(0xFF006EB7),
@@ -379,11 +328,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
             //               child: Column(
             //                 children: [
             //                   Text(
-            //                     "Today's Gold Rate",
+            //                     "Gold Rate${Provider.of<CommonCompanyYearSelectionProvider>(context, listen: false).CoSname == "UAE"?"(AED)":""}",
             //                     style: GoogleFonts.nunito(
             //                         color: Colors.white,
             //                         fontWeight: FontWeight.bold,
-            //                         fontSize: 12),
+            //                         fontSize: 14),
             //                   ),
             //                   Text(
             //                     todayGoldRate,
@@ -402,7 +351,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
             //         padding: const EdgeInsets.symmetric(horizontal: 5.0),
             //         child: Container(
             //           height: 60,
-            //           width: 5,
+            //           width: 1,
             //           decoration: BoxDecoration(
             //               color: Colors.white,
             //               borderRadius: BorderRadius.circular(18)),
@@ -411,19 +360,20 @@ class _DashboardScreenState extends State<DashboardScreen> {
             //       Expanded(
             //         child: Row(
             //           children: [
+            //             SizedBox(width: 5,),
             //             Image.asset(
-            //               AppImage.gold,
+            //               AppImage.silver,
             //               scale: 15,
             //             ),
             //             Expanded(
             //               child: Column(
             //                 children: [
             //                   Text(
-            //                     "Today's Silver Rate",
+            //                     "Silver Rate${Provider.of<CommonCompanyYearSelectionProvider>(context, listen: false).CoSname == "UAE"?"(AED)":""}",
             //                     style: GoogleFonts.nunito(
             //                         color: Colors.white,
             //                         fontWeight: FontWeight.bold,
-            //                         fontSize: 12),
+            //                         fontSize: 14),
             //                   ),
             //                   Text(
             //                     todaySilverRate,
@@ -441,7 +391,87 @@ class _DashboardScreenState extends State<DashboardScreen> {
             //     ],
             //   ),
             // ),
-            SizedBox(height: 10,),
+            AnimatedRateBox(todayGoldRate: todayGoldRate,todaySilverRate: todaySilverRate,),
+            // rateContainer(title: 'Gold Rate${Provider.of<CommonCompanyYearSelectionProvider>(context, listen: false).CoSname == "UAE"?"(AED)":""}', rate: todayGoldRate, image: AppImage.gold),
+            // SizedBox(
+            //   height: 15,
+            // ),
+            // rateContainer(title: 'Silver Rate${Provider.of<CommonCompanyYearSelectionProvider>(context, listen: false).CoSname == "UAE"?"(AED)":""}', rate: todaySilverRate, image: AppImage.silver),
+            const SizedBox(
+              height: 10,
+            ),
+            Padding(
+              padding: const EdgeInsets.only(left: 20.0),
+              child: Text(
+                "Quick Menu",
+                style: GoogleFonts.nunito(
+                    fontSize: 21,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.blue[800]),
+              ),
+            ),
+            const SizedBox(
+              height: 10,
+            ),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 20.0),
+              child: Row(
+                // spacing: ,
+                children: [
+                  Expanded(child: quickMenuItem(tittle: "Scan", image: AppImage.qr, ontap: ()async{
+
+                    Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                            builder: (context) => QRViewExample(isFromTagScreen: false,)));
+
+                  })),
+                  const SizedBox(
+                    width: 5,
+                  ),
+                  Expanded(child: quickMenuItem(tittle: "Tag", image: AppImage.tag, ontap: (){                          Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                          builder: (context) => TagimageScreen()));})),
+                  const SizedBox(
+                    width: 5,
+                  ),
+                  Expanded(child: quickMenuItem(tittle: "Reminder", image: AppImage.bell, ontap: (){
+                    if(Provider.of<CommonCompanyYearSelectionProvider>(
+                        context,
+                        listen: false).sType == "E" || Provider.of<CommonCompanyYearSelectionProvider>(
+                        context,
+                        listen: false).sType == "A" || Provider.of<CommonCompanyYearSelectionProvider>(
+                        context,
+                        listen: false).dType == "E" || Provider.of<CommonCompanyYearSelectionProvider>(
+                        context,
+                        listen: false).dType == "A" ){
+                      // showUpgradeRequiredDialog(context);
+                      Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                              builder: (context) => ReminderScreen()));
+                    }else{
+                      showUpgradeRequiredDialog(context);
+                    }
+
+                  })),
+                  const SizedBox(
+                    width: 5,
+                  ),
+                  Expanded(child: quickMenuItem(tittle: "PhoneBook", image: AppImage.phonebook, ontap: (){
+                    Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                            builder: (context) => PhonebookScreen()));
+                  })),
+
+                ],
+              ),
+            ),
+            const SizedBox(height: 10,),
+            CashOnHandBox(cashAmount: cashOnHandAmount,),
+            const SizedBox(height: 10,),
             Padding(
               padding: const EdgeInsets.only(left: 20.0),
               child: Text(
@@ -452,7 +482,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     color: Colors.blue[800]),
               ),
             ),
-            SizedBox(
+            const SizedBox(
               height: 10,
             ),
             Padding(
@@ -499,7 +529,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 ],
               ),
             ),
-            SizedBox(
+            const SizedBox(
               height: 10,
             ),
             Padding(
@@ -626,3 +656,55 @@ class _DashboardScreenState extends State<DashboardScreen> {
     );
   }
 }
+
+
+void showUpgradeRequiredDialog(BuildContext context) {
+  showGeneralDialog(
+    context: context,
+    barrierDismissible: true,
+    barrierLabel: "Upgrade Required",
+    transitionDuration: const Duration(milliseconds: 300),
+    pageBuilder: (context, animation, secondaryAnimation) {
+      return const SizedBox.shrink();
+    },
+    transitionBuilder: (context, animation, secondaryAnimation, child) {
+      return Transform.scale(
+        scale: animation.value,
+        child: Opacity(
+          opacity: animation.value,
+          child: AlertDialog(
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(20),
+            ),
+            title: const Text(
+              "Upgrade Required",
+              style: TextStyle(fontWeight: FontWeight.bold),
+            ),
+            content: const Text(
+              "This feature is only available in a higher version of the software. "
+                  "Please upgrade to access this functionality.",
+            ),
+            actions: [
+
+              ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColor.PRIMARY_COLOR,
+                  foregroundColor: Colors.white,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                ),
+                onPressed: () {
+                  Navigator.of(context).pop();
+                  // handle upgrade logic
+                },
+                child: const Text("OK"),
+              ),
+            ],
+          ),
+        ),
+      );
+    },
+  );
+}
+

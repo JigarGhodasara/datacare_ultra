@@ -174,14 +174,14 @@ class _CompanyYearSelectionState extends State<CompanyYearSelection> {
                   children: [
                     GestureDetector(
                         onTap: () => Navigator.pop(context),
-                        child: Icon(
+                        child: const Icon(
                           Icons.keyboard_arrow_left_rounded,
                           color: Colors.white,
                           size: 50,
                         )),
-                    Expanded(
+                    const Expanded(
                       child: Padding(
-                        padding: const EdgeInsets.only(right: 20.0),
+                        padding: EdgeInsets.only(right: 20.0),
                         child: Row(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
@@ -202,7 +202,7 @@ class _CompanyYearSelectionState extends State<CompanyYearSelection> {
               flex: 5,
               child: Container(
                 width: double.infinity,
-                decoration: BoxDecoration(
+                decoration: const BoxDecoration(
                     color: Colors.white,
                     borderRadius: BorderRadius.only(
                         topRight: Radius.circular(30),
@@ -231,7 +231,7 @@ class _CompanyYearSelectionState extends State<CompanyYearSelection> {
                               children: [
                                 Image.asset(AppImage.businessAndTrade,
                                     scale: 20, color: Colors.blue[800]),
-                                SizedBox(
+                                const SizedBox(
                                   width: 10,
                                 ),
                                 Expanded(
@@ -268,7 +268,7 @@ class _CompanyYearSelectionState extends State<CompanyYearSelection> {
                             ),
                           ),
                         ),
-                        SizedBox(
+                        const SizedBox(
                           height: 20,
                         ),
 
@@ -283,7 +283,7 @@ class _CompanyYearSelectionState extends State<CompanyYearSelection> {
                               children: [
                                 Image.asset(AppImage.branch,
                                     scale: 20, color: Colors.blue[800]),
-                                SizedBox(
+                                const SizedBox(
                                   width: 10,
                                 ),
                                 Expanded(
@@ -307,13 +307,13 @@ class _CompanyYearSelectionState extends State<CompanyYearSelection> {
                             ),
                           ),
                         ),
-                        SizedBox(
+                        const SizedBox(
                           height: 20,
                         ),
 
                         Container(
                           decoration: BoxDecoration(
-                              color: Color(0xFFe7edeb),
+                              color: const Color(0xFFe7edeb),
                               borderRadius: BorderRadius.circular(8.0)),
                           child: Padding(
                             padding: const EdgeInsets.symmetric(
@@ -322,7 +322,7 @@ class _CompanyYearSelectionState extends State<CompanyYearSelection> {
                               children: [
                                 Image.asset(AppImage.calendar,
                                     scale: 20, color: Colors.blue[800]),
-                                SizedBox(
+                                const SizedBox(
                                   width: 10,
                                 ),
                                 Expanded(
@@ -346,7 +346,7 @@ class _CompanyYearSelectionState extends State<CompanyYearSelection> {
                             ),
                           ),
                         ),
-                        SizedBox(
+                        const SizedBox(
                           height: 40,
                         ), // TextField
                         GestureDetector(
@@ -435,7 +435,14 @@ class _CompanyYearSelectionState extends State<CompanyYearSelection> {
 
                               String sType = SoftTypedata[0]["SoftType"];
                               String dType = SoftTypedata[0]["DemoType"];
-
+                              Provider.of<CommonCompanyYearSelectionProvider>(
+                                  context,
+                                  listen: false)
+                                  .changesType(sType);
+                              Provider.of<CommonCompanyYearSelectionProvider>(
+                                  context,
+                                  listen: false)
+                                  .changedType(dType);
                               print("SSType ${sType}");
                               print("DDType ${dType}");
 

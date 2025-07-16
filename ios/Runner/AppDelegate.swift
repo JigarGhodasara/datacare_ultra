@@ -178,6 +178,14 @@ class AppDelegate: FlutterAppDelegate {
                 let args = call.arguments as! Dictionary<String, Any>
                 self?.getZoomingSalesProductDetails(result: result, coCode: args["coCode"] as! String , lcCode: args["lcCode"] as! String, vchNo: args["vchNo"] as! String,coBook: args["coBook"] as! String)
             }
+            else if call.method == "getCashOnHand" {
+                let args = call.arguments as! Dictionary<String, Any>
+                self?.getCashOnHand(result: result, coCode: args["coCode"] as! String , lcCode: args["lcCode"] as! String, date: args["date"] as! String )
+            }
+            else if call.method == "getReminder" {
+                    let args = call.arguments as! Dictionary<String, Any>
+                self?.getReminder(result:result,coCode:args["coCode"] as! String, lcCode: args["lcCode"] as! String, fromDate: args["fromDate"] as! String, toDate: args["toDate"] as! String)
+                }
             else {
                 result(FlutterMethodNotImplemented)
             }
@@ -231,6 +239,14 @@ class AppDelegate: FlutterAppDelegate {
     private func getRates(result: @escaping FlutterResult,coCode:String,lcCode:String,date:String) {
         print("INside getYears from xcode")
         sqlClient = SQLClient.sharedInstance()
+        print("Gold Rate")
+        print("SELECT FINE_GL_RATE,FINE_SL_RATE,A.VCH_DATE FROM RATE_MAST AS A INNER JOIN GROUP_MAST AS B ON A.CO_CODE = B.CO_CODE AND A.GR_CODE = B.GR_CODE WHERE A.CO_CODE = '" +
+              coCode +
+              "' AND A.LC_CODE = '" +
+              lcCode +
+              "' AND A.VCH_DATE <= '" +
+              date +
+              "' AND B.RATE_DISPLAY = 'Y'GROUP BY FINE_GL_RATE,FINE_SL_RATE,A.VCH_DATE ORDER BY A.VCH_DATE DESC ")
         sqlClient?.execute("SELECT FINE_GL_RATE,FINE_SL_RATE,A.VCH_DATE FROM RATE_MAST AS A INNER JOIN GROUP_MAST AS B ON A.CO_CODE = B.CO_CODE AND A.GR_CODE = B.GR_CODE WHERE A.CO_CODE = '" +
                            coCode +
                            "' AND A.LC_CODE = '" +
@@ -676,6 +692,29 @@ class AppDelegate: FlutterAppDelegate {
        
             print(query)
         sqlClient?.execute(query) { results in
+            result(results)
+        }
+
+        }
+    private func getCashOnHand(result: @escaping FlutterResult,coCode:String,lcCode:String,date:String) {
+            print("INside getCashOnHand from xcode")
+            sqlClient = SQLClient.sharedInstance()
+        let query = "Select Sum(A.CR_AMT-A.DR_AMT) as BalAmt FROM AC_DATA AS A LEFT JOIN AC_MAST AS B ON A.CO_CODE = B.CO_CODE AND A.AC_CODE = B.AC_CODE WHERE A.CO_CODE = '"+coCode+"' and A.LC_CODE = '"+lcCode+"'  AND A.AC_CODE = '00001' and VCH_DATE <='"+date+"'"
+       
+            print(query)
+        sqlClient?.execute(query) { results in
+            result(results)
+        }
+
+        }
+    private func getReminder(result: @escaping FlutterResult,coCode:String,lcCode:String,fromDate:String,toDate:String) {
+            print("INside getReminder from xcode")
+            sqlClient = SQLClient.sharedInstance()
+        let query = "SELECT A.CO_CODE,A.LC_CODE,A.CO_YEAR,A.BOOK_NAME, A.CO_BOOK,A.HD_VCH_NO,A.VCH_NO,A.VCH_DATE,A.REM_DATE,A.AC_CODE,A.ENTRY_TYPE,A.INOUT_TYPE,A.IT_DESC,A.SR_NO,A.MAIN_USER,A.DATA_TRFR,A.EMP_CODE,A.AC_NAME,B.AC_MOBILE FROM REM_DATA AS A LEFT JOIN AC_MAST AS B ON A.CO_CODE = B.CO_CODE AND A.AC_CODE = B.AC_CODE WHERE A.CO_CODE = '\(coCode)' AND A.LC_CODE = '\(lcCode)' AND A.REM_DATE >= '\(fromDate)' AND A.REM_DATE <= '\(toDate)'"
+       
+            print(query)
+        sqlClient?.execute(query) { results in
+            
             result(results)
         }
 

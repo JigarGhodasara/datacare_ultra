@@ -36,6 +36,5 @@ class AppImage{
   static var silver = "${base}silver.png";
   static var whSales = "${base}whSales.png";
   static var salesOrder = "${base}salesOrder.png";
-
-
+  static var bell = "${base}bell.png";
 }
