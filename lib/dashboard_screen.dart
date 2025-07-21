@@ -200,6 +200,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
         SizedBox(height: 3,),
         Text(
           tittle,
+          textAlign: TextAlign.center,
           style: GoogleFonts.nunito(
               color: Colors.white,
               fontWeight: FontWeight.bold,
@@ -429,7 +430,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   const SizedBox(
                     width: 5,
                   ),
-                  Expanded(child: quickMenuItem(tittle: "Tag", image: AppImage.tag, ontap: (){                          Navigator.push(
+                  Expanded(child: quickMenuItem(tittle: "Tag Estimate", image: AppImage.tag, ontap: (){                          Navigator.push(
                       context,
                       MaterialPageRoute(
                           builder: (context) => TagimageScreen()));})),
