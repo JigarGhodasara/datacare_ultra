@@ -42,8 +42,8 @@ class _TagestimateScreenState extends State<TagestimateScreen> {
   final sqlConnection = SqlConnection.getInstance();
   dynamic productDetail;
   dynamic printingLable;
-  int selectedOpt = 1;
-  String selectedItType = 'G';
+  int selectedOpt = 2;
+  String selectedItType = 'N';
   late LoadingProvider loadingProvider;
   late CommonCompanyYearSelectionProvider commonCompanyYearSelectionProvider;
   String? co_code;
@@ -71,8 +71,13 @@ class _TagestimateScreenState extends State<TagestimateScreen> {
   void initState() {
     // TODO: implement initState
     super.initState();
+    co_code =
+        Provider.of<CommonCompanyYearSelectionProvider>(context, listen: false)
+            .co_code;
+    getImage();
     loadingProvider = Provider.of<LoadingProvider>(context, listen: false);
-    commonCompanyYearSelectionProvider = Provider.of<CommonCompanyYearSelectionProvider>(context, listen: false);
+    commonCompanyYearSelectionProvider =
+        Provider.of<CommonCompanyYearSelectionProvider>(context, listen: false);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       // Update your state here
       if (widget.tagNo != null) {
@@ -85,22 +90,57 @@ class _TagestimateScreenState extends State<TagestimateScreen> {
     // }
   }
 
-  getPrintLable() async{
-    co_code =
+  void getImage() async {
+    if (Provider.of<CommonCompanyYearSelectionProvider>(context, listen: false)
+            .webImage
+            .isEmpty &&
         Provider.of<CommonCompanyYearSelectionProvider>(context, listen: false)
-            .co_code;
-    String query = "";
-    if (Platform.isAndroid) {
-      query = "SELECT * FROM COL_MAST WHERE CO_CODE = '${co_code!}' AND BOOK_NAME = 'SALES' AND YES_NO = 'Y'";
-      }
-      log("query $query");
-      dynamic result = await sqlConnection.queryDatabase(query);
-      if (jsonDecode(result).length != 0) {
-        print("result");
-        print(result);
-printingLable = result;
+            .webPath
+            .isEmpty) {
+      if (Platform.isAndroid) {
+        dynamic resultOfweb = await sqlConnection.queryDatabase(
+            "SELECT WEB_IMAGE,WEB_PATH FROM CO_SET_NEW WHERE CO_CODE ='" +
+                co_code! +
+                "' ");
+        print("resultofWeb $resultOfweb");
+        print("resultofWeb ${jsonDecode(resultOfweb)[0]["WEB_IMAGE"]}");
+        Provider.of<CommonCompanyYearSelectionProvider>(context, listen: false)
+            .changeWebImage(jsonDecode(resultOfweb)[0]["WEB_IMAGE"]);
+        Provider.of<CommonCompanyYearSelectionProvider>(context, listen: false)
+            .changeWebPath(jsonDecode(resultOfweb)[0]["WEB_PATH"]);
+      } else {
+        dynamic image = await MySQLService().getForImage(co_code!);
+        print("IMagesss $image");
+        Provider.of<CommonCompanyYearSelectionProvider>(context, listen: false)
+            .changeWebImage(image[0][0]["WEB_IMAGE"]);
+        Provider.of<CommonCompanyYearSelectionProvider>(context, listen: false)
+            .changeWebPath(image[0][0]["WEB_PATH"]);
       }
     }
+  }
+
+  getPrintLable() async {
+    String query = "";
+    if (Platform.isAndroid) {
+      query =
+          "SELECT * FROM COL_MAST WHERE CO_CODE = '${co_code!}' AND BOOK_NAME = 'SALES' AND YES_NO = 'Y'";
+
+    log("query $query");
+    dynamic result = await sqlConnection.queryDatabase(query);
+    if (jsonDecode(result).length != 0) {
+      print("result");
+      print(result);
+      printingLable = jsonDecode(result);
+    }}else{
+     dynamic res = await MySQLService().getPrintLable("SELECT * FROM COL_MAST WHERE CO_CODE = '${co_code!}' AND BOOK_NAME = 'SALES' AND YES_NO = 'Y'");
+     print("result");
+     print("result $res");
+     if(res[0].length != 0){
+       printingLable = res[0];
+     }
+    }
+  }
+
   getProductDetail() async {
     loadingProvider.startLoading();
     setState(() {});
@@ -295,6 +335,8 @@ printingLable = result;
     print("object $selectOption");
     int selectedOption = selectOption;
     bool checkBox = selectedCheckbox;
+    print("object $selectType");
+
     String selectedType = selectType;
     TextEditingController lbrPerCntorller =
         TextEditingController(text: filterLbrPrc);
@@ -342,7 +384,7 @@ printingLable = result;
                                 fillterLbrRate = "";
                                 fillterLbrCharges = "";
                                 fillterGst = "3.00";
-                                selectedItType = "G";
+                                selectedItType = "N";
                                 selectedOpt = 1;
                                 selectedGST = true;
 
@@ -394,7 +436,10 @@ printingLable = result;
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              commonCompanyYearSelectionProvider.CoSname == "UAE"?"Making":"Labour",
+                              commonCompanyYearSelectionProvider.CoSname ==
+                                      "UAE"
+                                  ? "Making"
+                                  : "Labour",
                               style: TextStyle(
                                   fontSize: 15,
                                   color: Color(0xFF006EB7),
@@ -523,7 +568,7 @@ printingLable = result;
                               height: 15,
                             ),
                             Text(
-                              "${commonCompanyYearSelectionProvider.CoSname == "UAE"?"Making":"Labour"} Type",
+                              "${commonCompanyYearSelectionProvider.CoSname == "UAE" ? "Making" : "Labour"} Type",
                               style: TextStyle(
                                   fontSize: 15,
                                   color: Color(0xFF006EB7),
@@ -749,9 +794,9 @@ printingLable = result;
     netAmmount = double.parse(intNetAmount.toString()).round().toString();
     var TaxAmount = 0.0;
     if (selectedGST && fillterGst.isNotEmpty && fillterGst != "0") {
-      if(commonCompanyYearSelectionProvider.CoSname == "UAE"){
+      if (commonCompanyYearSelectionProvider.CoSname == "UAE") {
         TaxAmount = (intNetAmount * double.parse("5")) / 100;
-      }else{
+      } else {
         TaxAmount = (intNetAmount * double.parse(fillterGst)) / 100;
       }
     }
@@ -1130,7 +1175,10 @@ printingLable = result;
                           child: Column(
                             children: [
                               Text(
-                                commonCompanyYearSelectionProvider.CoSname == "UAE"?"AED":"Amount",
+                                commonCompanyYearSelectionProvider.CoSname ==
+                                        "UAE"
+                                    ? "AED"
+                                    : "Amount",
                                 style: GoogleFonts.nunito(
                                     color: Color(0xFF006EB7),
                                     fontWeight: FontWeight.bold,
@@ -1372,29 +1420,42 @@ printingLable = result;
                           ],
                         ),
                       ),
-                      // printingLable == null ? SizedBox():
-                      //     printingLable.where((e) => e["COL_NAME"] == "Ght%" && e["YES_NO"] == "Y") != null ? Padding(
-                      //       padding: const EdgeInsets.only(
-                      //           right: 12.0, left: 12.0, top: 8),
-                      //       child: Row(
-                      //         children: [
-                      //           Text(
-                      //             "${printingLable.where((e) => e["COL_NAME"] == "Ght%" && e["YES_NO"] == "Y").first["COL_NEW_NAME"]} :",
-                      //             style: GoogleFonts.nunito(
-                      //                 fontWeight: FontWeight.w900,
-                      //                 fontSize: 12),
-                      //           ),
-                      //           Spacer(),
-                      //           Text(
-                      //             productDetail == null
-                      //                 ? "-:-" : productDetail["ITM_GHT_PRC"].toString() ,
-                      //             style: GoogleFonts.nunito(
-                      //                 fontWeight: FontWeight.w900,
-                      //                 fontSize: 12),
-                      //           ),
-                      //         ],
-                      //       ),
-                      //     ) : SizedBox(),
+                      printingLable == null
+                          ? SizedBox()
+                          : printingLable?.any(
+                                    (e) =>
+                                        e["COL_NAME"]
+                                                .toString()
+                                                .toLowerCase() ==
+                                            "ght%" &&
+                                        e["YES_NO"] == "Y",
+                                  ) ??
+                                  false
+                              ? Padding(
+                                  padding: const EdgeInsets.only(
+                                      right: 12.0, left: 12.0, top: 8),
+                                  child: Row(
+                                    children: [
+                                      Text(
+                                        "${printingLable.where((e) => e["COL_NAME"] == "Ght%" && e["YES_NO"] == "Y").first["COL_NEW_NAME"]} :",
+                                        style: GoogleFonts.nunito(
+                                            fontWeight: FontWeight.w900,
+                                            fontSize: 12),
+                                      ),
+                                      Spacer(),
+                                      Text(
+                                        productDetail == null
+                                            ? "-:-"
+                                            : productDetail["ITM_GHT_PRC"]
+                                                .toString(),
+                                        style: GoogleFonts.nunito(
+                                            fontWeight: FontWeight.w900,
+                                            fontSize: 12),
+                                      ),
+                                    ],
+                                  ),
+                                )
+                              : SizedBox(),
                       // productDetail == null || productDetail["ITM_GHT_PRC"] == 0
                       //     ? SizedBox()
                       //     : Padding(
@@ -1419,30 +1480,44 @@ printingLable = result;
                       //         ),
                       //       ),
 
-                      // printingLable == null ? SizedBox():
-                      // printingLable.where((e) => e["COL_NAME"] == "GhtWt" && e["YES_NO"] == "Y") != null ? Padding(
-                      //   padding: const EdgeInsets.only(
-                      //       right: 12.0, left: 12.0, top: 8),
-                      //   child: Row(
-                      //     children: [
-                      //       Text(
-                      //         "${printingLable.where((e) => e["COL_NAME"] == "GhtWt" && e["YES_NO"] == "Y").first["COL_NEW_NAME"]} :",
-                      //         style: GoogleFonts.nunito(
-                      //             fontWeight: FontWeight.w900,
-                      //             fontSize: 12),
-                      //       ),
-                      //       Spacer(),
-                      //       Text(
-                      //         productDetail == null
-                      //             ? "-:-" : double.parse(productDetail["ITM_GHAT"]
-                      //             .toString())
-                      //             .toStringAsFixed(3),                              style: GoogleFonts.nunito(
-                      //             fontWeight: FontWeight.w900,
-                      //             fontSize: 12),
-                      //       ),
-                      //     ],
-                      //   ),
-                      // ) : SizedBox(),
+                      printingLable == null
+                          ? SizedBox()
+                          : printingLable?.any(
+                                    (e) =>
+                                        e["COL_NAME"]
+                                                .toString()
+                                                .toLowerCase() ==
+                                            "ghtwt" &&
+                                        e["YES_NO"] == "Y",
+                                  ) ??
+                                  false
+                              ? Padding(
+                                  padding: const EdgeInsets.only(
+                                      right: 12.0, left: 12.0, top: 8),
+                                  child: Row(
+                                    children: [
+                                      Text(
+                                        "${printingLable.where((e) => e["COL_NAME"] == "GhtWt" && e["YES_NO"] == "Y").first["COL_NEW_NAME"]} :",
+                                        style: GoogleFonts.nunito(
+                                            fontWeight: FontWeight.w900,
+                                            fontSize: 12),
+                                      ),
+                                      Spacer(),
+                                      Text(
+                                        productDetail == null
+                                            ? "-:-"
+                                            : double.parse(
+                                                    productDetail["ITM_GHAT"]
+                                                        .toString())
+                                                .toStringAsFixed(3),
+                                        style: GoogleFonts.nunito(
+                                            fontWeight: FontWeight.w900,
+                                            fontSize: 12),
+                                      ),
+                                    ],
+                                  ),
+                                )
+                              : SizedBox(),
                       //
                       // productDetail == null || productDetail["ITM_GHAT"] == 0
                       //     ? SizedBox()
@@ -1537,7 +1612,10 @@ printingLable = result;
                         child: Row(
                           children: [
                             Text(
-                              commonCompanyYearSelectionProvider.CoSname == "UAE"?"Metal Value (AED) :": "Item Amount :",
+                              commonCompanyYearSelectionProvider.CoSname ==
+                                      "UAE"
+                                  ? "Metal Value (AED) :"
+                                  : "Item Amount :",
                               style: GoogleFonts.nunito(
                                   fontWeight: FontWeight.w900, fontSize: 12),
                             ),
@@ -1562,7 +1640,7 @@ printingLable = result;
                         child: Row(
                           children: [
                             Text(
-                              "${commonCompanyYearSelectionProvider.CoSname == "UAE"?"Making":"Labour"} Prc% :",
+                              "${commonCompanyYearSelectionProvider.CoSname == "UAE" ? "Making" : "Labour"} Prc% :",
                               style: GoogleFonts.nunito(
                                   fontWeight: FontWeight.w900, fontSize: 12),
                             ),
@@ -1585,7 +1663,7 @@ printingLable = result;
                         child: Row(
                           children: [
                             Text(
-                              "${commonCompanyYearSelectionProvider.CoSname == "UAE"?"Making":"Labour"} Rate :",
+                              "${commonCompanyYearSelectionProvider.CoSname == "UAE" ? "Making" : "Labour"} Rate :",
                               style: GoogleFonts.nunito(
                                   fontWeight: FontWeight.w900, fontSize: 12),
                             ),
@@ -1608,7 +1686,10 @@ printingLable = result;
                         child: Row(
                           children: [
                             Text(
-                              commonCompanyYearSelectionProvider.CoSname == "UAE"?"Making Charges(AED) :":"Labour Amount :",
+                              commonCompanyYearSelectionProvider.CoSname ==
+                                      "UAE"
+                                  ? "Making Charges(AED) :"
+                                  : "Labour Amount :",
                               style: GoogleFonts.nunito(
                                   fontWeight: FontWeight.w900, fontSize: 12),
                             ),
@@ -1631,7 +1712,7 @@ printingLable = result;
                         child: Row(
                           children: [
                             Text(
-                              "Other ${commonCompanyYearSelectionProvider.CoSname == "UAE"?"Charges(AED)":"Amount"} :",
+                              "Other ${commonCompanyYearSelectionProvider.CoSname == "UAE" ? "Charges(AED)" : "Amount"} :",
                               style: GoogleFonts.nunito(
                                   fontWeight: FontWeight.w900, fontSize: 12),
                             ),
@@ -1648,37 +1729,40 @@ printingLable = result;
                           ],
                         ),
                       ),
-                      commonCompanyYearSelectionProvider.CoSname == "UAE" ?SizedBox():
+                      commonCompanyYearSelectionProvider.CoSname == "UAE"
+                          ? SizedBox()
+                          : Padding(
+                              padding: const EdgeInsets.only(
+                                  right: 12.0, left: 12.0, top: 8),
+                              child: Row(
+                                children: [
+                                  Text(
+                                    "MRP :",
+                                    style: GoogleFonts.nunito(
+                                        fontWeight: FontWeight.w900,
+                                        fontSize: 12),
+                                  ),
+                                  Spacer(),
+                                  Text(
+                                    productDetail == null
+                                        ? "-:-"
+                                        : double.parse(mrp.toString())
+                                                .toStringAsFixed(2) ??
+                                            "-:-",
+                                    style: GoogleFonts.nunito(
+                                        fontWeight: FontWeight.w900,
+                                        fontSize: 12),
+                                  ),
+                                ],
+                              ),
+                            ),
                       Padding(
                         padding: const EdgeInsets.only(
                             right: 12.0, left: 12.0, top: 8),
                         child: Row(
                           children: [
                             Text(
-                              "MRP :",
-                              style: GoogleFonts.nunito(
-                                  fontWeight: FontWeight.w900, fontSize: 12),
-                            ),
-                            Spacer(),
-                            Text(
-                              productDetail == null
-                                  ? "-:-"
-                                  : double.parse(mrp.toString())
-                                          .toStringAsFixed(2) ??
-                                      "-:-",
-                              style: GoogleFonts.nunito(
-                                  fontWeight: FontWeight.w900, fontSize: 12),
-                            ),
-                          ],
-                        ),
-                      ),
-                      Padding(
-                        padding: const EdgeInsets.only(
-                            right: 12.0, left: 12.0, top: 8),
-                        child: Row(
-                          children: [
-                            Text(
-                              "Net ${commonCompanyYearSelectionProvider.CoSname == "UAE"?"Value(AED)":"Amount"} :",
+                              "Net ${commonCompanyYearSelectionProvider.CoSname == "UAE" ? "Value(AED)" : "Amount"} :",
                               style: GoogleFonts.nunito(
                                   fontWeight: FontWeight.w900, fontSize: 12),
                             ),
@@ -1703,7 +1787,10 @@ printingLable = result;
                         child: Row(
                           children: [
                             Text(
-                            commonCompanyYearSelectionProvider.CoSname == "UAE" ? "VAT 5% (AED) :" :"GST Tax :",
+                              commonCompanyYearSelectionProvider.CoSname ==
+                                      "UAE"
+                                  ? "VAT 5% (AED) :"
+                                  : "GST Tax :",
                               style: GoogleFonts.nunito(
                                   fontWeight: FontWeight.w900, fontSize: 12),
                             ),
@@ -1725,7 +1812,7 @@ printingLable = result;
                         child: Row(
                           children: [
                             Text(
-                              "Total ${commonCompanyYearSelectionProvider.CoSname == "UAE"?"Value (AED)":"Amount"} :",
+                              "Total ${commonCompanyYearSelectionProvider.CoSname == "UAE" ? "Value (AED)" : "Amount"} :",
                               style: GoogleFonts.nunito(
                                   fontWeight: FontWeight.w900, fontSize: 12),
                             ),
@@ -1819,7 +1906,8 @@ printingLable = result;
 
   createPDF() async {
     final pdf = pw.Document();
-    final provider = Provider.of<CommonCompanyYearSelectionProvider>(context, listen: false);
+    final provider =
+        Provider.of<CommonCompanyYearSelectionProvider>(context, listen: false);
     final qrCodeImage = await generateQRCodeImage(widget.tagNo ?? "");
     dynamic companyDetails;
     if (Platform.isAndroid) {
@@ -1833,304 +1921,24 @@ printingLable = result;
       dynamic companyData = await MySQLService().getCompanyDetail(co_code!);
       companyDetails = companyData[0][0];
     }
+    dynamic otherDetailsData;
 
-    // pdf.addPage(pw.Page(
-    //     build: (contexts) => pw.Column(
-    //             crossAxisAlignment: pw.CrossAxisAlignment.center,
-    //             children: [
-    //               pw.Text(
-    //                 "${companyDetails["CO_NAME"]}",
-    //                 style: pw.TextStyle(
-    //                     fontSize: 24, fontWeight: pw.FontWeight.bold),
-    //               ),
-    //               pw.Text(
-    //                   "${companyDetails["CO_ADD1"]},${companyDetails["CO_ADD2"]}",
-    //                   style: pw.TextStyle(
-    //                     fontSize: 18,
-    //                   ),
-    //                   textAlign: pw.TextAlign.center),
-    //               pw.Text(
-    //                 "${companyDetails["CO_ADD3"]},${companyDetails["CO_CITY"]}-${companyDetails["CO_PIN"]}",
-    //                 style: pw.TextStyle(fontSize: 18),
-    //               ),
-    //               pw.Text(
-    //                 "Mo: ${companyDetails["CO_MOBILE"].toString()}",
-    //                 style: pw.TextStyle(fontSize: 18),
-    //               ),
-    //               pw.SizedBox(height: 10),
-    //               pw.Text(
-    //                 "Date : ${DateFormat("dd/MM/yyyy").format(DateTime.now())}",
-    //                 style: pw.TextStyle(fontSize: 18),
-    //               ),
-    //               pw.SizedBox(height: 8),
-    //               pw.Text(
-    //                 "${productDetail["IT_NAME"].toString()}",
-    //                 style: pw.TextStyle(
-    //                     fontSize: 22, fontWeight: pw.FontWeight.bold),
-    //               ),
-    //               pw.SizedBox(height: 15),
-    //               pw.Center(
-    //                 child: pw.Table(
-    //                     border: pw.TableBorder(
-    //                         left: pw.BorderSide(),
-    //                         right: pw.BorderSide(),
-    //                         top: pw.BorderSide(),
-    //                         bottom: pw.BorderSide(),
-    //                         horizontalInside: pw.BorderSide(),
-    //                         verticalInside: pw.BorderSide()),
-    //
-    //                     tableWidth: pw.TableWidth.min,
-    //                     children: [
-    //                       pw.TableRow(
-    //                           verticalAlignment: pw.TableCellVerticalAlignment.middle,
-    //                           children: [
-    //                         pw.Align(
-    //                           alignment: pw.Alignment.centerRight,
-    //                           child:  pw.Padding(padding: pw.EdgeInsets.only(right: 10,left: 80),child: pw.Text(
-    //                             "Tag No :",
-    //                             style: pw.TextStyle(fontSize: 18),
-    //                           )),
-    //                         ),
-    //                         pw.Align(alignment: pw.Alignment.centerRight,
-    //                           child: pw.Padding(padding: pw.EdgeInsets.symmetric(horizontal: 20,vertical: 5),child:  pw.Text(
-    //                             widget.tagNo.toString(),
-    //                             style: pw.TextStyle(fontSize: 18),
-    //                           ),)
-    //                         )
-    //
-    //                       ]),
-    //                       pw.TableRow(
-    //                           verticalAlignment: pw.TableCellVerticalAlignment.middle,
-    //                           children: [
-    //                             pw.Align(alignment: pw.Alignment.centerRight,child: pw.Padding(padding: pw.EdgeInsets.only(right: 10),child:pw.Text(
-    //                               "Pcs :",
-    //                               style: pw.TextStyle(fontSize: 18),
-    //                             ) )),
-    //                         pw.Align(alignment: pw.Alignment.centerRight,
-    //                           child: pw.Padding(padding: pw.EdgeInsets.symmetric(horizontal: 20,vertical: 5),child:  pw.Text(
-    //                             productDetail["ITM_PCS"].toString(),
-    //                             style: pw.TextStyle(fontSize: 18),
-    //                           ) )
-    //                         )
-    //
-    //                       ]),
-    //                       pw.TableRow(verticalAlignment: pw.TableCellVerticalAlignment.middle,children: [
-    //                         productDetail == null || productDetail["DESIGN_NO"] == ""
-    //                             ?pw.SizedBox():
-    //                             pw.Align(alignment: pw.Alignment.centerRight,child: pw.Padding(padding: pw.EdgeInsets.only(right: 10),child:  pw.Text(
-    //                               "Design :",
-    //                               style: pw.TextStyle(fontSize: 18),
-    //                             ),)),
-    //
-    //                         productDetail == null || productDetail["DESIGN_NO"] == ""
-    //                             ?pw.SizedBox():
-    //                             pw.Align(alignment: pw.Alignment.centerRight,
-    //                               child: pw.Padding(padding: pw.EdgeInsets.symmetric(horizontal: 20,vertical: 5),child: pw.Text(
-    //                                 productDetail == null
-    //                                     ? "-:-"
-    //                                     : productDetail["DESIGN_NO"] == ""
-    //                                     ? "-"
-    //                                     : productDetail["DESIGN_NO"] ?? "-:-",
-    //                                 style: pw.TextStyle(fontSize: 18),
-    //                               ),)
-    //                             )
-    //
-    //                       ]),
-    //                       pw.TableRow(verticalAlignment: pw.TableCellVerticalAlignment.middle,children: [
-    //                         pw.Align(alignment: pw.Alignment.centerRight,child: pw.Padding(padding: pw.EdgeInsets.only(right: 10),child:  pw.Text(
-    //                           "Gr Wt :",
-    //                           style: pw.TextStyle(fontSize: 18),
-    //                         ))),
-    //                         pw.Align(alignment: pw.Alignment.centerRight,
-    //                           child: pw.Padding(padding: pw.EdgeInsets.symmetric(horizontal: 20,vertical: 5),child:  pw.Text(
-    //                             double.parse(productDetail["ITM_GWT"].toString())
-    //                                 .toStringAsFixed(3),
-    //                             style: pw.TextStyle(fontSize: 18),
-    //                           ),)
-    //                         )
-    //
-    //                       ]),
-    //                       pw.TableRow(verticalAlignment: pw.TableCellVerticalAlignment.middle,children: [
-    //                         pw.Align(alignment: pw.Alignment.centerRight,child: pw.Padding(padding: pw.EdgeInsets.only(right: 10),child:  pw.Text(
-    //                           "Nt Wt :",
-    //                           style: pw.TextStyle(fontSize: 18),
-    //                         ))),
-    //                         pw.Align(alignment: pw.Alignment.centerRight,
-    //                             child: pw.Padding(padding: pw.EdgeInsets.symmetric(horizontal: 20,vertical: 5),child:  pw.Text(
-    //                               double.parse(productDetail["TagNwt"].toString())
-    //                                   .toStringAsFixed(3),
-    //                               style: pw.TextStyle(fontSize: 18),
-    //                             ),)
-    //                         )
-    //                       ]),
-    //                       pw.TableRow(verticalAlignment: pw.TableCellVerticalAlignment.middle,children: [
-    //                         productDetail == null || Provider.of<CommonCompanyYearSelectionProvider>(context, listen: false).amountType != "F"?pw.SizedBox():
-    //                         pw.Align(alignment: pw.Alignment.centerRight,child: pw.Padding(padding: pw.EdgeInsets.only(right: 10),child:  pw.Text(
-    //                           "Fine Weight :",
-    //                           style: pw.TextStyle(fontSize: 18),
-    //                         ))),
-    //
-    //                         productDetail == null || Provider.of<CommonCompanyYearSelectionProvider>(context, listen: false).amountType != "F"?pw.SizedBox():
-    //                         pw.Align(alignment: pw.Alignment.centerRight,
-    //                             child: pw.Padding(padding: pw.EdgeInsets.symmetric(horizontal: 20,vertical: 5),child:  pw.Text(
-    //                               productDetail == null
-    //                                   ? "-:-"
-    //                                   : productDetail["ITM_FINE"] == ""
-    //                                   ? "-"
-    //                                   : double.parse(productDetail["ITM_FINE"]
-    //                                   .toString())
-    //                                   .toStringAsFixed(3) ??
-    //                                   "-:-",
-    //                               style: pw.TextStyle(fontSize: 18),
-    //                             ),)
-    //                         )
-    //
-    //                       ]),
-    //                       pw.TableRow(verticalAlignment: pw.TableCellVerticalAlignment.middle,children: [
-    //                         pw.Align(alignment: pw.Alignment.centerRight,child: pw.Padding(padding: pw.EdgeInsets.only(right: 10),child:  pw.Text(
-    //                           "Rate 1 Gm :",
-    //                           style: pw.TextStyle(fontSize: 18),
-    //                         ))),
-    //                         pw.Align(alignment: pw.Alignment.centerRight,
-    //                             child: pw.Padding(padding: pw.EdgeInsets.symmetric(horizontal: 20,vertical: 5),child:  pw.Text(
-    //                               double.parse(itemRate.toString())
-    //                                   .toStringAsFixed(2),
-    //                               style: pw.TextStyle(fontSize: 18),
-    //                             ),)
-    //                         )
-    //                       ]),
-    //                       pw.TableRow(verticalAlignment: pw.TableCellVerticalAlignment.middle,children: [
-    //                         pw.Align(alignment: pw.Alignment.centerRight,child: pw.Padding(padding: pw.EdgeInsets.only(right: 10),child:  pw.Text(
-    //                            commonCompanyYearSelectionProvider.CoSname == "UAE"? "Metal Value (AED)": "Item Amt :",
-    //                           style: pw.TextStyle(fontSize: 18),
-    //                         ))),
-    //                         pw.Align(alignment: pw.Alignment.centerRight,
-    //                             child: pw.Padding(padding: pw.EdgeInsets.symmetric(horizontal: 20,vertical: 5),child:  pw.Text(
-    //                               double.parse(itemAmount.toString())
-    //                                   .toStringAsFixed(2) ??
-    //                                   "-:-",
-    //                               style: pw.TextStyle(fontSize: 18),
-    //                             ),)
-    //                         )
-    //                       ]),
-    //                        pw.TableRow(verticalAlignment: pw.TableCellVerticalAlignment.middle,children: [
-    //                          lbrPrc == "0.0" ? pw.SizedBox() :  pw.Align(alignment: pw.Alignment.centerRight,child: pw.Padding(padding: pw.EdgeInsets.only(right: 10),child:  pw.Text(
-    //                           "${commonCompanyYearSelectionProvider.CoSname == "UAE"?"Making":"Lbr"} prc % :",
-    //                           style: pw.TextStyle(fontSize: 18),
-    //                         ))),
-    //                          lbrPrc == "0.0" ? pw.SizedBox() : pw.Align(alignment: pw.Alignment.centerRight,
-    //                             child: pw.Padding(padding: pw.EdgeInsets.symmetric(horizontal: 20,vertical: 5),child:  pw.Text(
-    //                               double.parse(lbrPrc.toString())
-    //                                   .toStringAsFixed(2) ??
-    //                                   "-:-",
-    //                               style: pw.TextStyle(fontSize: 18),
-    //                             ),)
-    //                         )
-    //
-    //                       ]),
-    //                       pw.TableRow(verticalAlignment: pw.TableCellVerticalAlignment.middle,children: [
-    //                         lbrRate == "0.00" ? pw.SizedBox() :  pw.Align(alignment: pw.Alignment.centerRight,child: pw.Padding(padding: pw.EdgeInsets.only(right: 10),child:  pw.Text(
-    //                           "${commonCompanyYearSelectionProvider.CoSname == "UAE"?"Making":"Lbr"} Rate :",
-    //                           style: pw.TextStyle(fontSize: 18),
-    //                         ))),
-    //                         lbrRate == "0.00" ? pw.SizedBox() : pw.Align(alignment: pw.Alignment.centerRight,
-    //                             child: pw.Padding(padding: pw.EdgeInsets.symmetric(horizontal: 20,vertical: 5),child:  pw.Text(
-    //                               double.parse(lbrRate.toString())
-    //                                   .toStringAsFixed(2) ??
-    //                                   "-:-",
-    //                               style: pw.TextStyle(fontSize: 18),
-    //                             ),)
-    //                         )
-    //
-    //                       ]),
-    //                       pw.TableRow(verticalAlignment: pw.TableCellVerticalAlignment.middle,children: [
-    //                         lbrAmmount == "0.0" ? pw.SizedBox() :  pw.Align(alignment: pw.Alignment.centerRight,child: pw.Padding(padding: pw.EdgeInsets.only(right: 10,left: 3),child:  pw.Text(
-    //                           "${commonCompanyYearSelectionProvider.CoSname == "UAE"?"Making":"Lbr"} ${commonCompanyYearSelectionProvider.CoSname == "UAE"?"Charges(AED)":"Amt"} :",
-    //                           style: pw.TextStyle(fontSize: 18),
-    //                         ))),
-    //                         lbrAmmount == "0.0" ? pw.SizedBox() :  pw.Align(alignment: pw.Alignment.centerRight,
-    //                             child: pw.Padding(padding: pw.EdgeInsets.symmetric(horizontal: 20,vertical: 5),child:  pw.Text(
-    //                               double.parse(lbrAmmount.toString())
-    //                                   .toStringAsFixed(2) ??
-    //                                   "-:-",
-    //                               style: pw.TextStyle(fontSize: 18),
-    //                             ),)
-    //                         )
-    //
-    //                       ]),
-    //                       pw.TableRow(verticalAlignment: pw.TableCellVerticalAlignment.middle,children: [
-    //                         othAmmount == "0.0" ? pw.SizedBox() :  pw.Align(alignment: pw.Alignment.centerRight,child: pw.Padding(padding: pw.EdgeInsets.only(right: 10,left: 3),child:  pw.Text(
-    //                           "Oth ${commonCompanyYearSelectionProvider.CoSname == "UAE"?"Charges(AED)":"Amt"} :",
-    //                           style: pw.TextStyle(fontSize: 18),
-    //                         ))),
-    //                         othAmmount == "0.0" ? pw.SizedBox() :  pw.Align(alignment: pw.Alignment.centerRight,
-    //                             child: pw.Padding(padding: pw.EdgeInsets.symmetric(horizontal: 20,vertical: 5),child:  pw.Text(
-    //                               double.parse(othAmmount.toString())
-    //                                   .toStringAsFixed(2) ??
-    //                                   "-:-",
-    //                               style: pw.TextStyle(fontSize: 18),
-    //                             ),)
-    //                         )
-    //                       ]),
-    //
-    //                       pw.TableRow(verticalAlignment: pw.TableCellVerticalAlignment.middle,children: [
-    //                         mrp == "0.0" ? pw.SizedBox() :  pw.Align(alignment: pw.Alignment.centerRight,child: pw.Padding(padding: pw.EdgeInsets.only(right: 10,left: 3),child:  pw.Text(
-    //                           "${commonCompanyYearSelectionProvider.CoSname == "UAE"?"AED":"MRP"} :",
-    //                           style: pw.TextStyle(fontSize: 18),
-    //                         ))),
-    //                         mrp == "0.0" ? pw.SizedBox() : pw.Align(alignment: pw.Alignment.centerRight,
-    //                             child: pw.Padding(padding: pw.EdgeInsets.symmetric(horizontal: 20,vertical: 5),child:  pw.Text(
-    //                               double.parse(mrp.toString())
-    //                                   .toStringAsFixed(2) ??
-    //                                   "-:-",
-    //                               style: pw.TextStyle(fontSize: 18),
-    //                             ),)
-    //                         )
-    //                       ]),
-    //
-    //
-    //                       pw.TableRow(verticalAlignment: pw.TableCellVerticalAlignment.middle,children: [
-    //                         pw.Align(alignment: pw.Alignment.centerRight,child: pw.Padding(padding: pw.EdgeInsets.only(right: 10),child:  pw.Text(
-    //                           "Net ${commonCompanyYearSelectionProvider.CoSname == "UAE"?"Value(AED)":"Amt"} :",
-    //                           style: pw.TextStyle(fontSize: 18),
-    //                         ))),
-    //                         pw.Align(alignment: pw.Alignment.centerRight,
-    //                             child: pw.Padding(padding: pw.EdgeInsets.symmetric(horizontal: 20,vertical: 5),child:  pw.Text(
-    //                               double.parse(netAmmount).toStringAsFixed(2) ??
-    //                                   "-:-",
-    //                               style: pw.TextStyle(fontSize: 18),
-    //                             ),)
-    //                         )
-    //                       ]),
-    //                       pw.TableRow(verticalAlignment: pw.TableCellVerticalAlignment.middle,children: [
-    //                         pw.Align(alignment: pw.Alignment.centerRight,child: pw.Padding(padding: pw.EdgeInsets.only(right: 10),child:  pw.Text(
-    //                           commonCompanyYearSelectionProvider.CoSname == "UAE"?"Vat(AED) :":"Gst Tax :",
-    //                           style: pw.TextStyle(fontSize: 18),
-    //                         ))),
-    //                         pw.Align(alignment: pw.Alignment.centerRight,
-    //                             child: pw.Padding(padding: pw.EdgeInsets.symmetric(horizontal: 20,vertical: 5),child:  pw.Text(
-    //                               double.parse(gstTax).toStringAsFixed(2) ?? "-:-",
-    //                               style: pw.TextStyle(fontSize: 18),
-    //                             ),)
-    //                         )
-    //
-    //                       ]),
-    //
-    //                     ]),
-    //               ),
-    //               pw.SizedBox(height: 20),
-    //               pw.Text(
-    //                 "Total ${commonCompanyYearSelectionProvider.CoSname == "UAE"?"Value(AED)":"Amt"} : ${double.parse(totalAmount).toStringAsFixed(2) ?? "-:-"}",
-    //                 style: pw.TextStyle(
-    //                     fontSize: 22, fontWeight: pw.FontWeight.bold),
-    //               ),
-    //               pw.Text(
-    //                 "Thank you! Visit Again",
-    //                 style: pw.TextStyle(fontSize: 18),
-    //               ),
-    //             ])));
+    if (Platform.isAndroid) {
+      String otherDetailsQuery =
+          "SELECT * FROM BAR_IDTL WHERE CO_CODE='${provider.co_code}' AND LC_CODE='${provider.lc_code}' AND TAG_NO='${widget.tagNo}' AND VCH_SRNO=${productDetail["VCH_SRNO"]}";
 
+      dynamic rawData = await sqlConnection.queryDatabase(otherDetailsQuery);
+      otherDetailsData = jsonDecode(rawData);
+    } else {
+      dynamic data = await MySQLService().getOtherDetails(
+        provider.co_code!,
+        provider.lc_code!,
+        widget.tagNo!,
+        productDetail["VCH_SRNO"].toString(),
+      );
 
+      otherDetailsData = data[0];
+    }
 
     pdf.addPage(
       pw.Page(
@@ -2144,7 +1952,8 @@ printingLable = result;
               children: [
                 pw.Text(
                   "${companyDetails["CO_NAME"]}",
-                  style: pw.TextStyle(fontSize: 24, fontWeight: pw.FontWeight.bold),
+                  style: pw.TextStyle(
+                      fontSize: 24, fontWeight: pw.FontWeight.bold),
                   textAlign: pw.TextAlign.center,
                 ),
                 pw.Text(
@@ -2170,7 +1979,8 @@ printingLable = result;
                 pw.SizedBox(height: 8),
                 pw.Text(
                   "${productDetail["IT_NAME"]}",
-                  style: pw.TextStyle(fontSize: 22, fontWeight: pw.FontWeight.bold),
+                  style: pw.TextStyle(
+                      fontSize: 22, fontWeight: pw.FontWeight.bold),
                   textAlign: pw.TextAlign.center,
                 ),
                 pw.SizedBox(height: 15),
@@ -2193,244 +2003,660 @@ printingLable = result;
                     pw.TableRow(
                         verticalAlignment: pw.TableCellVerticalAlignment.middle,
                         children: [
-                          pw.Expanded(child: pw.Align(
+                          pw.Expanded(
+                              child: pw.Align(
                             alignment: pw.Alignment.centerRight,
-                            child:  pw.Padding(padding: pw.EdgeInsets.only(right: 10,left: 80),child: pw.Text(
-                              "Tag No :",
-                              style: pw.TextStyle(fontSize: 18),
-                            )),
+                            child: pw.Padding(
+                                padding:
+                                    pw.EdgeInsets.only(right: 10, left: 80),
+                                child: pw.Text(
+                                  "Tag No :",
+                                  style: pw.TextStyle(fontSize: 18),
+                                )),
                           )),
-                          pw.Expanded(child:   pw.Align(alignment: pw.Alignment.centerLeft,
-                              child: pw.Padding(padding: pw.EdgeInsets.symmetric(horizontal: 20,vertical: 5),child:  pw.Text(
-                                widget.tagNo.toString(),
-                                style: pw.TextStyle(fontSize: 18),
-                              ),)
-                          ))
-
+                          pw.Expanded(
+                              child: pw.Align(
+                                  alignment: pw.Alignment.centerLeft,
+                                  child: pw.Padding(
+                                    padding: pw.EdgeInsets.symmetric(
+                                        horizontal: 20, vertical: 5),
+                                    child: pw.Text(
+                                      widget.tagNo.toString(),
+                                      style: pw.TextStyle(fontSize: 18),
+                                    ),
+                                  )))
                         ]),
                     pw.TableRow(
                         verticalAlignment: pw.TableCellVerticalAlignment.middle,
                         children: [
-                          pw.Expanded(child: pw.Align(alignment: pw.Alignment.centerRight,child: pw.Padding(padding: pw.EdgeInsets.only(right: 10),child:pw.Text(
-                            "Pcs :",
-                            style: pw.TextStyle(fontSize: 18),
-                          ) ))),
-                          pw.Expanded(child: pw.Align(alignment: pw.Alignment.centerLeft,
-                              child: pw.Padding(padding: pw.EdgeInsets.symmetric(horizontal: 20,vertical: 5),child:  pw.Text(
-                                productDetail["ITM_PCS"].toString(),
-                                style: pw.TextStyle(fontSize: 18),
-                              ) )
-                          ))
-
+                          pw.Expanded(
+                              child: pw.Align(
+                                  alignment: pw.Alignment.centerRight,
+                                  child: pw.Padding(
+                                      padding: pw.EdgeInsets.only(right: 10),
+                                      child: pw.Text(
+                                        "Pcs :",
+                                        style: pw.TextStyle(fontSize: 18),
+                                      )))),
+                          pw.Expanded(
+                              child: pw.Align(
+                                  alignment: pw.Alignment.centerLeft,
+                                  child: pw.Padding(
+                                      padding: pw.EdgeInsets.symmetric(
+                                          horizontal: 20, vertical: 5),
+                                      child: pw.Text(
+                                        productDetail["ITM_PCS"].toString(),
+                                        style: pw.TextStyle(fontSize: 18),
+                                      ))))
                         ]),
-                    pw.TableRow(verticalAlignment: pw.TableCellVerticalAlignment.middle,children: [
-                      productDetail == null || productDetail["DESIGN_NO"] == ""
-                          ?pw.SizedBox():
-                      pw.Expanded(child: pw.Align(alignment: pw.Alignment.centerRight,child: pw.Padding(padding: pw.EdgeInsets.only(right: 10),child:  pw.Text(
-                        "Design :",
-                        style: pw.TextStyle(fontSize: 18),
-                      ),))),
+                    pw.TableRow(
+                        verticalAlignment: pw.TableCellVerticalAlignment.middle,
+                        children: [
+                          productDetail == null ||
+                                  productDetail["DESIGN_NO"] == ""
+                              ? pw.SizedBox()
+                              : pw.Expanded(
+                                  child: pw.Align(
+                                      alignment: pw.Alignment.centerRight,
+                                      child: pw.Padding(
+                                        padding: pw.EdgeInsets.only(right: 10),
+                                        child: pw.Text(
+                                          "Design :",
+                                          style: pw.TextStyle(fontSize: 18),
+                                        ),
+                                      ))),
+                          productDetail == null ||
+                                  productDetail["DESIGN_NO"] == ""
+                              ? pw.SizedBox()
+                              : pw.Expanded(
+                                  child: pw.Align(
+                                      alignment: pw.Alignment.centerLeft,
+                                      child: pw.Padding(
+                                        padding: pw.EdgeInsets.symmetric(
+                                            horizontal: 20, vertical: 5),
+                                        child: pw.Text(
+                                          productDetail == null
+                                              ? "-:-"
+                                              : productDetail["DESIGN_NO"] == ""
+                                                  ? "-"
+                                                  : productDetail[
+                                                          "DESIGN_NO"] ??
+                                                      "-:-",
+                                          style: pw.TextStyle(fontSize: 18),
+                                        ),
+                                      )))
+                        ]),
+                    pw.TableRow(
+                        verticalAlignment: pw.TableCellVerticalAlignment.middle,
+                        children: [
+                          pw.Expanded(
+                              child: pw.Align(
+                                  alignment: pw.Alignment.centerRight,
+                                  child: pw.Padding(
+                                      padding: pw.EdgeInsets.only(right: 10),
+                                      child: pw.Text(
+                                        "Gr Wt :",
+                                        style: pw.TextStyle(fontSize: 18),
+                                      )))),
+                          pw.Expanded(
+                              child: pw.Align(
+                                  alignment: pw.Alignment.centerLeft,
+                                  child: pw.Padding(
+                                    padding: pw.EdgeInsets.symmetric(
+                                        horizontal: 20, vertical: 5),
+                                    child: pw.Text(
+                                      double.parse(productDetail["ITM_GWT"]
+                                              .toString())
+                                          .toStringAsFixed(3),
+                                      style: pw.TextStyle(fontSize: 18),
+                                    ),
+                                  )))
+                        ]),
+                    pw.TableRow(
+                        verticalAlignment: pw.TableCellVerticalAlignment.middle,
+                        children: [
+                          pw.Expanded(
+                              child: pw.Align(
+                                  alignment: pw.Alignment.centerRight,
+                                  child: pw.Padding(
+                                      padding: pw.EdgeInsets.only(right: 10),
+                                      child: pw.Text(
+                                        "Nt Wt :",
+                                        style: pw.TextStyle(fontSize: 18),
+                                      )))),
+                          pw.Expanded(
+                              child: pw.Align(
+                                  alignment: pw.Alignment.centerLeft,
+                                  child: pw.Padding(
+                                    padding: pw.EdgeInsets.symmetric(
+                                        horizontal: 20, vertical: 5),
+                                    child: pw.Text(
+                                      double.parse(productDetail["TagNwt"]
+                                              .toString())
+                                          .toStringAsFixed(3),
+                                      style: pw.TextStyle(fontSize: 18),
+                                    ),
+                                  )))
+                        ]),
+                    pw.TableRow(
+                        verticalAlignment: pw.TableCellVerticalAlignment.middle,
+                        children: [
+                          productDetail == null || provider.amountType != "F"
+                              ? pw.SizedBox()
+                              : pw.Expanded(
+                                  child: pw.Align(
+                                      alignment: pw.Alignment.centerRight,
+                                      child: pw.Padding(
+                                          padding:
+                                              pw.EdgeInsets.only(right: 10),
+                                          child: pw.Text(
+                                            "Fine Weight :",
+                                            style: pw.TextStyle(fontSize: 18),
+                                          )))),
+                          productDetail == null || provider.amountType != "F"
+                              ? pw.SizedBox()
+                              : pw.Expanded(
+                                  child: pw.Align(
+                                      alignment: pw.Alignment.centerLeft,
+                                      child: pw.Padding(
+                                        padding: pw.EdgeInsets.symmetric(
+                                            horizontal: 20, vertical: 5),
+                                        child: pw.Text(
+                                          productDetail == null
+                                              ? "-:-"
+                                              : productDetail["ITM_FINE"] == ""
+                                                  ? "-"
+                                                  : double.parse(productDetail[
+                                                                  "ITM_FINE"]
+                                                              .toString())
+                                                          .toStringAsFixed(3) ??
+                                                      "-:-",
+                                          style: pw.TextStyle(fontSize: 18),
+                                        ),
+                                      )))
+                        ]),
+                    pw.TableRow(
+                        verticalAlignment: pw.TableCellVerticalAlignment.middle,
+                        children: [
+                          printingLable == null
+                              ? pw.SizedBox()
+                              : ((printingLable?.any(
+                                        (e) =>
+                                            e["COL_NAME"]
+                                                    .toString()
+                                                    .toLowerCase() ==
+                                                "ght%" &&
+                                            e["YES_NO"] == "Y",
+                                      ) ??
+                                      false)
+                                  ? pw.Expanded(
+                                      child: pw.Align(
+                                        alignment: pw.Alignment.centerRight,
+                                        child: pw.Padding(
+                                          padding: const pw.EdgeInsets.only(
+                                              right: 10),
+                                          child: pw.Text(
+                                            "${printingLable.where((e) => e["COL_NAME"] == "Ght%" && e["YES_NO"] == "Y").first["COL_NEW_NAME"]}",
+                                            style: pw.TextStyle(fontSize: 18),
+                                          ),
+                                        ),
+                                      ),
+                                    )
+                                  : pw.SizedBox()),
+                          printingLable == null
+                              ? pw.SizedBox()
+                              : ((printingLable?.any(
+                                        (e) =>
+                                            e["COL_NAME"]
+                                                    .toString()
+                                                    .toLowerCase() ==
+                                                "ght%" &&
+                                            e["YES_NO"] == "Y",
+                                      ) ??
+                                      false)
+                                  ? pw.Expanded(
+                                      child: pw.Align(
+                                          alignment: pw.Alignment.centerLeft,
+                                          child: pw.Padding(
+                                            padding: pw.EdgeInsets.symmetric(
+                                                horizontal: 20, vertical: 5),
+                                            child: pw.Text(
+                                              productDetail == null
+                                                  ? "-:-"
+                                                  : productDetail["ITM_GHT_PRC"]
+                                                      .toString(),
+                                              style: pw.TextStyle(fontSize: 18),
+                                            ),
+                                          )))
+                                  : pw.SizedBox())
+                        ]),
 
-                      productDetail == null || productDetail["DESIGN_NO"] == ""
-                          ?pw.SizedBox():
-                      pw.Expanded(child: pw.Align(alignment: pw.Alignment.centerLeft,
-                          child: pw.Padding(padding: pw.EdgeInsets.symmetric(horizontal: 20,vertical: 5),child: pw.Text(
-                            productDetail == null
-                                ? "-:-"
-                                : productDetail["DESIGN_NO"] == ""
-                                ? "-"
-                                : productDetail["DESIGN_NO"] ?? "-:-",
-                            style: pw.TextStyle(fontSize: 18),
-                          ),)
-                      ))
+                    pw.TableRow(verticalAlignment: pw.TableCellVerticalAlignment.middle,children: [
+                      printingLable == null
+                          ? pw.SizedBox()
+                          : ((printingLable?.any(
+                            (e) =>
+                        e["COL_NAME"]
+                            .toString()
+                            .toLowerCase() ==
+                            "ghtwt" &&
+                            e["YES_NO"] == "Y",
+                      ) ??
+                          false)
+                          ? pw.Expanded(
+                        child: pw.Align(
+                          alignment: pw.Alignment.centerRight,
+                          child: pw.Padding(
+                            padding: const pw.EdgeInsets.only(
+                                right: 10),
+                            child: pw.Text(
+                              "${printingLable.where((e) => e["COL_NAME"] == "GhtWt" && e["YES_NO"] == "Y").first["COL_NEW_NAME"]} :",
+                              style: pw.TextStyle(fontSize: 18),
+                            ),
+                          ),
+                        ),
+                      )
+                          : pw.SizedBox()),
+                      printingLable == null
+                          ? pw.SizedBox()
+                          : ((printingLable?.any(
+                            (e) =>
+                        e["COL_NAME"]
+                            .toString()
+                            .toLowerCase() ==
+                            "ght%" &&
+                            e["YES_NO"] == "Y",
+                      ) ??
+                          false)
+                          ? pw.Expanded(
+                          child: pw.Align(
+                              alignment: pw.Alignment.centerLeft,
+                              child: pw.Padding(
+                                padding: pw.EdgeInsets.symmetric(
+                                    horizontal: 20, vertical: 5),
+                                child: pw.Text(
+                                  double.parse(
+                                      productDetail["ITM_GHAT"]
+                                          .toString())
+                                      .toStringAsFixed(3),
+                                  style: pw.TextStyle(fontSize: 18),
+                                ),
+                              )))
+                          : pw.SizedBox())
+                    ]),
+                    pw.TableRow(
+                        verticalAlignment: pw.TableCellVerticalAlignment.middle,
+                        children: [
+                          pw.Expanded(
+                              child: pw.Align(
+                                  alignment: pw.Alignment.centerRight,
+                                  child: pw.Padding(
+                                      padding: pw.EdgeInsets.only(right: 10),
+                                      child: pw.Text(
+                                        "Rate 1 Gm :",
+                                        style: pw.TextStyle(fontSize: 18),
+                                      )))),
+                          pw.Expanded(
+                              child: pw.Align(
+                                  alignment: pw.Alignment.centerLeft,
+                                  child: pw.Padding(
+                                    padding: pw.EdgeInsets.symmetric(
+                                        horizontal: 20, vertical: 5),
+                                    child: pw.Text(
+                                      double.parse(itemRate.toString())
+                                          .toStringAsFixed(2),
+                                      style: pw.TextStyle(fontSize: 18),
+                                    ),
+                                  )))
+                        ]),
+                    pw.TableRow(
+                        verticalAlignment: pw.TableCellVerticalAlignment.middle,
+                        children: [
+                          pw.Expanded(
+                              child: pw.Align(
+                                  alignment: pw.Alignment.centerRight,
+                                  child: pw.Padding(
+                                      padding: pw.EdgeInsets.only(right: 10),
+                                      child: pw.Text(
+                                        commonCompanyYearSelectionProvider
+                                                    .CoSname ==
+                                                "UAE"
+                                            ? "Metal Value (AED)"
+                                            : "Item Amt :",
+                                        style: pw.TextStyle(fontSize: 18),
+                                      )))),
+                          pw.Expanded(
+                              child: pw.Align(
+                                  alignment: pw.Alignment.centerLeft,
+                                  child: pw.Padding(
+                                    padding: pw.EdgeInsets.symmetric(
+                                        horizontal: 20, vertical: 5),
+                                    child: pw.Text(
+                                      double.parse(itemAmount.toString())
+                                              .toStringAsFixed(2) ??
+                                          "-:-",
+                                      style: pw.TextStyle(fontSize: 18),
+                                    ),
+                                  )))
+                        ]),
+                    pw.TableRow(
+                        verticalAlignment: pw.TableCellVerticalAlignment.middle,
+                        children: [
+                          lbrPrc == "0.0"
+                              ? pw.SizedBox()
+                              : pw.Expanded(
+                                  child: pw.Align(
+                                      alignment: pw.Alignment.centerRight,
+                                      child: pw.Padding(
+                                          padding:
+                                              pw.EdgeInsets.only(right: 10),
+                                          child: pw.Text(
+                                            "${commonCompanyYearSelectionProvider.CoSname == "UAE" ? "Making" : "Lbr"} prc % :",
+                                            style: pw.TextStyle(fontSize: 18),
+                                          )))),
+                          lbrPrc == "0.0"
+                              ? pw.SizedBox()
+                              : pw.Expanded(
+                                  child: pw.Align(
+                                      alignment: pw.Alignment.centerLeft,
+                                      child: pw.Padding(
+                                        padding: pw.EdgeInsets.symmetric(
+                                            horizontal: 20, vertical: 5),
+                                        child: pw.Text(
+                                          double.parse(lbrPrc.toString())
+                                                  .toStringAsFixed(2) ??
+                                              "-:-",
+                                          style: pw.TextStyle(fontSize: 18),
+                                        ),
+                                      )))
+                        ]),
+                    pw.TableRow(
+                        verticalAlignment: pw.TableCellVerticalAlignment.middle,
+                        children: [
+                          lbrRate == "0.00"
+                              ? pw.SizedBox()
+                              : pw.Expanded(
+                                  child: pw.Align(
+                                      alignment: pw.Alignment.centerRight,
+                                      child: pw.Padding(
+                                          padding:
+                                              pw.EdgeInsets.only(right: 10),
+                                          child: pw.Text(
+                                            "${commonCompanyYearSelectionProvider.CoSname == "UAE" ? "Making" : "Lbr"} Rate :",
+                                            style: pw.TextStyle(fontSize: 18),
+                                          )))),
+                          lbrRate == "0.00"
+                              ? pw.SizedBox()
+                              : pw.Expanded(
+                                  child: pw.Align(
+                                      alignment: pw.Alignment.centerLeft,
+                                      child: pw.Padding(
+                                        padding: pw.EdgeInsets.symmetric(
+                                            horizontal: 20, vertical: 5),
+                                        child: pw.Text(
+                                          double.parse(lbrRate.toString())
+                                                  .toStringAsFixed(2) ??
+                                              "-:-",
+                                          style: pw.TextStyle(fontSize: 18),
+                                        ),
+                                      )))
+                        ]),
+                    pw.TableRow(
+                        verticalAlignment: pw.TableCellVerticalAlignment.middle,
+                        children: [
+                          lbrAmmount == "0.0"
+                              ? pw.SizedBox()
+                              : pw.Expanded(
+                                  child: pw.Align(
+                                      alignment: pw.Alignment.centerRight,
+                                      child: pw.Padding(
+                                          padding: pw.EdgeInsets.only(
+                                              right: 10, left: 3),
+                                          child: pw.Text(
+                                            "${commonCompanyYearSelectionProvider.CoSname == "UAE" ? "Making" : "Lbr"} ${commonCompanyYearSelectionProvider.CoSname == "UAE" ? "Charges(AED)" : "Amt"} :",
+                                            style: pw.TextStyle(fontSize: 18),
+                                          )))),
+                          lbrAmmount == "0.0"
+                              ? pw.SizedBox()
+                              : pw.Expanded(
+                                  child: pw.Align(
+                                      alignment: pw.Alignment.centerLeft,
+                                      child: pw.Padding(
+                                        padding: pw.EdgeInsets.symmetric(
+                                            horizontal: 20, vertical: 5),
+                                        child: pw.Text(
+                                          double.parse(lbrAmmount.toString())
+                                                  .toStringAsFixed(2) ??
+                                              "-:-",
+                                          style: pw.TextStyle(fontSize: 18),
+                                        ),
+                                      )))
+                        ]),
+                    pw.TableRow(
+                        verticalAlignment: pw.TableCellVerticalAlignment.middle,
+                        children: [
+                          othAmmount == "0.0"
+                              ? pw.SizedBox()
+                              : pw.Expanded(
+                                  child: pw.Align(
+                                      alignment: pw.Alignment.centerRight,
+                                      child: pw.Padding(
+                                          padding: pw.EdgeInsets.only(
+                                              right: 10, left: 3),
+                                          child: pw.Text(
+                                            "Oth ${commonCompanyYearSelectionProvider.CoSname == "UAE" ? "Charges(AED)" : "Amt"} :",
+                                            style: const pw.TextStyle(
+                                                fontSize: 18),
+                                          )))),
+                          othAmmount == "0.0"
+                              ? pw.SizedBox()
+                              : pw.Expanded(
+                                  child: pw.Align(
+                                      alignment: pw.Alignment.centerLeft,
+                                      child: pw.Padding(
+                                        padding: const pw.EdgeInsets.symmetric(
+                                            horizontal: 20, vertical: 5),
+                                        child: pw.Text(
+                                          double.parse(othAmmount.toString())
+                                                  .toStringAsFixed(2) ??
+                                              "-:-",
+                                          style:
+                                              const pw.TextStyle(fontSize: 18),
+                                        ),
+                                      )))
+                        ]),
 
-                    ]),
-                    pw.TableRow(verticalAlignment: pw.TableCellVerticalAlignment.middle,children: [
-                      pw.Expanded(child: pw.Align(alignment: pw.Alignment.centerRight,child: pw.Padding(padding: pw.EdgeInsets.only(right: 10),child:  pw.Text(
-                        "Gr Wt :",
-                        style: pw.TextStyle(fontSize: 18),
-                      )))),
-                      pw.Expanded(child: pw.Align(alignment: pw.Alignment.centerLeft,
-                          child: pw.Padding(padding: pw.EdgeInsets.symmetric(horizontal: 20,vertical: 5),child:  pw.Text(
-                            double.parse(productDetail["ITM_GWT"].toString())
-                                .toStringAsFixed(3),
-                            style: pw.TextStyle(fontSize: 18),
-                          ),)
-                      ))
+                    pw.TableRow(
+                        verticalAlignment: pw.TableCellVerticalAlignment.middle,
+                        children: [
+                          mrp == "0.0"
+                              ? pw.SizedBox()
+                              : pw.Expanded(
+                                  child: pw.Align(
+                                      alignment: pw.Alignment.centerRight,
+                                      child: pw.Padding(
+                                          padding: pw.EdgeInsets.only(
+                                              right: 10, left: 3),
+                                          child: pw.Text(
+                                            "${commonCompanyYearSelectionProvider.CoSname == "UAE" ? "AED" : "MRP"} :",
+                                            style: const pw.TextStyle(
+                                                fontSize: 18),
+                                          )))),
+                          mrp == "0.0"
+                              ? pw.SizedBox()
+                              : pw.Expanded(
+                                  child: pw.Align(
+                                      alignment: pw.Alignment.centerLeft,
+                                      child: pw.Padding(
+                                        padding: pw.EdgeInsets.symmetric(
+                                            horizontal: 20, vertical: 5),
+                                        child: pw.Text(
+                                          double.parse(mrp.toString())
+                                                  .toStringAsFixed(2) ??
+                                              "-:-",
+                                          style: pw.TextStyle(fontSize: 18),
+                                        ),
+                                      )))
+                        ]),
 
-                    ]),
-                    pw.TableRow(verticalAlignment: pw.TableCellVerticalAlignment.middle,children: [
-                      pw.Expanded(child: pw.Align(alignment: pw.Alignment.centerRight,child: pw.Padding(padding: pw.EdgeInsets.only(right: 10),child:  pw.Text(
-                        "Nt Wt :",
-                        style: pw.TextStyle(fontSize: 18),
-                      )))),
-                      pw.Expanded(child: pw.Align(alignment: pw.Alignment.centerLeft,
-                          child: pw.Padding(padding: pw.EdgeInsets.symmetric(horizontal: 20,vertical: 5),child:  pw.Text(
-                            double.parse(productDetail["TagNwt"].toString())
-                                .toStringAsFixed(3),
-                            style: pw.TextStyle(fontSize: 18),
-                          ),)
-                      ))
-                    ]),
-                    pw.TableRow(verticalAlignment: pw.TableCellVerticalAlignment.middle,children: [
-                      productDetail == null || provider.amountType != "F"?pw.SizedBox():
-                      pw.Expanded(child: pw.Align(alignment: pw.Alignment.centerRight,child: pw.Padding(padding: pw.EdgeInsets.only(right: 10),child:  pw.Text(
-                        "Fine Weight :",
-                        style: pw.TextStyle(fontSize: 18),
-                      )))),
-
-                      productDetail == null || provider.amountType != "F"?pw.SizedBox():
-                      pw.Expanded(child: pw.Align(alignment: pw.Alignment.centerLeft,
-                          child: pw.Padding(padding: pw.EdgeInsets.symmetric(horizontal: 20,vertical: 5),child:  pw.Text(
-                            productDetail == null
-                                ? "-:-"
-                                : productDetail["ITM_FINE"] == ""
-                                ? "-"
-                                : double.parse(productDetail["ITM_FINE"]
-                                .toString())
-                                .toStringAsFixed(3) ??
-                                "-:-",
-                            style: pw.TextStyle(fontSize: 18),
-                          ),)
-                      ))
-
-                    ]),
-                    pw.TableRow(verticalAlignment: pw.TableCellVerticalAlignment.middle,children: [
-                      pw.Expanded(child: pw.Align(alignment: pw.Alignment.centerRight,child: pw.Padding(padding: pw.EdgeInsets.only(right: 10),child:  pw.Text(
-                        "Rate 1 Gm :",
-                        style: pw.TextStyle(fontSize: 18),
-                      )))),
-                      pw.Expanded(child: pw.Align(alignment: pw.Alignment.centerLeft,
-                          child: pw.Padding(padding: pw.EdgeInsets.symmetric(horizontal: 20,vertical: 5),child:  pw.Text(
-                            double.parse(itemRate.toString())
-                                .toStringAsFixed(2),
-                            style: pw.TextStyle(fontSize: 18),
-                          ),)
-                      ))
-                    ]),
-                    pw.TableRow(verticalAlignment: pw.TableCellVerticalAlignment.middle,children: [
-                      pw.Expanded(child: pw.Align(alignment: pw.Alignment.centerRight,child: pw.Padding(padding: pw.EdgeInsets.only(right: 10),child:  pw.Text(
-                        commonCompanyYearSelectionProvider.CoSname == "UAE"? "Metal Value (AED)": "Item Amt :",
-                        style: pw.TextStyle(fontSize: 18),
-                      )))),
-                      pw.Expanded(child: pw.Align(alignment: pw.Alignment.centerLeft,
-                          child: pw.Padding(padding: pw.EdgeInsets.symmetric(horizontal: 20,vertical: 5),child:  pw.Text(
-                            double.parse(itemAmount.toString())
-                                .toStringAsFixed(2) ??
-                                "-:-",
-                            style: pw.TextStyle(fontSize: 18),
-                          ),)
-                      ))
-                    ]),
-                    pw.TableRow(verticalAlignment: pw.TableCellVerticalAlignment.middle,children: [
-                      lbrPrc == "0.0" ? pw.SizedBox() :  pw.Expanded(child: pw.Align(alignment: pw.Alignment.centerRight,child: pw.Padding(padding: pw.EdgeInsets.only(right: 10),child:  pw.Text(
-                        "${commonCompanyYearSelectionProvider.CoSname == "UAE"?"Making":"Lbr"} prc % :",
-                        style: pw.TextStyle(fontSize: 18),
-                      )))),
-                      lbrPrc == "0.0" ? pw.SizedBox() : pw.Expanded(child: pw.Align(alignment: pw.Alignment.centerLeft,
-                          child: pw.Padding(padding: pw.EdgeInsets.symmetric(horizontal: 20,vertical: 5),child:  pw.Text(
-                            double.parse(lbrPrc.toString())
-                                .toStringAsFixed(2) ??
-                                "-:-",
-                            style: pw.TextStyle(fontSize: 18),
-                          ),)
-                      ))
-
-                    ]),
-                    pw.TableRow(verticalAlignment: pw.TableCellVerticalAlignment.middle,children: [
-                      lbrRate == "0.00" ? pw.SizedBox() :  pw.Expanded(child: pw.Align(alignment: pw.Alignment.centerRight,child: pw.Padding(padding: pw.EdgeInsets.only(right: 10),child:  pw.Text(
-                        "${commonCompanyYearSelectionProvider.CoSname == "UAE"?"Making":"Lbr"} Rate :",
-                        style: pw.TextStyle(fontSize: 18),
-                      )))),
-                      lbrRate == "0.00" ? pw.SizedBox() : pw.Expanded(child: pw.Align(alignment: pw.Alignment.centerLeft,
-                          child: pw.Padding(padding: pw.EdgeInsets.symmetric(horizontal: 20,vertical: 5),child:  pw.Text(
-                            double.parse(lbrRate.toString())
-                                .toStringAsFixed(2) ??
-                                "-:-",
-                            style: pw.TextStyle(fontSize: 18),
-                          ),)
-                      ))
-
-                    ]),
-                    pw.TableRow(verticalAlignment: pw.TableCellVerticalAlignment.middle,children: [
-                      lbrAmmount == "0.0" ? pw.SizedBox() :  pw.Expanded(child: pw.Align(alignment: pw.Alignment.centerRight,child: pw.Padding(padding: pw.EdgeInsets.only(right: 10,left: 3),child:  pw.Text(
-                        "${commonCompanyYearSelectionProvider.CoSname == "UAE"?"Making":"Lbr"} ${commonCompanyYearSelectionProvider.CoSname == "UAE"?"Charges(AED)":"Amt"} :",
-                        style: pw.TextStyle(fontSize: 18),
-                      )))),
-                      lbrAmmount == "0.0" ? pw.SizedBox() :  pw.Expanded(child: pw.Align(alignment: pw.Alignment.centerLeft,
-                          child: pw.Padding(padding: pw.EdgeInsets.symmetric(horizontal: 20,vertical: 5),child:  pw.Text(
-                            double.parse(lbrAmmount.toString())
-                                .toStringAsFixed(2) ??
-                                "-:-",
-                            style: pw.TextStyle(fontSize: 18),
-                          ),)
-                      ))
-
-                    ]),
-                    pw.TableRow(verticalAlignment: pw.TableCellVerticalAlignment.middle,children: [
-                      othAmmount == "0.0" ? pw.SizedBox() :  pw.Expanded(child: pw.Align(alignment: pw.Alignment.centerRight,child: pw.Padding(padding: pw.EdgeInsets.only(right: 10,left: 3),child:  pw.Text(
-                        "Oth ${commonCompanyYearSelectionProvider.CoSname == "UAE"?"Charges(AED)":"Amt"} :",
-                        style: const pw.TextStyle(fontSize: 18),
-                      )))),
-                      othAmmount == "0.0" ? pw.SizedBox() :  pw.Expanded(child: pw.Align(alignment: pw.Alignment.centerLeft,
-                          child: pw.Padding(padding: const pw.EdgeInsets.symmetric(horizontal: 20,vertical: 5),child:  pw.Text(
-                            double.parse(othAmmount.toString())
-                                .toStringAsFixed(2) ??
-                                "-:-",
-                            style: const pw.TextStyle(fontSize: 18),
-                          ),)
-                      ))
-                    ]),
-
-                    pw.TableRow(verticalAlignment: pw.TableCellVerticalAlignment.middle,children: [
-                      mrp == "0.0" ? pw.SizedBox() :  pw.Expanded(child: pw.Align(alignment: pw.Alignment.centerRight,child: pw.Padding(padding: pw.EdgeInsets.only(right: 10,left: 3),child:  pw.Text(
-                        "${commonCompanyYearSelectionProvider.CoSname == "UAE"?"AED":"MRP"} :",
-                        style: const pw.TextStyle(fontSize: 18),
-                      )))),
-                      mrp == "0.0" ? pw.SizedBox() : pw.Expanded(child: pw.Align(alignment: pw.Alignment.centerLeft,
-                          child: pw.Padding(padding: pw.EdgeInsets.symmetric(horizontal: 20,vertical: 5),child:  pw.Text(
-                            double.parse(mrp.toString())
-                                .toStringAsFixed(2) ??
-                                "-:-",
-                            style: pw.TextStyle(fontSize: 18),
-                          ),)
-                      ))
-                    ]),
-
-
-                    pw.TableRow(verticalAlignment: pw.TableCellVerticalAlignment.middle,children: [
-                      pw.Expanded(child: pw.Align(alignment: pw.Alignment.centerRight,child: pw.Padding(padding: pw.EdgeInsets.only(right: 10),child:  pw.Text(
-                        "Net ${commonCompanyYearSelectionProvider.CoSname == "UAE"?"Value(AED)":"Amt"} :",
-                        style: pw.TextStyle(fontSize: 18),
-                      )))),
-                      pw.Expanded(child: pw.Align(alignment: pw.Alignment.centerLeft,
-                          child: pw.Padding(padding: pw.EdgeInsets.symmetric(horizontal: 20,vertical: 5),child:  pw.Text(
-                            double.parse(netAmmount).toStringAsFixed(2) ??
-                                "-:-",
-                            style: pw.TextStyle(fontSize: 18),
-                          ),)
-                      ))
-                    ]),
-                    pw.TableRow(verticalAlignment: pw.TableCellVerticalAlignment.middle,children: [
-                      pw.Expanded(child: pw.Align(alignment: pw.Alignment.centerRight,child: pw.Padding(padding: pw.EdgeInsets.only(right: 10),child:  pw.Text(
-                        commonCompanyYearSelectionProvider.CoSname == "UAE"?"Vat(AED) :":"Gst Tax :",
-                        style: pw.TextStyle(fontSize: 18),
-                      )))),
-                      pw.Expanded(child: pw.Align(alignment: pw.Alignment.centerLeft,
-                          child: pw.Padding(padding: pw.EdgeInsets.symmetric(horizontal: 20,vertical: 5),child:  pw.Text(
-                            double.parse(gstTax).toStringAsFixed(2) ?? "-:-",
-                            style: pw.TextStyle(fontSize: 18),
-                          ),)
-                      ))
-
-                    ]),
+                    pw.TableRow(
+                        verticalAlignment: pw.TableCellVerticalAlignment.middle,
+                        children: [
+                          pw.Expanded(
+                              child: pw.Align(
+                                  alignment: pw.Alignment.centerRight,
+                                  child: pw.Padding(
+                                      padding: pw.EdgeInsets.only(right: 10),
+                                      child: pw.Text(
+                                        "Net ${commonCompanyYearSelectionProvider.CoSname == "UAE" ? "Value(AED)" : "Amt"} :",
+                                        style: pw.TextStyle(fontSize: 18),
+                                      )))),
+                          pw.Expanded(
+                              child: pw.Align(
+                                  alignment: pw.Alignment.centerLeft,
+                                  child: pw.Padding(
+                                    padding: pw.EdgeInsets.symmetric(
+                                        horizontal: 20, vertical: 5),
+                                    child: pw.Text(
+                                      double.parse(netAmmount)
+                                              .toStringAsFixed(2) ??
+                                          "-:-",
+                                      style: pw.TextStyle(fontSize: 18),
+                                    ),
+                                  )))
+                        ]),
+                    pw.TableRow(
+                        verticalAlignment: pw.TableCellVerticalAlignment.middle,
+                        children: [
+                          pw.Expanded(
+                              child: pw.Align(
+                                  alignment: pw.Alignment.centerRight,
+                                  child: pw.Padding(
+                                      padding: pw.EdgeInsets.only(right: 10),
+                                      child: pw.Text(
+                                        commonCompanyYearSelectionProvider
+                                                    .CoSname ==
+                                                "UAE"
+                                            ? "Vat(AED) :"
+                                            : "Gst Tax :",
+                                        style: pw.TextStyle(fontSize: 18),
+                                      )))),
+                          pw.Expanded(
+                              child: pw.Align(
+                                  alignment: pw.Alignment.centerLeft,
+                                  child: pw.Padding(
+                                    padding: pw.EdgeInsets.symmetric(
+                                        horizontal: 20, vertical: 5),
+                                    child: pw.Text(
+                                      double.parse(gstTax).toStringAsFixed(2) ??
+                                          "-:-",
+                                      style: pw.TextStyle(fontSize: 18),
+                                    ),
+                                  )))
+                        ]),
                   ],
                 ),
+                if (otherDetailsData != null &&
+                    otherDetailsData.isNotEmpty) ...[
+                  pw.SizedBox(height: 15),
+                  pw.Text(
+                    "Other Details",
+                    style: pw.TextStyle(
+                        fontSize: 20, fontWeight: pw.FontWeight.bold),
+                  ),
+                  pw.SizedBox(height: 8),
+                  pw.Table(
+                    border: pw.TableBorder.all(),
+                    columnWidths: {
+                      0: pw.FlexColumnWidth(2),
+                      1: pw.FlexColumnWidth(1),
+                      2: pw.FlexColumnWidth(1),
+                      3: pw.FlexColumnWidth(1),
+                      4: pw.FlexColumnWidth(2),
+                    },
+                    children: [
+                      // Header row
+                      pw.TableRow(
+                        decoration:
+                            const pw.BoxDecoration(color: PdfColors.grey300),
+                        children: [
+                          pw.Padding(
+                              padding: const pw.EdgeInsets.all(5),
+                              child: pw.Text("Stone",
+                                  style: pw.TextStyle(
+                                      fontWeight: pw.FontWeight.bold))),
+                          pw.Padding(
+                              padding: const pw.EdgeInsets.all(5),
+                              child: pw.Text("Pcs",
+                                  style: pw.TextStyle(
+                                      fontWeight: pw.FontWeight.bold))),
+                          pw.Padding(
+                              padding: const pw.EdgeInsets.all(5),
+                              child: pw.Text("CT Weight",
+                                  style: pw.TextStyle(
+                                      fontWeight: pw.FontWeight.bold))),
+                          pw.Padding(
+                              padding: const pw.EdgeInsets.all(5),
+                              child: pw.Text("Rate",
+                                  style: pw.TextStyle(
+                                      fontWeight: pw.FontWeight.bold))),
+                          pw.Padding(
+                              padding: const pw.EdgeInsets.all(5),
+                              child: pw.Text("Net Amount",
+                                  style: pw.TextStyle(
+                                      fontWeight: pw.FontWeight.bold))),
+                        ],
+                      ),
+
+                      // Dynamic rows
+                      ...otherDetailsData.map<pw.TableRow>((row) {
+                        String pcs = row["IT_PCS"]?.toString() ?? "0";
+
+                        String gwt = row["IT_GWT"] != null
+                            ? (double.tryParse(row["IT_GWT"].toString())
+                                    ?.toStringAsFixed(2) ??
+                                "0.00")
+                            : "0.00";
+
+                        String rate = row["IT_RATE"] != null
+                            ? (double.tryParse(row["IT_RATE"].toString())
+                                    ?.toStringAsFixed(2) ??
+                                "0.00")
+                            : "0.00";
+
+                        String netAmt = row["IT_NET_AMT"] != null
+                            ? (double.tryParse(row["IT_NET_AMT"].toString())
+                                    ?.toStringAsFixed(2) ??
+                                "0.00")
+                            : "0.00";
+
+                        return pw.TableRow(children: [
+                          pw.Padding(
+                              padding: const pw.EdgeInsets.all(5),
+                              child: pw.Text(row["IT_CODE"] ?? "-")),
+                          pw.Padding(
+                              padding: const pw.EdgeInsets.all(5),
+                              child: pw.Text(pcs)),
+                          pw.Padding(
+                              padding: const pw.EdgeInsets.all(5),
+                              child: pw.Text(gwt)),
+                          pw.Padding(
+                              padding: const pw.EdgeInsets.all(5),
+                              child: pw.Text(rate)),
+                          pw.Padding(
+                              padding: const pw.EdgeInsets.all(5),
+                              child: pw.Text(netAmt)),
+                        ]);
+                      }).toList(),
+                    ],
+                  ),
+                ],
 
                 pw.SizedBox(height: 20),
                 pw.Text(
                   "Total ${commonCompanyYearSelectionProvider.CoSname == "UAE" ? "Value(AED)" : "Amt"} : ${double.parse(totalAmount).toStringAsFixed(2)}",
-                  style: pw.TextStyle(fontSize: 22, fontWeight: pw.FontWeight.bold),
+                  style: pw.TextStyle(
+                      fontSize: 22, fontWeight: pw.FontWeight.bold),
                 ),
                 pw.Text(
                   "Thank you! Visit Again",
@@ -2442,7 +2668,6 @@ printingLable = result;
         ),
       ),
     );
-
 
     sharePDF(await pdf.save(), "tag_pdf");
   }

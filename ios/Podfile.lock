@@ -22,13 +22,13 @@ PODS:
 
 DEPENDENCIES:
   - Flutter (from `Flutter`)
-  - image_picker_ios (from `.symlinks/plugins/image_picker_ios/ios`)
-  - path_provider_foundation (from `.symlinks/plugins/path_provider_foundation/darwin`)
+  - image_picker_ios (from `/Users/jigar/Documents/Jigar/Projects/DULTRA/datacare_ultra/ios/.symlinks/plugins/image_picker_ios/ios`)
+  - path_provider_foundation (from `/Users/jigar/Documents/Jigar/Projects/DULTRA/datacare_ultra/ios/.symlinks/plugins/path_provider_foundation/darwin`)
   - qr_code_scanner_plus (from `.symlinks/plugins/qr_code_scanner_plus/ios`)
-  - share_plus (from `.symlinks/plugins/share_plus/ios`)
-  - shared_preferences_foundation (from `.symlinks/plugins/shared_preferences_foundation/darwin`)
-  - sqflite_darwin (from `.symlinks/plugins/sqflite_darwin/darwin`)
-  - url_launcher_ios (from `.symlinks/plugins/url_launcher_ios/ios`)
+  - share_plus (from `/Users/jigar/Documents/Jigar/Projects/DULTRA/datacare_ultra/ios/.symlinks/plugins/share_plus/ios`)
+  - shared_preferences_foundation (from `/Users/jigar/Documents/Jigar/Projects/DULTRA/datacare_ultra/ios/.symlinks/plugins/shared_preferences_foundation/darwin`)
+  - sqflite_darwin (from `/Users/jigar/Documents/Jigar/Projects/DULTRA/datacare_ultra/ios/.symlinks/plugins/sqflite_darwin/darwin`)
+  - url_launcher_ios (from `/Users/jigar/Documents/Jigar/Projects/DULTRA/datacare_ultra/ios/.symlinks/plugins/url_launcher_ios/ios`)
 
 SPEC REPOS:
   trunk:
@@ -38,19 +38,19 @@ EXTERNAL SOURCES:
   Flutter:
     :path: Flutter
   image_picker_ios:
-    :path: ".symlinks/plugins/image_picker_ios/ios"
+    :path: "/Users/jigar/Documents/Jigar/Projects/DULTRA/datacare_ultra/ios/.symlinks/plugins/image_picker_ios/ios"
   path_provider_foundation:
-    :path: ".symlinks/plugins/path_provider_foundation/darwin"
+    :path: "/Users/jigar/Documents/Jigar/Projects/DULTRA/datacare_ultra/ios/.symlinks/plugins/path_provider_foundation/darwin"
   qr_code_scanner_plus:
     :path: ".symlinks/plugins/qr_code_scanner_plus/ios"
   share_plus:
-    :path: ".symlinks/plugins/share_plus/ios"
+    :path: "/Users/jigar/Documents/Jigar/Projects/DULTRA/datacare_ultra/ios/.symlinks/plugins/share_plus/ios"
   shared_preferences_foundation:
-    :path: ".symlinks/plugins/shared_preferences_foundation/darwin"
+    :path: "/Users/jigar/Documents/Jigar/Projects/DULTRA/datacare_ultra/ios/.symlinks/plugins/shared_preferences_foundation/darwin"
   sqflite_darwin:
-    :path: ".symlinks/plugins/sqflite_darwin/darwin"
+    :path: "/Users/jigar/Documents/Jigar/Projects/DULTRA/datacare_ultra/ios/.symlinks/plugins/sqflite_darwin/darwin"
   url_launcher_ios:
-    :path: ".symlinks/plugins/url_launcher_ios/ios"
+    :path: "/Users/jigar/Documents/Jigar/Projects/DULTRA/datacare_ultra/ios/.symlinks/plugins/url_launcher_ios/ios"
 
 SPEC CHECKSUMS:
   Flutter: e0871f40cf51350855a761d2e70bf5af5b9b5de7
@@ -63,6 +63,6 @@ SPEC CHECKSUMS:
   sqflite_darwin: 20b2a3a3b70e43edae938624ce550a3cbf66a3d0
   url_launcher_ios: 694010445543906933d732453a59da0a173ae33d
 
-PODFILE CHECKSUM: a57f30d18f102dd3ce366b1d62a55ecbef2158e5
+PODFILE CHECKSUM: 6b914ffbbc6b72101e66027ca01fc21915ac0582
 
 COCOAPODS: 1.16.2

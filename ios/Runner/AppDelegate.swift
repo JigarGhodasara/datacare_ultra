@@ -186,6 +186,16 @@ class AppDelegate: FlutterAppDelegate {
                     let args = call.arguments as! Dictionary<String, Any>
                 self?.getReminder(result:result,coCode:args["coCode"] as! String, lcCode: args["lcCode"] as! String, fromDate: args["fromDate"] as! String, toDate: args["toDate"] as! String)
                 }
+            else if call.method == "getOtherDetails" {
+                    let args = call.arguments as! Dictionary<String, Any>
+                self?.getOtherDetails(result:result,coCode:args["coCode"] as! String, lcCode: args["lcCode"] as! String, tagNo: args["tagNo"] as! String, vchsrNo: args["vchsrNo"] as! String)
+                }
+            else if call.method == "getPrintLable" {
+                    let args = call.arguments as! Dictionary<String, Any>
+                print("Query Print")
+                print(args["query"])
+                self?.getPrintLable(result:result,query:args["query"] as! String)
+                }
             else {
                 result(FlutterMethodNotImplemented)
             }
@@ -713,6 +723,29 @@ class AppDelegate: FlutterAppDelegate {
         let query = "SELECT A.CO_CODE,A.LC_CODE,A.CO_YEAR,A.BOOK_NAME, A.CO_BOOK,A.HD_VCH_NO,A.VCH_NO,A.VCH_DATE,A.REM_DATE,A.AC_CODE,A.ENTRY_TYPE,A.INOUT_TYPE,A.IT_DESC,A.SR_NO,A.MAIN_USER,A.DATA_TRFR,A.EMP_CODE,A.AC_NAME,B.AC_MOBILE FROM REM_DATA AS A LEFT JOIN AC_MAST AS B ON A.CO_CODE = B.CO_CODE AND A.AC_CODE = B.AC_CODE WHERE A.CO_CODE = '\(coCode)' AND A.LC_CODE = '\(lcCode)' AND A.REM_DATE >= '\(fromDate)' AND A.REM_DATE <= '\(toDate)'"
        
             print(query)
+        sqlClient?.execute(query) { results in
+            
+            result(results)
+        }
+
+        }
+    private func getOtherDetails(result: @escaping FlutterResult,coCode:String,lcCode:String,tagNo:String,vchsrNo:String) {
+            print("INside getOtherDetails from xcode")
+            sqlClient = SQLClient.sharedInstance()
+        let query = "SELECT * FROM BAR_IDTL WHERE CO_CODE='\(coCode)' AND LC_CODE='\(lcCode)' AND TAG_NO='\(tagNo)' AND VCH_SRNO='\(vchsrNo)'"
+       
+            print(query)
+        sqlClient?.execute(query) { results in
+            
+            result(results)
+        }
+
+        }
+    private func getPrintLable(result: @escaping FlutterResult,query:String) {
+            print("INside getPrintLable from xcode")
+            sqlClient = SQLClient.sharedInstance()
+            print(query)
+        print("QUERY QUERY QUERY")
         sqlClient?.execute(query) { results in
             
             result(results)

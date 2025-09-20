@@ -359,9 +359,15 @@ class _CompanyYearSelectionState extends State<CompanyYearSelection> {
                                 await Preffrance().getString(Keys.PASSWORD);
 
                             print("Selected Year ${selectedYear}");
+                            var newString;
+                            if(selectedYear.toString().contains("-")){
+                              String a = selectedYear.toString().split('-')[0];
+                            newString = a.substring(a.length - 2);
+                            }else {
+                              newString = selectedYear.substring(selectedYear.length - 4);
+                            }
 
-                            String a = selectedYear.toString().split('-')[0];
-                            var newString = a.substring(a.length - 2);
+                            print("newString");
                             print(newString);
                             String dataBaseName = "Next" + newString;
                             print("Database Name $dataBaseName");
@@ -433,7 +439,7 @@ class _CompanyYearSelectionState extends State<CompanyYearSelection> {
                               }
                               print("SoftType Data ${SoftTypedata}");
 
-                              String sType = SoftTypedata[0]["SoftType"];
+                              String sType = SoftTypedata[0]["SoftType"] ;
                               String dType = SoftTypedata[0]["DemoType"];
                               Provider.of<CommonCompanyYearSelectionProvider>(
                                   context,
@@ -453,8 +459,11 @@ class _CompanyYearSelectionState extends State<CompanyYearSelection> {
                                   dType == "E" ||
                                   dType== "U" ||
                                   dType== "P" ||
-                                  dType== "A") {
+                                  dType== "A"
+                              ) {
                                 print("Inside softType");
+
+
                                 String userType =
                                     Provider.of<CommonCompanyYearSelectionProvider>(context, listen: false)
                                         .userType;
@@ -470,12 +479,32 @@ class _CompanyYearSelectionState extends State<CompanyYearSelection> {
                                       MaterialPageRoute(
                                           builder: (context) => TagestimateScreen()));
                                 }
-                              }else{
-                                ScaffoldMessenger.of(context)
-                                    .showSnackBar(const SnackBar(
-                                  content: Text(
-                                      "Please upgrade your software version."),
-                                ));
+
+                              }
+                              else if((sType == "B" || sType == "S" || dType == "B" || dType == "s") && Platform.isAndroid){
+                                String userType =
+                                    Provider.of<CommonCompanyYearSelectionProvider>(context, listen: false)
+                                        .userType;
+                                print("UserType ${userType}");
+                                if(userType == "A"){
+                                  Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                          builder: (context) => DashboardScreen()));
+                                }else {
+                                  Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                          builder: (context) => TagestimateScreen()));
+                                }
+                              }
+                              else{
+                                // ScaffoldMessenger.of(context)
+                                //     .showSnackBar(const SnackBar(
+                                //   content: Text(
+                                //       "Please upgrade your software version."),
+                                // ));
+                                showUpgradeRequiredDialog(context);
                               }
 
                             } else {

@@ -420,12 +420,15 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 // spacing: ,
                 children: [
                   Expanded(child: quickMenuItem(tittle: "Scan", image: AppImage.qr, ontap: ()async{
-
-                    Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                            builder: (context) => QRViewExample(isFromTagScreen: false,)));
-
+                    if(Provider.of<CommonCompanyYearSelectionProvider>(context, listen: false).sType == "B" || Provider.of<CommonCompanyYearSelectionProvider>(context, listen: false).sType == "S"){
+                      showUpgradeRequiredDialog(context);
+                    }
+                    else{
+                      Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                              builder: (context) => QRViewExample(isFromTagScreen: false,)));
+                    }
                   })),
                   const SizedBox(
                     width: 5,
@@ -433,27 +436,35 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   Expanded(child: quickMenuItem(tittle: "Tag Estimate", image: AppImage.tag, ontap: (){                          Navigator.push(
                       context,
                       MaterialPageRoute(
-                          builder: (context) => TagimageScreen()));})),
+                          builder: (context) => TagestimateScreen()));})),
                   const SizedBox(
                     width: 5,
                   ),
                   Expanded(child: quickMenuItem(tittle: "Reminder", image: AppImage.bell, ontap: (){
-                    if(Provider.of<CommonCompanyYearSelectionProvider>(
-                        context,
-                        listen: false).sType == "E" || Provider.of<CommonCompanyYearSelectionProvider>(
-                        context,
-                        listen: false).sType == "A" || Provider.of<CommonCompanyYearSelectionProvider>(
-                        context,
-                        listen: false).dType == "E" || Provider.of<CommonCompanyYearSelectionProvider>(
-                        context,
-                        listen: false).dType == "A" ){
-                      // showUpgradeRequiredDialog(context);
+                    if(Provider.of<CommonCompanyYearSelectionProvider>(context, listen: false).sType == "E"
+                        ||
+                        Provider.of<CommonCompanyYearSelectionProvider>(context, listen: false).sType == "A"
+                       )
+                    {
                       Navigator.push(
                           context,
                           MaterialPageRoute(
                               builder: (context) => ReminderScreen()));
-                    }else{
+                    }
+                    else if(Provider.of<CommonCompanyYearSelectionProvider>(context, listen: false).sType != ""){
                       showUpgradeRequiredDialog(context);
+                    }
+                    else{
+                      if( Provider.of<CommonCompanyYearSelectionProvider>(context, listen: false).dType == "E"
+                          ||
+                          Provider.of<CommonCompanyYearSelectionProvider>(context, listen: false).dType == "A"){
+                        Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                                builder: (context) => ReminderScreen()));
+                      }else{
+                        showUpgradeRequiredDialog(context);
+                      }
                     }
 
                   })),
@@ -471,8 +482,13 @@ class _DashboardScreenState extends State<DashboardScreen> {
               ),
             ),
             const SizedBox(height: 10,),
-            CashOnHandBox(cashAmount: cashOnHandAmount,),
-            const SizedBox(height: 10,),
+            Provider.of<CommonCompanyYearSelectionProvider>(context, listen: false).sType == "B" || Provider.of<CommonCompanyYearSelectionProvider>(context, listen: false).sType == "S"?
+                 SizedBox() : Column(
+              children: [
+                CashOnHandBox(cashAmount: cashOnHandAmount,),
+                const SizedBox(height: 10,),
+              ],
+            ) ,
             Padding(
               padding: const EdgeInsets.only(left: 20.0),
               child: Text(
@@ -538,17 +554,29 @@ class _DashboardScreenState extends State<DashboardScreen> {
               child: Row(
                 children: [
                   Expanded(child: reportItem(icon: AppImage.whSales, title: "WH Sales", ontap: (){
-                    Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                            builder: (context) => WhsalesreportScreen()));
+
+                    if(Provider.of<CommonCompanyYearSelectionProvider>(context, listen: false).sType == "B" || Provider.of<CommonCompanyYearSelectionProvider>(context, listen: false).sType == "S"){
+                      showUpgradeRequiredDialog(context);
+                    }
+                    else{
+                        Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                                builder: (context) => WhsalesreportScreen()));
+                    }
                   }, isLast: false)),
                   SizedBox(width: 10,),
                   Expanded(child: reportItem(icon: AppImage.salesOrder, title: "Sales Order", ontap: (){
-                    Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                            builder: (context) => SalesOrderReportScreen()));
+                    if(Provider.of<CommonCompanyYearSelectionProvider>(context, listen: false).sType == "B" || Provider.of<CommonCompanyYearSelectionProvider>(context, listen: false).sType == "S"){
+                      showUpgradeRequiredDialog(context);
+                    }
+                    else{
+                      Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                              builder: (context) => SalesOrderReportScreen()));
+                    }
+
                   }, isLast: false)),
                 ],
               ),

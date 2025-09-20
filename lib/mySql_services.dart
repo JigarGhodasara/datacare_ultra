@@ -420,4 +420,24 @@ class MySQLService {
     print("getReminder $getReminder");
     return getReminder;
   }
+
+  Future<dynamic> getOtherDetails(String coCode,String lcCode,String tagNo,String vchsrNo) async {
+    final getOtherDetails = await _channel.invokeMethod('getOtherDetails',{
+      "coCode": coCode,
+      "lcCode": lcCode,
+      "tagNo":tagNo,
+      "vchsrNo":vchsrNo
+    });
+    print("getOtherDetails $getOtherDetails");
+    return getOtherDetails;
+  }
+
+  Future<dynamic> getPrintLable(String query) async {
+    final getPrintLable = await _channel.invokeMethod('getPrintLable',{
+      "query": query,
+    });
+    print("getOtherDetails $getPrintLable");
+    return getPrintLable;
+  }
+
   }

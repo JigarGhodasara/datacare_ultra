@@ -30,7 +30,12 @@ flutter_ios_podfile_setup
 target 'Runner' do
   use_frameworks!
   use_modular_headers!
-
+   pod 'image_picker_ios', :path =>'/Users/jigar/Documents/Jigar/Projects/DULTRA/datacare_ultra/ios/.symlinks/plugins/image_picker_ios/ios'
+   pod 'path_provider_foundation', :path =>'/Users/jigar/Documents/Jigar/Projects/DULTRA/datacare_ultra/ios/.symlinks/plugins/path_provider_foundation/darwin'
+   pod 'share_plus', :path =>'/Users/jigar/Documents/Jigar/Projects/DULTRA/datacare_ultra/ios/.symlinks/plugins/share_plus/ios'
+   pod 'shared_preferences_foundation', :path =>'/Users/jigar/Documents/Jigar/Projects/DULTRA/datacare_ultra/ios/.symlinks/plugins/shared_preferences_foundation/darwin'
+   pod 'sqflite_darwin', :path =>'/Users/jigar/Documents/Jigar/Projects/DULTRA/datacare_ultra/ios/.symlinks/plugins/sqflite_darwin/darwin'
+   pod 'url_launcher_ios', :path =>'/Users/jigar/Documents/Jigar/Projects/DULTRA/datacare_ultra/ios/.symlinks/plugins/url_launcher_ios/ios'
   flutter_install_all_ios_pods File.dirname(File.realpath(__FILE__))
   target 'RunnerTests' do
     inherit! :search_paths
