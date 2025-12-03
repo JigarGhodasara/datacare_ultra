@@ -5,6 +5,7 @@ import 'dart:ui' as ui;
 import 'package:DataCareUltra/image_screen.dart';
 import 'package:DataCareUltra/provider/loading_provider.dart';
 import 'package:DataCareUltra/qrCode_screen.dart';
+import 'package:flutter_image_compress/flutter_image_compress.dart';
 import 'package:http/http.dart' as http;
 import 'package:DataCareUltra/mySql_services.dart';
 import 'package:DataCareUltra/provider/commonCompanyYearSelectionProvider.dart';
@@ -65,6 +66,7 @@ class _TagestimateScreenState extends State<TagestimateScreen> {
   String fillterLbrRate = "";
   String fillterLbrCharges = "";
   String fillterGst = "3.00";
+  String hddNo = "";
   bool selectedGST = true;
 
   @override
@@ -85,7 +87,11 @@ class _TagestimateScreenState extends State<TagestimateScreen> {
       }
       getPrintLable();
     });
+  hddNo = Provider.of<CommonCompanyYearSelectionProvider>(
+      context,
+      listen: false).hdd;
 
+  print("HDD NO $hddNo");
     // if(widget.productImage != null && widget.tagNo != null && widget.VchSrNo != null){
     // }
   }
@@ -156,7 +162,7 @@ class _TagestimateScreenState extends State<TagestimateScreen> {
             .lc_code;
     if (Platform.isAndroid) {
       if (widget.VchSrNo == null || widget.VchSrNo == "") {
-        query = "SELECT B.IT_NAME,A.TAG_NO,A.IT_CODE,C.DESIGN_NO,C.ITM_SIZE,C.ITM_PCS,C.ITM_GWT,C.VCH_SRNO,B.PR_CODE,B.GR_CODE,(D.GR_RATE/10) As Rate,C.ITM_NWT AS TagNwt,C.ITM_FINE,C.LBR_AMT,C.OTH_AMT,C.LBR_PRC,C.ITM_GHT_PRC,C.ITM_GHT_WT as ITM_GHAT,C.ITM_MRP, C.LBR_RATE,C.VCH_DATE  from ((MAIN_STOCK AS A INNER JOIN BAR_DETL AS C ON A.CO_CODE = C.CO_CODE AND A.TAG_NO = C.TAG_NO AND A.VCH_SRNO = C.VCH_SRNO AND A.IT_CODE = C.IT_CODE)LEFT JOIN ITEM_MAST AS B ON A.CO_CODE = B.CO_CODE AND A.IT_CODE = B.IT_CODE)LEFT JOIN GROUP_MAST AS D ON B.CO_CODE = D.CO_CODE AND B.GR_CODE = D.GR_CODE WHERE A.CO_CODE = '" +
+        query = "SELECT B.IT_NAME,A.TAG_NO,A.IT_CODE,C.LBR_TYPE,C.DESIGN_NO,C.ITM_SIZE,C.ITM_WEST_PRC,C.ITM_PCS,C.ITM_GWT,C.VCH_SRNO,B.PR_CODE,B.GR_CODE,(D.GR_RATE/10) As Rate,C.ITM_NWT AS TagNwt,C.ITM_FINE,C.LBR_AMT,C.OTH_AMT,C.LBR_PRC,C.ITM_GHT_PRC,C.ITM_GHT_WT as ITM_GHAT,C.ITM_MRP, C.LBR_RATE,C.VCH_DATE  from ((MAIN_STOCK AS A INNER JOIN BAR_DETL AS C ON A.CO_CODE = C.CO_CODE AND A.TAG_NO = C.TAG_NO AND A.VCH_SRNO = C.VCH_SRNO AND A.IT_CODE = C.IT_CODE)LEFT JOIN ITEM_MAST AS B ON A.CO_CODE = B.CO_CODE AND A.IT_CODE = B.IT_CODE)LEFT JOIN GROUP_MAST AS D ON B.CO_CODE = D.CO_CODE AND B.GR_CODE = D.GR_CODE WHERE A.CO_CODE = '" +
             co_code! +
             "'  AND A.LC_CODE = '" +
             lc_code! +
@@ -164,9 +170,9 @@ class _TagestimateScreenState extends State<TagestimateScreen> {
             year! +
             "' AND A.TAG_NO = '" +
             widget.tagNo! +
-            "'  GROUP BY A.TAG_NO,A.IT_CODE,C.DESIGN_NO,C.ITM_SIZE,C.ITM_PCS,C.ITM_GWT,C.ITM_NWT,C.ITM_FINE,C.LBR_AMT,C.OTH_AMT,C.VCH_SRNO,B.PR_CODE,B.IT_NAME,B.GR_CODE,D.GR_RATE,C.LBR_PRC,C.ITM_GHT_PRC,C.ITM_GHT_WT,C.ITM_MRP, C.LBR_RATE,C.VCH_DATE HAVING SUM(CASE WHEN ITM_SIGN='+' THEN A.VCH_SRNO ELSE -A.VCH_SRNO END) > 0 ORDER BY C.VCH_DATE DESC";
+            "'  GROUP BY A.TAG_NO,A.IT_CODE,C.LBR_TYPE,C.DESIGN_NO,C.ITM_SIZE,C.ITM_WEST_PRC,C.ITM_PCS,C.ITM_GWT,C.ITM_NWT,C.ITM_FINE,C.LBR_AMT,C.OTH_AMT,C.VCH_SRNO,B.PR_CODE,B.IT_NAME,B.GR_CODE,D.GR_RATE,C.LBR_PRC,C.ITM_GHT_PRC,C.ITM_GHT_WT,C.ITM_MRP, C.LBR_RATE,C.VCH_DATE HAVING SUM(CASE WHEN ITM_SIGN='+' THEN A.VCH_SRNO ELSE -A.VCH_SRNO END) > 0 ORDER BY C.VCH_DATE DESC";
       } else {
-        query = "SELECT B.IT_NAME,A.TAG_NO,A.IT_CODE,C.DESIGN_NO,C.ITM_SIZE,C.ITM_PCS,C.ITM_GWT,C.VCH_SRNO,B.PR_CODE,B.GR_CODE,(D.GR_RATE/10) As Rate,C.ITM_FINE,C.ITM_NWT AS TagNwt,C.LBR_AMT,C.OTH_AMT,C.LBR_PRC,C.ITM_GHT_PRC,C.ITM_GHT_WT as ITM_GHAT,C.ITM_MRP, C.LBR_RATE  from ((MAIN_STOCK AS A INNER JOIN BAR_DETL AS C ON A.CO_CODE = C.CO_CODE AND A.TAG_NO = C.TAG_NO AND A.VCH_SRNO = C.VCH_SRNO AND A.IT_CODE = C.IT_CODE)LEFT JOIN ITEM_MAST AS B ON A.CO_CODE = B.CO_CODE AND A.IT_CODE = B.IT_CODE)LEFT JOIN GROUP_MAST AS D ON B.CO_CODE = D.CO_CODE AND B.GR_CODE = D.GR_CODE WHERE A.CO_CODE = '" +
+        query = "SELECT B.IT_NAME,A.TAG_NO,A.IT_CODE,C.LBR_TYPE,C.DESIGN_NO,C.ITM_SIZE,C.ITM_WEST_PRC,C.ITM_PCS,C.ITM_GWT,C.VCH_SRNO,B.PR_CODE,B.GR_CODE,(D.GR_RATE/10) As Rate,C.ITM_FINE,C.ITM_NWT AS TagNwt,C.LBR_AMT,C.OTH_AMT,C.LBR_PRC,C.ITM_GHT_PRC,C.ITM_GHT_WT as ITM_GHAT,C.ITM_MRP, C.LBR_RATE  from ((MAIN_STOCK AS A INNER JOIN BAR_DETL AS C ON A.CO_CODE = C.CO_CODE AND A.TAG_NO = C.TAG_NO AND A.VCH_SRNO = C.VCH_SRNO AND A.IT_CODE = C.IT_CODE)LEFT JOIN ITEM_MAST AS B ON A.CO_CODE = B.CO_CODE AND A.IT_CODE = B.IT_CODE)LEFT JOIN GROUP_MAST AS D ON B.CO_CODE = D.CO_CODE AND B.GR_CODE = D.GR_CODE WHERE A.CO_CODE = '" +
             co_code! +
             "'  AND A.LC_CODE = '" +
             lc_code! +
@@ -176,7 +182,7 @@ class _TagestimateScreenState extends State<TagestimateScreen> {
             widget.tagNo! +
             "'  AND A.VCH_SRNO = '" +
             widget.VchSrNo! +
-            "'  GROUP BY A.TAG_NO,A.IT_CODE,C.DESIGN_NO,C.ITM_SIZE,C.ITM_PCS,C.ITM_GWT,C.ITM_NWT,C.ITM_FINE,C.LBR_AMT,C.OTH_AMT,C.VCH_SRNO,B.PR_CODE,B.IT_NAME,B.GR_CODE,D.GR_RATE,C.LBR_PRC,C.ITM_GHT_PRC,C.ITM_GHT_WT,C.ITM_MRP, C.LBR_RATE HAVING SUM(CASE WHEN ITM_SIGN='+' THEN A.VCH_SRNO ELSE -A.VCH_SRNO END) > 0 ";
+            "'  GROUP BY A.TAG_NO,A.IT_CODE,C.LBR_TYPE,C.DESIGN_NO,C.ITM_SIZE,C.ITM_WEST_PRC,C.ITM_PCS,C.ITM_GWT,C.ITM_NWT,C.ITM_FINE,C.LBR_AMT,C.OTH_AMT,C.VCH_SRNO,B.PR_CODE,B.IT_NAME,B.GR_CODE,D.GR_RATE,C.LBR_PRC,C.ITM_GHT_PRC,C.ITM_GHT_WT,C.ITM_MRP, C.LBR_RATE HAVING SUM(CASE WHEN ITM_SIGN='+' THEN A.VCH_SRNO ELSE -A.VCH_SRNO END) > 0 ";
       }
       log("query ${query}");
       dynamic result = await sqlConnection.queryDatabase(query);
@@ -231,8 +237,16 @@ class _TagestimateScreenState extends State<TagestimateScreen> {
   }
 
   void saveToDb(XFile image) async {
-    dynamic a = await image.readAsBytes();
-    String base64String = base64Encode(a);
+
+    final compressedBytes = await FlutterImageCompress.compressWithFile(
+      image.path,
+      minWidth: 1920,   // keep enough resolution
+      minHeight: 1920,
+      quality: 95,      // keep quality high, but reduce extra weight
+      format: CompressFormat.jpeg, // use jpeg for smaller size
+    );
+    if (compressedBytes == null) return;
+    String base64String = base64Encode(compressedBytes);
     sqlConnection.disconnect();
     String? host = await Preffrance().getString(Keys.HOST);
     String? userName = await Preffrance().getString(Keys.USERNAME);
@@ -705,9 +719,13 @@ class _TagestimateScreenState extends State<TagestimateScreen> {
 
   setLableValue() {
     print("Hello");
+    // print("Hello lbr ${productDetail["LBR_RATE"]}");
+
     widget.VchSrNo = BigInt.from(productDetail["VCH_SRNO"]).toString();
     var temRate = 0.0;
     var intLbrPRC = productDetail["LBR_PRC"];
+    fillterLbrRate = double.parse(productDetail["LBR_RATE"].toString()) != 0.0 ? double.parse(productDetail["LBR_RATE"].toString()).toStringAsFixed(2):"";
+    print("lbr ${fillterLbrRate}");
     var intOthAmount = productDetail["OTH_AMT"];
     if (fillterItemRate.isNotEmpty && fillterItemRate != "0") {
       // convert into 10 gram rate
@@ -733,7 +751,7 @@ class _TagestimateScreenState extends State<TagestimateScreen> {
     if (Provider.of<CommonCompanyYearSelectionProvider>(context, listen: false)
             .amountType ==
         "N") {
-      itAmount = itmRate * (productDetail["TagNwt"] + intLbrGhat);
+      itAmount = itmRate * (productDetail["TagNwt"] + double.parse(intLbrGhat.toStringAsFixed(3)));
     } else if (Provider.of<CommonCompanyYearSelectionProvider>(context,
                 listen: false)
             .amountType ==
@@ -743,27 +761,32 @@ class _TagestimateScreenState extends State<TagestimateScreen> {
                 listen: false)
             .amountType ==
         "F") {
-      itAmount = itmRate * productDetail["ITM_FINE"];
+      itAmount = itmRate * productDetail["ITM_FINE"]; // other users
+      // itAmount = itmRate * (productDetail["TagNwt"]+((productDetail["TagNwt"]*16)/100)); // For only Ganda user vijaywada customer
     } else {
-      itAmount = itmRate * (productDetail["TagNwt"] + intLbrGhat);
+      itAmount = itmRate * (productDetail["TagNwt"] + double.parse(intLbrGhat.toStringAsFixed(3)));
     }
     var LbrRate = 0.0;
     var LbrAmt = 0.0;
     var intLbrAmount = productDetail["LBR_AMT"];
+    print("LBR AMT $intLbrAmount");
     var intMRP = productDetail["ITM_MRP"];
     if (fillterLbrPrc.isNotEmpty && fillterLbrPrc != "0") {
+      print("ABCD 3");
       LbrRate = (itmRate * double.parse(fillterLbrPrc)) / 100;
       LbrAmt = LbrRate * (tempGwtNwt + intLbrGhat);
       intLbrPRC = double.parse(fillterLbrPrc);
     } else if (fillterLbrRate.isNotEmpty && fillterLbrRate != "0") {
-      LbrAmt = double.parse(fillterLbrRate) * (tempGwtNwt + intLbrGhat);
+      LbrAmt = productDetail['LBR_TYPE'] == "P" ? double.parse(fillterLbrRate)*productDetail['ITM_PCS'] : double.parse(fillterLbrRate) * (tempGwtNwt + intLbrGhat);
       LbrRate = double.parse(fillterLbrRate);
       intLbrPRC = 0.0;
     } else if (fillterLbrCharges.isNotEmpty && fillterLbrCharges != "0") {
+      print("ABCD 1");
       LbrAmt = double.parse(fillterLbrCharges);
       LbrRate = 0.0;
       intLbrPRC = 0.0;
     } else {
+      print("ABCD");
       if (intLbrPRC != 0.0) {
         LbrRate = ((itmRate * intLbrPRC) / 100);
         LbrAmt = LbrRate.round().toDouble() * (tempGwtNwt + intLbrGhat);
@@ -772,6 +795,7 @@ class _TagestimateScreenState extends State<TagestimateScreen> {
         print("Lab rate ${intLbrGhat}");
         print("Lab AMT ${LbrAmt}");
       } else {
+        print("Labbb AMT ");
         LbrAmt = intLbrAmount;
       }
     }
@@ -783,7 +807,7 @@ class _TagestimateScreenState extends State<TagestimateScreen> {
     } else {
       intNetAmount = LbrAmt + intOthAmount + itAmount;
     }
-
+    print("Labbb AMT ");
     itemRate = itmRate.toString();
     itemAmount = itAmount.round().toStringAsFixed(2);
     lbrPrc = intLbrPRC.toString();
@@ -809,6 +833,7 @@ class _TagestimateScreenState extends State<TagestimateScreen> {
 
   @override
   Widget build(BuildContext context) {
+    print("III $productImage");
     return Scaffold(
       backgroundColor: Colors.grey[200],
       appBar: AppBar(
@@ -1446,8 +1471,7 @@ class _TagestimateScreenState extends State<TagestimateScreen> {
                                       Text(
                                         productDetail == null
                                             ? "-:-"
-                                            : productDetail["ITM_GHT_PRC"]
-                                                .toString(),
+                                            : "${double.parse(productDetail["ITM_GHT_PRC"].toString()).toStringAsFixed(2)}%",
                                         style: GoogleFonts.nunito(
                                             fontWeight: FontWeight.w900,
                                             fontSize: 12),
@@ -1545,6 +1569,33 @@ class _TagestimateScreenState extends State<TagestimateScreen> {
                       //           ],
                       //         ),
                       //       ),
+
+                   // For ganda user below
+
+                      // Padding(
+                      //   padding: const EdgeInsets.only(
+                      //       right: 12.0, left: 12.0, top: 8),
+                      //   child: Row(
+                      //     children: [
+                      //       Text(
+                      //         "West% :",
+                      //         style: GoogleFonts.nunito(
+                      //             fontWeight: FontWeight.w900, fontSize: 12),
+                      //       ),
+                      //       Spacer(),
+                      //       Text(
+                      //         productDetail == null
+                      //             ? "-:-"
+                      //             : productDetail["ITM_WEST_PRC"] == ""
+                      //             ? "-"
+                      //             : "${double.parse(productDetail["ITM_WEST_PRC"].toString()).toStringAsFixed(2)}%"??
+                      //             "-:-",
+                      //         style: GoogleFonts.nunito(
+                      //             fontWeight: FontWeight.w900, fontSize: 12),
+                      //       ),
+                      //     ],
+                      //   ),
+                      // ),
                       productDetail == null ||
                               Provider.of<CommonCompanyYearSelectionProvider>(
                                           context,
@@ -1581,6 +1632,41 @@ class _TagestimateScreenState extends State<TagestimateScreen> {
                                 ],
                               ),
                             ),
+                      printingLable == null
+                          ? SizedBox()
+                          : hddNo != "VK289NEPH"? SizedBox() : printingLable?.any(
+                            (e) =>
+                        e["COL_NAME"]
+                            .toString()
+                            .toLowerCase() ==
+                            "ght%" &&
+                            e["YES_NO"] == "Y",
+                      ) ??
+                          false
+                          ? Padding(
+                        padding: const EdgeInsets.only(
+                            right: 12.0, left: 12.0, top: 8),
+                        child: Row(
+                          children: [
+                            Text(
+                              "Total Weight :",
+                              style: GoogleFonts.nunito(
+                                  fontWeight: FontWeight.w900,
+                                  fontSize: 12),
+                            ),
+                            Spacer(),
+                            Text(
+                              productDetail == null
+                                  ? "-:-"
+                                  : double.parse((productDetail["TagNwt"]+((productDetail["TagNwt"]*productDetail["ITM_GHT_PRC"])/100)).toString()).toStringAsFixed(3),
+                              style: GoogleFonts.nunito(
+                                  fontWeight: FontWeight.w900,
+                                  fontSize: 12),
+                            ),
+                          ],
+                        ),
+                      )
+                          : SizedBox(),
                       Padding(
                         padding: const EdgeInsets.only(
                             right: 12.0, left: 12.0, top: 8),
@@ -1908,7 +1994,6 @@ class _TagestimateScreenState extends State<TagestimateScreen> {
     final pdf = pw.Document();
     final provider =
         Provider.of<CommonCompanyYearSelectionProvider>(context, listen: false);
-    final qrCodeImage = await generateQRCodeImage(widget.tagNo ?? "");
     dynamic companyDetails;
     if (Platform.isAndroid) {
       String companyData =
@@ -1929,6 +2014,7 @@ class _TagestimateScreenState extends State<TagestimateScreen> {
 
       dynamic rawData = await sqlConnection.queryDatabase(otherDetailsQuery);
       otherDetailsData = jsonDecode(rawData);
+      log("otherDetail $otherDetailsData");
     } else {
       dynamic data = await MySQLService().getOtherDetails(
         provider.co_code!,
@@ -1941,35 +2027,43 @@ class _TagestimateScreenState extends State<TagestimateScreen> {
     }
 
     pdf.addPage(
-      pw.Page(
+      pw.MultiPage(
         pageFormat: PdfPageFormat.a4,
         margin: const pw.EdgeInsets.all(24),
-        build: (context) => pw.Center(
+        build: (context) =>[ pw.Center(
           child: pw.ConstrainedBox(
             constraints: const pw.BoxConstraints(maxWidth: double.infinity),
             child: pw.Column(
               crossAxisAlignment: pw.CrossAxisAlignment.center,
               children: [
-                pw.Text(
-                  "${companyDetails["CO_NAME"]}",
-                  style: pw.TextStyle(
-                      fontSize: 24, fontWeight: pw.FontWeight.bold),
-                  textAlign: pw.TextAlign.center,
-                ),
-                pw.Text(
-                  "${companyDetails["CO_ADD1"]}, ${companyDetails["CO_ADD2"]}",
-                  style: pw.TextStyle(fontSize: 18),
-                  textAlign: pw.TextAlign.center,
-                ),
-                pw.Text(
-                  "${companyDetails["CO_ADD3"]}, ${companyDetails["CO_CITY"]}-${companyDetails["CO_PIN"]}",
-                  style: pw.TextStyle(fontSize: 18),
-                  textAlign: pw.TextAlign.center,
-                ),
-                pw.Text(
-                  "Mo: ${companyDetails["CO_MOBILE"]}",
-                  style: pw.TextStyle(fontSize: 18),
-                  textAlign: pw.TextAlign.center,
+                hddNo == "VK289NEPH" ||
+                    hddNo == "VK103NEVK" ||
+                    hddNo == "VK061NEVK"
+                ? pw.SizedBox() :
+                pw.Column(
+                  children: [
+                    pw.Text(
+                      "${companyDetails["CO_NAME"]}",
+                      style: pw.TextStyle(
+                          fontSize: 24, fontWeight: pw.FontWeight.bold),
+                      textAlign: pw.TextAlign.center,
+                    ),
+                    pw.Text(
+                      "${companyDetails["CO_ADD1"]}, ${companyDetails["CO_ADD2"]}",
+                      style: pw.TextStyle(fontSize: 18),
+                      textAlign: pw.TextAlign.center,
+                    ),
+                    pw.Text(
+                      "${companyDetails["CO_ADD3"]}, ${companyDetails["CO_CITY"]}-${companyDetails["CO_PIN"]}",
+                      style: pw.TextStyle(fontSize: 18),
+                      textAlign: pw.TextAlign.center,
+                    ),
+                    pw.Text(
+                      "Mo: ${companyDetails["CO_MOBILE"]}",
+                      style: pw.TextStyle(fontSize: 18),
+                      textAlign: pw.TextAlign.center,
+                    ),
+                  ]
                 ),
                 pw.SizedBox(height: 10),
                 pw.Text(
@@ -2005,15 +2099,15 @@ class _TagestimateScreenState extends State<TagestimateScreen> {
                         children: [
                           pw.Expanded(
                               child: pw.Align(
-                            alignment: pw.Alignment.centerRight,
-                            child: pw.Padding(
-                                padding:
+                                alignment: pw.Alignment.centerRight,
+                                child: pw.Padding(
+                                    padding:
                                     pw.EdgeInsets.only(right: 10, left: 80),
-                                child: pw.Text(
-                                  "Tag No :",
-                                  style: pw.TextStyle(fontSize: 18),
-                                )),
-                          )),
+                                    child: pw.Text(
+                                      "Tag No :",
+                                      style: pw.TextStyle(fontSize: 18),
+                                    )),
+                              )),
                           pw.Expanded(
                               child: pw.Align(
                                   alignment: pw.Alignment.centerLeft,
@@ -2053,38 +2147,38 @@ class _TagestimateScreenState extends State<TagestimateScreen> {
                         verticalAlignment: pw.TableCellVerticalAlignment.middle,
                         children: [
                           productDetail == null ||
-                                  productDetail["DESIGN_NO"] == ""
+                              productDetail["DESIGN_NO"] == ""
                               ? pw.SizedBox()
                               : pw.Expanded(
-                                  child: pw.Align(
-                                      alignment: pw.Alignment.centerRight,
-                                      child: pw.Padding(
-                                        padding: pw.EdgeInsets.only(right: 10),
-                                        child: pw.Text(
-                                          "Design :",
-                                          style: pw.TextStyle(fontSize: 18),
-                                        ),
-                                      ))),
+                              child: pw.Align(
+                                  alignment: pw.Alignment.centerRight,
+                                  child: pw.Padding(
+                                    padding: pw.EdgeInsets.only(right: 10),
+                                    child: pw.Text(
+                                      "Design :",
+                                      style: pw.TextStyle(fontSize: 18),
+                                    ),
+                                  ))),
                           productDetail == null ||
-                                  productDetail["DESIGN_NO"] == ""
+                              productDetail["DESIGN_NO"] == ""
                               ? pw.SizedBox()
                               : pw.Expanded(
-                                  child: pw.Align(
-                                      alignment: pw.Alignment.centerLeft,
-                                      child: pw.Padding(
-                                        padding: pw.EdgeInsets.symmetric(
-                                            horizontal: 20, vertical: 5),
-                                        child: pw.Text(
-                                          productDetail == null
-                                              ? "-:-"
-                                              : productDetail["DESIGN_NO"] == ""
-                                                  ? "-"
-                                                  : productDetail[
-                                                          "DESIGN_NO"] ??
-                                                      "-:-",
-                                          style: pw.TextStyle(fontSize: 18),
-                                        ),
-                                      )))
+                              child: pw.Align(
+                                  alignment: pw.Alignment.centerLeft,
+                                  child: pw.Padding(
+                                    padding: pw.EdgeInsets.symmetric(
+                                        horizontal: 20, vertical: 5),
+                                    child: pw.Text(
+                                      productDetail == null
+                                          ? "-:-"
+                                          : productDetail["DESIGN_NO"] == ""
+                                          ? "-"
+                                          : productDetail[
+                                      "DESIGN_NO"] ??
+                                          "-:-",
+                                      style: pw.TextStyle(fontSize: 18),
+                                    ),
+                                  )))
                         ]),
                     pw.TableRow(
                         verticalAlignment: pw.TableCellVerticalAlignment.middle,
@@ -2106,7 +2200,7 @@ class _TagestimateScreenState extends State<TagestimateScreen> {
                                         horizontal: 20, vertical: 5),
                                     child: pw.Text(
                                       double.parse(productDetail["ITM_GWT"]
-                                              .toString())
+                                          .toString())
                                           .toStringAsFixed(3),
                                       style: pw.TextStyle(fontSize: 18),
                                     ),
@@ -2132,12 +2226,49 @@ class _TagestimateScreenState extends State<TagestimateScreen> {
                                         horizontal: 20, vertical: 5),
                                     child: pw.Text(
                                       double.parse(productDetail["TagNwt"]
-                                              .toString())
+                                          .toString())
                                           .toStringAsFixed(3),
                                       style: pw.TextStyle(fontSize: 18),
                                     ),
                                   )))
                         ]),
+
+                    // For gaNDA USER ONLY
+
+                    // pw.TableRow(
+                    //     verticalAlignment: pw.TableCellVerticalAlignment.middle,
+                    //     children: [
+                    //       productDetail == null || provider.amountType != "F"
+                    //           ? pw.SizedBox()
+                    //           : pw.Expanded(
+                    //           child: pw.Align(
+                    //               alignment: pw.Alignment.centerRight,
+                    //               child: pw.Padding(
+                    //                   padding:
+                    //                   pw.EdgeInsets.only(right: 10),
+                    //                   child: pw.Text(
+                    //                     "West% :",
+                    //                     style: pw.TextStyle(fontSize: 18),
+                    //                   )))),
+                    //       productDetail == null || provider.amountType != "F"
+                    //           ? pw.SizedBox()
+                    //           : pw.Expanded(
+                    //           child: pw.Align(
+                    //               alignment: pw.Alignment.centerLeft,
+                    //               child: pw.Padding(
+                    //                 padding: pw.EdgeInsets.symmetric(
+                    //                     horizontal: 20, vertical: 5),
+                    //                 child: pw.Text(
+                    //                   productDetail == null
+                    //                       ? "-:-"
+                    //                       : productDetail["ITM_WEST_PRC"] == ""
+                    //                       ? "-"
+                    //                       : "${double.parse(productDetail["ITM_WEST_PRC"].toString()).toStringAsFixed(2)}%" ??
+                    //                       "-:-",
+                    //                   style: pw.TextStyle(fontSize: 18),
+                    //                 ),
+                    //               )))
+                    //     ]),
                     pw.TableRow(
                         verticalAlignment: pw.TableCellVerticalAlignment.middle,
                         children: [
@@ -2156,24 +2287,21 @@ class _TagestimateScreenState extends State<TagestimateScreen> {
                           productDetail == null || provider.amountType != "F"
                               ? pw.SizedBox()
                               : pw.Expanded(
-                                  child: pw.Align(
-                                      alignment: pw.Alignment.centerLeft,
-                                      child: pw.Padding(
-                                        padding: pw.EdgeInsets.symmetric(
-                                            horizontal: 20, vertical: 5),
-                                        child: pw.Text(
-                                          productDetail == null
-                                              ? "-:-"
-                                              : productDetail["ITM_FINE"] == ""
-                                                  ? "-"
-                                                  : double.parse(productDetail[
-                                                                  "ITM_FINE"]
-                                                              .toString())
-                                                          .toStringAsFixed(3) ??
-                                                      "-:-",
-                                          style: pw.TextStyle(fontSize: 18),
-                                        ),
-                                      )))
+                              child: pw.Align(
+                                  alignment: pw.Alignment.centerLeft,
+                                  child: pw.Padding(
+                                    padding: pw.EdgeInsets.symmetric(
+                                        horizontal: 20, vertical: 5),
+                                    child: pw.Text(
+                                      productDetail == null
+                                          ? "-:-"
+                                          : productDetail["ITM_FINE"] == ""
+                                          ? "-"
+                                          : double.parse(((productDetail["TagNwt"]*16)/100).toString()).toStringAsFixed(3) ??
+                                          "-:-",
+                                      style: pw.TextStyle(fontSize: 18),
+                                    ),
+                                  )))
                         ]),
                     pw.TableRow(
                         verticalAlignment: pw.TableCellVerticalAlignment.middle,
@@ -2181,54 +2309,54 @@ class _TagestimateScreenState extends State<TagestimateScreen> {
                           printingLable == null
                               ? pw.SizedBox()
                               : ((printingLable?.any(
-                                        (e) =>
-                                            e["COL_NAME"]
-                                                    .toString()
-                                                    .toLowerCase() ==
-                                                "ght%" &&
-                                            e["YES_NO"] == "Y",
-                                      ) ??
-                                      false)
-                                  ? pw.Expanded(
-                                      child: pw.Align(
-                                        alignment: pw.Alignment.centerRight,
-                                        child: pw.Padding(
-                                          padding: const pw.EdgeInsets.only(
-                                              right: 10),
-                                          child: pw.Text(
-                                            "${printingLable.where((e) => e["COL_NAME"] == "Ght%" && e["YES_NO"] == "Y").first["COL_NEW_NAME"]}",
-                                            style: pw.TextStyle(fontSize: 18),
-                                          ),
-                                        ),
-                                      ),
-                                    )
-                                  : pw.SizedBox()),
+                                (e) =>
+                            e["COL_NAME"]
+                                .toString()
+                                .toLowerCase() ==
+                                "ght%" &&
+                                e["YES_NO"] == "Y",
+                          ) ??
+                              false)
+                              ? pw.Expanded(
+                            child: pw.Align(
+                              alignment: pw.Alignment.centerRight,
+                              child: pw.Padding(
+                                padding: const pw.EdgeInsets.only(
+                                    right: 10),
+                                child: pw.Text(
+                                  "${printingLable.where((e) => e["COL_NAME"] == "Ght%" && e["YES_NO"] == "Y").first["COL_NEW_NAME"]}",
+                                  style: pw.TextStyle(fontSize: 18),
+                                ),
+                              ),
+                            ),
+                          )
+                              : pw.SizedBox()),
                           printingLable == null
                               ? pw.SizedBox()
                               : ((printingLable?.any(
-                                        (e) =>
-                                            e["COL_NAME"]
-                                                    .toString()
-                                                    .toLowerCase() ==
-                                                "ght%" &&
-                                            e["YES_NO"] == "Y",
-                                      ) ??
-                                      false)
-                                  ? pw.Expanded(
-                                      child: pw.Align(
-                                          alignment: pw.Alignment.centerLeft,
-                                          child: pw.Padding(
-                                            padding: pw.EdgeInsets.symmetric(
-                                                horizontal: 20, vertical: 5),
-                                            child: pw.Text(
-                                              productDetail == null
-                                                  ? "-:-"
-                                                  : productDetail["ITM_GHT_PRC"]
-                                                      .toString(),
-                                              style: pw.TextStyle(fontSize: 18),
-                                            ),
-                                          )))
-                                  : pw.SizedBox())
+                                (e) =>
+                            e["COL_NAME"]
+                                .toString()
+                                .toLowerCase() ==
+                                "ght%" &&
+                                e["YES_NO"] == "Y",
+                          ) ??
+                              false)
+                              ? pw.Expanded(
+                              child: pw.Align(
+                                  alignment: pw.Alignment.centerLeft,
+                                  child: pw.Padding(
+                                    padding: pw.EdgeInsets.symmetric(
+                                        horizontal: 20, vertical: 5),
+                                    child: pw.Text(
+                                      productDetail == null
+                                          ? "-:-"
+                                          :"${double.parse( productDetail["ITM_GHT_PRC"]
+                                          .toString()).toStringAsFixed(2)}%",
+                                      style: pw.TextStyle(fontSize: 18),
+                                    ),
+                                  )))
+                              : pw.SizedBox())
                         ]),
 
                     pw.TableRow(verticalAlignment: pw.TableCellVerticalAlignment.middle,children: [
@@ -2284,6 +2412,62 @@ class _TagestimateScreenState extends State<TagestimateScreen> {
                               )))
                           : pw.SizedBox())
                     ]),
+
+
+                    pw.TableRow(verticalAlignment: pw.TableCellVerticalAlignment.middle,children: [
+                      printingLable == null
+                          ? pw.SizedBox()
+                          : hddNo != "VK289NEPH" ? pw.SizedBox() :((printingLable?.any(
+                            (e) =>
+                        e["COL_NAME"]
+                            .toString()
+                            .toLowerCase() ==
+                            "ghtwt" &&
+                            e["YES_NO"] == "Y",
+                      ) ??
+                          false)
+                          ? pw.Expanded(
+                        child: pw.Align(
+                          alignment: pw.Alignment.centerRight,
+                          child: pw.Padding(
+                            padding: const pw.EdgeInsets.only(
+                                right: 10),
+                            child: pw.Text(
+                              "Total Weight :",
+                              style: pw.TextStyle(fontSize: 18),
+                            ),
+                          ),
+                        ),
+                      )
+                          : pw.SizedBox()),
+                      printingLable == null
+                          ? pw.SizedBox()
+                          : hddNo != "VK289NEPH" ? pw.SizedBox() :((printingLable?.any(
+                            (e) =>
+                        e["COL_NAME"]
+                            .toString()
+                            .toLowerCase() ==
+                            "ght%" &&
+                            e["YES_NO"] == "Y",
+                      ) ??
+                          false)
+                          ? pw.Expanded(
+                          child: pw.Align(
+                              alignment: pw.Alignment.centerLeft,
+                              child: pw.Padding(
+                                padding: pw.EdgeInsets.symmetric(
+                                    horizontal: 20, vertical: 5),
+                                child: pw.Text(
+                                  double.parse(
+                                      (productDetail["TagNwt"]+((productDetail["TagNwt"]*productDetail["ITM_GHT_PRC"])/100)).toString())
+                                      .toStringAsFixed(3),
+                                  style: pw.TextStyle(fontSize: 18),
+                                ),
+                              )))
+                          : pw.SizedBox())
+                    ]),
+
+
                     pw.TableRow(
                         verticalAlignment: pw.TableCellVerticalAlignment.middle,
                         children: [
@@ -2319,8 +2503,8 @@ class _TagestimateScreenState extends State<TagestimateScreen> {
                                       padding: pw.EdgeInsets.only(right: 10),
                                       child: pw.Text(
                                         commonCompanyYearSelectionProvider
-                                                    .CoSname ==
-                                                "UAE"
+                                            .CoSname ==
+                                            "UAE"
                                             ? "Metal Value (AED)"
                                             : "Item Amt :",
                                         style: pw.TextStyle(fontSize: 18),
@@ -2333,7 +2517,7 @@ class _TagestimateScreenState extends State<TagestimateScreen> {
                                         horizontal: 20, vertical: 5),
                                     child: pw.Text(
                                       double.parse(itemAmount.toString())
-                                              .toStringAsFixed(2) ??
+                                          .toStringAsFixed(2) ??
                                           "-:-",
                                       style: pw.TextStyle(fontSize: 18),
                                     ),
@@ -2345,30 +2529,30 @@ class _TagestimateScreenState extends State<TagestimateScreen> {
                           lbrPrc == "0.0"
                               ? pw.SizedBox()
                               : pw.Expanded(
-                                  child: pw.Align(
-                                      alignment: pw.Alignment.centerRight,
-                                      child: pw.Padding(
-                                          padding:
-                                              pw.EdgeInsets.only(right: 10),
-                                          child: pw.Text(
-                                            "${commonCompanyYearSelectionProvider.CoSname == "UAE" ? "Making" : "Lbr"} prc % :",
-                                            style: pw.TextStyle(fontSize: 18),
-                                          )))),
+                              child: pw.Align(
+                                  alignment: pw.Alignment.centerRight,
+                                  child: pw.Padding(
+                                      padding:
+                                      pw.EdgeInsets.only(right: 10),
+                                      child: pw.Text(
+                                        "${commonCompanyYearSelectionProvider.CoSname == "UAE" ? "Making" : "Lbr"} prc % :",
+                                        style: pw.TextStyle(fontSize: 18),
+                                      )))),
                           lbrPrc == "0.0"
                               ? pw.SizedBox()
                               : pw.Expanded(
-                                  child: pw.Align(
-                                      alignment: pw.Alignment.centerLeft,
-                                      child: pw.Padding(
-                                        padding: pw.EdgeInsets.symmetric(
-                                            horizontal: 20, vertical: 5),
-                                        child: pw.Text(
-                                          double.parse(lbrPrc.toString())
-                                                  .toStringAsFixed(2) ??
-                                              "-:-",
-                                          style: pw.TextStyle(fontSize: 18),
-                                        ),
-                                      )))
+                              child: pw.Align(
+                                  alignment: pw.Alignment.centerLeft,
+                                  child: pw.Padding(
+                                    padding: pw.EdgeInsets.symmetric(
+                                        horizontal: 20, vertical: 5),
+                                    child: pw.Text(
+                                      double.parse(lbrPrc.toString())
+                                          .toStringAsFixed(2) ??
+                                          "-:-",
+                                      style: pw.TextStyle(fontSize: 18),
+                                    ),
+                                  )))
                         ]),
                     pw.TableRow(
                         verticalAlignment: pw.TableCellVerticalAlignment.middle,
@@ -2376,30 +2560,30 @@ class _TagestimateScreenState extends State<TagestimateScreen> {
                           lbrRate == "0.00"
                               ? pw.SizedBox()
                               : pw.Expanded(
-                                  child: pw.Align(
-                                      alignment: pw.Alignment.centerRight,
-                                      child: pw.Padding(
-                                          padding:
-                                              pw.EdgeInsets.only(right: 10),
-                                          child: pw.Text(
-                                            "${commonCompanyYearSelectionProvider.CoSname == "UAE" ? "Making" : "Lbr"} Rate :",
-                                            style: pw.TextStyle(fontSize: 18),
-                                          )))),
+                              child: pw.Align(
+                                  alignment: pw.Alignment.centerRight,
+                                  child: pw.Padding(
+                                      padding:
+                                      pw.EdgeInsets.only(right: 10),
+                                      child: pw.Text(
+                                        "${commonCompanyYearSelectionProvider.CoSname == "UAE" ? "Making" : "Lbr"} Rate :",
+                                        style: pw.TextStyle(fontSize: 18),
+                                      )))),
                           lbrRate == "0.00"
                               ? pw.SizedBox()
                               : pw.Expanded(
-                                  child: pw.Align(
-                                      alignment: pw.Alignment.centerLeft,
-                                      child: pw.Padding(
-                                        padding: pw.EdgeInsets.symmetric(
-                                            horizontal: 20, vertical: 5),
-                                        child: pw.Text(
-                                          double.parse(lbrRate.toString())
-                                                  .toStringAsFixed(2) ??
-                                              "-:-",
-                                          style: pw.TextStyle(fontSize: 18),
-                                        ),
-                                      )))
+                              child: pw.Align(
+                                  alignment: pw.Alignment.centerLeft,
+                                  child: pw.Padding(
+                                    padding: pw.EdgeInsets.symmetric(
+                                        horizontal: 20, vertical: 5),
+                                    child: pw.Text(
+                                      double.parse(lbrRate.toString())
+                                          .toStringAsFixed(2) ??
+                                          "-:-",
+                                      style: pw.TextStyle(fontSize: 18),
+                                    ),
+                                  )))
                         ]),
                     pw.TableRow(
                         verticalAlignment: pw.TableCellVerticalAlignment.middle,
@@ -2407,30 +2591,30 @@ class _TagestimateScreenState extends State<TagestimateScreen> {
                           lbrAmmount == "0.0"
                               ? pw.SizedBox()
                               : pw.Expanded(
-                                  child: pw.Align(
-                                      alignment: pw.Alignment.centerRight,
-                                      child: pw.Padding(
-                                          padding: pw.EdgeInsets.only(
-                                              right: 10, left: 3),
-                                          child: pw.Text(
-                                            "${commonCompanyYearSelectionProvider.CoSname == "UAE" ? "Making" : "Lbr"} ${commonCompanyYearSelectionProvider.CoSname == "UAE" ? "Charges(AED)" : "Amt"} :",
-                                            style: pw.TextStyle(fontSize: 18),
-                                          )))),
+                              child: pw.Align(
+                                  alignment: pw.Alignment.centerRight,
+                                  child: pw.Padding(
+                                      padding: pw.EdgeInsets.only(
+                                          right: 10, left: 3),
+                                      child: pw.Text(
+                                        "${commonCompanyYearSelectionProvider.CoSname == "UAE" ? "Making" : "Lbr"} ${commonCompanyYearSelectionProvider.CoSname == "UAE" ? "Charges(AED)" : "Amt"} :",
+                                        style: pw.TextStyle(fontSize: 18),
+                                      )))),
                           lbrAmmount == "0.0"
                               ? pw.SizedBox()
                               : pw.Expanded(
-                                  child: pw.Align(
-                                      alignment: pw.Alignment.centerLeft,
-                                      child: pw.Padding(
-                                        padding: pw.EdgeInsets.symmetric(
-                                            horizontal: 20, vertical: 5),
-                                        child: pw.Text(
-                                          double.parse(lbrAmmount.toString())
-                                                  .toStringAsFixed(2) ??
-                                              "-:-",
-                                          style: pw.TextStyle(fontSize: 18),
-                                        ),
-                                      )))
+                              child: pw.Align(
+                                  alignment: pw.Alignment.centerLeft,
+                                  child: pw.Padding(
+                                    padding: pw.EdgeInsets.symmetric(
+                                        horizontal: 20, vertical: 5),
+                                    child: pw.Text(
+                                      double.parse(lbrAmmount.toString())
+                                          .toStringAsFixed(2) ??
+                                          "-:-",
+                                      style: pw.TextStyle(fontSize: 18),
+                                    ),
+                                  )))
                         ]),
                     pw.TableRow(
                         verticalAlignment: pw.TableCellVerticalAlignment.middle,
@@ -2438,32 +2622,32 @@ class _TagestimateScreenState extends State<TagestimateScreen> {
                           othAmmount == "0.0"
                               ? pw.SizedBox()
                               : pw.Expanded(
-                                  child: pw.Align(
-                                      alignment: pw.Alignment.centerRight,
-                                      child: pw.Padding(
-                                          padding: pw.EdgeInsets.only(
-                                              right: 10, left: 3),
-                                          child: pw.Text(
-                                            "Oth ${commonCompanyYearSelectionProvider.CoSname == "UAE" ? "Charges(AED)" : "Amt"} :",
-                                            style: const pw.TextStyle(
-                                                fontSize: 18),
-                                          )))),
+                              child: pw.Align(
+                                  alignment: pw.Alignment.centerRight,
+                                  child: pw.Padding(
+                                      padding: pw.EdgeInsets.only(
+                                          right: 10, left: 3),
+                                      child: pw.Text(
+                                        "Oth ${commonCompanyYearSelectionProvider.CoSname == "UAE" ? "Charges(AED)" : "Amt"} :",
+                                        style: const pw.TextStyle(
+                                            fontSize: 18),
+                                      )))),
                           othAmmount == "0.0"
                               ? pw.SizedBox()
                               : pw.Expanded(
-                                  child: pw.Align(
-                                      alignment: pw.Alignment.centerLeft,
-                                      child: pw.Padding(
-                                        padding: const pw.EdgeInsets.symmetric(
-                                            horizontal: 20, vertical: 5),
-                                        child: pw.Text(
-                                          double.parse(othAmmount.toString())
-                                                  .toStringAsFixed(2) ??
-                                              "-:-",
-                                          style:
-                                              const pw.TextStyle(fontSize: 18),
-                                        ),
-                                      )))
+                              child: pw.Align(
+                                  alignment: pw.Alignment.centerLeft,
+                                  child: pw.Padding(
+                                    padding: const pw.EdgeInsets.symmetric(
+                                        horizontal: 20, vertical: 5),
+                                    child: pw.Text(
+                                      double.parse(othAmmount.toString())
+                                          .toStringAsFixed(2) ??
+                                          "-:-",
+                                      style:
+                                      const pw.TextStyle(fontSize: 18),
+                                    ),
+                                  )))
                         ]),
 
                     pw.TableRow(
@@ -2472,31 +2656,31 @@ class _TagestimateScreenState extends State<TagestimateScreen> {
                           mrp == "0.0"
                               ? pw.SizedBox()
                               : pw.Expanded(
-                                  child: pw.Align(
-                                      alignment: pw.Alignment.centerRight,
-                                      child: pw.Padding(
-                                          padding: pw.EdgeInsets.only(
-                                              right: 10, left: 3),
-                                          child: pw.Text(
-                                            "${commonCompanyYearSelectionProvider.CoSname == "UAE" ? "AED" : "MRP"} :",
-                                            style: const pw.TextStyle(
-                                                fontSize: 18),
-                                          )))),
+                              child: pw.Align(
+                                  alignment: pw.Alignment.centerRight,
+                                  child: pw.Padding(
+                                      padding: pw.EdgeInsets.only(
+                                          right: 10, left: 3),
+                                      child: pw.Text(
+                                        "${commonCompanyYearSelectionProvider.CoSname == "UAE" ? "AED" : "MRP"} :",
+                                        style: const pw.TextStyle(
+                                            fontSize: 18),
+                                      )))),
                           mrp == "0.0"
                               ? pw.SizedBox()
                               : pw.Expanded(
-                                  child: pw.Align(
-                                      alignment: pw.Alignment.centerLeft,
-                                      child: pw.Padding(
-                                        padding: pw.EdgeInsets.symmetric(
-                                            horizontal: 20, vertical: 5),
-                                        child: pw.Text(
-                                          double.parse(mrp.toString())
-                                                  .toStringAsFixed(2) ??
-                                              "-:-",
-                                          style: pw.TextStyle(fontSize: 18),
-                                        ),
-                                      )))
+                              child: pw.Align(
+                                  alignment: pw.Alignment.centerLeft,
+                                  child: pw.Padding(
+                                    padding: pw.EdgeInsets.symmetric(
+                                        horizontal: 20, vertical: 5),
+                                    child: pw.Text(
+                                      double.parse(mrp.toString())
+                                          .toStringAsFixed(2) ??
+                                          "-:-",
+                                      style: pw.TextStyle(fontSize: 18),
+                                    ),
+                                  )))
                         ]),
 
                     pw.TableRow(
@@ -2519,7 +2703,7 @@ class _TagestimateScreenState extends State<TagestimateScreen> {
                                         horizontal: 20, vertical: 5),
                                     child: pw.Text(
                                       double.parse(netAmmount)
-                                              .toStringAsFixed(2) ??
+                                          .toStringAsFixed(2) ??
                                           "-:-",
                                       style: pw.TextStyle(fontSize: 18),
                                     ),
@@ -2535,8 +2719,8 @@ class _TagestimateScreenState extends State<TagestimateScreen> {
                                       padding: pw.EdgeInsets.only(right: 10),
                                       child: pw.Text(
                                         commonCompanyYearSelectionProvider
-                                                    .CoSname ==
-                                                "UAE"
+                                            .CoSname ==
+                                            "UAE"
                                             ? "Vat(AED) :"
                                             : "Gst Tax :",
                                         style: pw.TextStyle(fontSize: 18),
@@ -2565,91 +2749,102 @@ class _TagestimateScreenState extends State<TagestimateScreen> {
                         fontSize: 20, fontWeight: pw.FontWeight.bold),
                   ),
                   pw.SizedBox(height: 8),
-                  pw.Table(
-                    border: pw.TableBorder.all(),
-                    columnWidths: {
-                      0: pw.FlexColumnWidth(2),
-                      1: pw.FlexColumnWidth(1),
-                      2: pw.FlexColumnWidth(1),
-                      3: pw.FlexColumnWidth(1),
-                      4: pw.FlexColumnWidth(2),
-                    },
-                    children: [
-                      // Header row
-                      pw.TableRow(
-                        decoration:
-                            const pw.BoxDecoration(color: PdfColors.grey300),
-                        children: [
-                          pw.Padding(
-                              padding: const pw.EdgeInsets.all(5),
-                              child: pw.Text("Stone",
-                                  style: pw.TextStyle(
-                                      fontWeight: pw.FontWeight.bold))),
-                          pw.Padding(
-                              padding: const pw.EdgeInsets.all(5),
-                              child: pw.Text("Pcs",
-                                  style: pw.TextStyle(
-                                      fontWeight: pw.FontWeight.bold))),
-                          pw.Padding(
-                              padding: const pw.EdgeInsets.all(5),
-                              child: pw.Text("CT Weight",
-                                  style: pw.TextStyle(
-                                      fontWeight: pw.FontWeight.bold))),
-                          pw.Padding(
-                              padding: const pw.EdgeInsets.all(5),
-                              child: pw.Text("Rate",
-                                  style: pw.TextStyle(
-                                      fontWeight: pw.FontWeight.bold))),
-                          pw.Padding(
-                              padding: const pw.EdgeInsets.all(5),
-                              child: pw.Text("Net Amount",
-                                  style: pw.TextStyle(
-                                      fontWeight: pw.FontWeight.bold))),
-                        ],
-                      ),
+                 pw.Wrap(
+                   spacing: 0,
+                   runSpacing: 0,
+                   children: [
+                     pw.Table(
+                       border: pw.TableBorder.all(),
+                       columnWidths: {
+                         0: pw.FlexColumnWidth(2),
+                         1: pw.FlexColumnWidth(1.5),
+                         2: pw.FlexColumnWidth(1.5),
+                         3: pw.FlexColumnWidth(2),
+                         4: pw.FlexColumnWidth(2),
+                       },
+                       children: [
+                         // Header row
+                         pw.TableRow(
+                           decoration:
+                           const pw.BoxDecoration(color: PdfColors.grey300),
+                           children: [
+                             pw.Padding(
+                                 padding: const pw.EdgeInsets.all(5),
+                                 child: pw.Text("Stone",
+                                     style: pw.TextStyle(
+                                         fontWeight: pw.FontWeight.bold,fontSize: 18))),
+                             pw.Padding(
+                                 padding: const pw.EdgeInsets.all(5),
+                                 child: pw.Text("Pcs",
+                                     style: pw.TextStyle(
+                                         fontWeight: pw.FontWeight.bold,fontSize: 18))),
+                             pw.Padding(
+                                 padding: const pw.EdgeInsets.all(5),
+                                 child: pw.Text("CT Weight",
+                                     style: pw.TextStyle(
+                                         fontWeight: pw.FontWeight.bold,fontSize: 18))),
+                             pw.Padding(
+                                 padding: const pw.EdgeInsets.all(5),
+                                 child: pw.Text("Rate",
+                                     style: pw.TextStyle(
+                                         fontWeight: pw.FontWeight.bold,fontSize: 18))),
+                             pw.Padding(
+                                 padding: const pw.EdgeInsets.all(5),
+                                 child: pw.Text("Net Amount",
+                                     style: pw.TextStyle(
+                                         fontWeight: pw.FontWeight.bold,fontSize: 18))),
+                           ],
+                         ),
 
-                      // Dynamic rows
-                      ...otherDetailsData.map<pw.TableRow>((row) {
-                        String pcs = row["IT_PCS"]?.toString() ?? "0";
+                         // Dynamic rows
+                         ...otherDetailsData.map<pw.TableRow>((row) {
+                           String pcs = row["IT_PCS"]?.toString() ?? "0";
 
-                        String gwt = row["IT_GWT"] != null
-                            ? (double.tryParse(row["IT_GWT"].toString())
-                                    ?.toStringAsFixed(2) ??
-                                "0.00")
-                            : "0.00";
+                           String gwt = row["IT_GWT"] != null
+                               ? (double.tryParse(row["IT_GWT"].toString())
+                               ?.toStringAsFixed(2) ??
+                               "0.00")
+                               : "0.00";
 
-                        String rate = row["IT_RATE"] != null
-                            ? (double.tryParse(row["IT_RATE"].toString())
-                                    ?.toStringAsFixed(2) ??
-                                "0.00")
-                            : "0.00";
+                           String rate = row["IT_RATE"] != null
+                               ? (double.tryParse(row["IT_RATE"].toString())
+                               ?.toStringAsFixed(2) ??
+                               "0.00")
+                               : "0.00";
 
-                        String netAmt = row["IT_NET_AMT"] != null
-                            ? (double.tryParse(row["IT_NET_AMT"].toString())
-                                    ?.toStringAsFixed(2) ??
-                                "0.00")
-                            : "0.00";
+                           String netAmt = row["IT_NET_AMT"] != null
+                               ? (double.tryParse(row["IT_NET_AMT"].toString())
+                               ?.toStringAsFixed(2) ??
+                               "0.00")
+                               : "0.00";
 
-                        return pw.TableRow(children: [
-                          pw.Padding(
-                              padding: const pw.EdgeInsets.all(5),
-                              child: pw.Text(row["IT_CODE"] ?? "-")),
-                          pw.Padding(
-                              padding: const pw.EdgeInsets.all(5),
-                              child: pw.Text(pcs)),
-                          pw.Padding(
-                              padding: const pw.EdgeInsets.all(5),
-                              child: pw.Text(gwt)),
-                          pw.Padding(
-                              padding: const pw.EdgeInsets.all(5),
-                              child: pw.Text(rate)),
-                          pw.Padding(
-                              padding: const pw.EdgeInsets.all(5),
-                              child: pw.Text(netAmt)),
-                        ]);
-                      }).toList(),
-                    ],
-                  ),
+                           return pw.TableRow(children: [
+                             pw.Padding(
+                                 padding: const pw.EdgeInsets.all(5),
+                                 child: pw.Text(row["IT_CODE"] ?? "-",style: pw.TextStyle(fontSize:
+                                 18))),
+                             pw.Padding(
+                                 padding: const pw.EdgeInsets.all(5),
+                                 child: pw.Text(pcs,style: pw.TextStyle(fontSize:
+                                 18))),
+                             pw.Padding(
+                                 padding: const pw.EdgeInsets.all(5),
+                                 child: pw.Text(gwt,style: pw.TextStyle(fontSize:
+                                 18))),
+                             pw.Padding(
+                                 padding: const pw.EdgeInsets.all(5),
+                                 child: pw.Text(rate,style: pw.TextStyle(fontSize:
+                                 18))),
+                             pw.Padding(
+                                 padding: const pw.EdgeInsets.all(5),
+                                 child: pw.Text(netAmt,style: pw.TextStyle(fontSize:
+                                 18))),
+                           ]);
+                         }).toList(),
+                       ],
+                     ),
+                   ]
+                 )
                 ],
 
                 pw.SizedBox(height: 20),
@@ -2665,7 +2860,7 @@ class _TagestimateScreenState extends State<TagestimateScreen> {
               ],
             ),
           ),
-        ),
+        )],
       ),
     );
 

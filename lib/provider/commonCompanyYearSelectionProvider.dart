@@ -15,6 +15,7 @@ class CommonCompanyYearSelectionProvider extends ChangeNotifier{
   String CoSname = "";
   String sType = "";
   String dType = "";
+  String hdd = "";
 
 
   void changeCO_name(String name){
@@ -70,5 +71,9 @@ class CommonCompanyYearSelectionProvider extends ChangeNotifier{
   void changedType(String name){
     dType = name;
     print(dType);
+  }
+  void changedHdd(String hddName){
+    hdd = hddName;
+    print(hdd);
   }
 }

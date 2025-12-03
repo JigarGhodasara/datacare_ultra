@@ -440,4 +440,12 @@ class MySQLService {
     return getPrintLable;
   }
 
+  Future<dynamic> getHdd(String query) async {
+    final getHdd = await _channel.invokeMethod('getHdd',{
+      "query": query,
+    });
+    print("getHdd $getHdd");
+    return getHdd;
+  }
+
   }

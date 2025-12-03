@@ -52,7 +52,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
     // TODO: implement initState
     super.initState();
     getGoldSilverRate();
-
+    getHdd();
   }
 
   void getGoldSilverRate() async {
@@ -122,6 +122,33 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
     setState(() {});
   }
+
+  void getHdd() async {
+    if (Platform.isAndroid) {
+      dynamic result = await sqlConnection.queryDatabase(
+          "SELECT * FROM HDD_MAST");
+      print("HDD NO $result");
+      if(jsonDecode(result).length != 0){
+       print("hdd No ${jsonDecode(result)[0]['REF_NO']}");
+       Provider.of<CommonCompanyYearSelectionProvider>(
+           context,
+           listen: false)
+           .changedHdd(jsonDecode(result)[0]['REF_NO']);
+      }
+
+    } else {
+      dynamic result = await MySQLService().getHdd("SELECT * FROM HDD_MAST");
+      if(result[0].length != 0){
+
+        Provider.of<CommonCompanyYearSelectionProvider>(
+            context,
+            listen: false)
+            .changedHdd(result[0][0]['REF_NO']);
+      }
+      print("Here value $result");
+    }
+  }
+
 
   Widget rateContainer(
       {required String title, required String rate, required image}) {

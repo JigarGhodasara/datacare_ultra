@@ -84,7 +84,7 @@ class _CategoryproductScreenState extends State<CategoryproductScreen> {
             .lc_code;
     if (Platform.isAndroid) {
       String query =
-          "SELECT A.TAG_NO As TagNo,B.IT_NAME As ItmName,D.PR_CODE,C.ITM_SIZE As Size,C.ITM_PCS as Pcs,C.ITM_GWT As Grwt,C.ITM_NWT AS NetWt,C.LBR_PRC As LbrPrc,C.LBR_RATE As LRate,C.LBR_AMT LbrAmt,C.OTH_AMT OthAmt,C.ITM_MRP As Mrp,C.VCH_SRNO,C.LBR_TYPE AS LbrType,C.RATE_TYPE AS RateType,B.GR_CODE as GrCode from ((MAIN_STOCK AS A INNER JOIN BAR_DETL AS C ON A.CO_CODE = C.CO_CODE  And A.TAG_NO = C.TAG_NO And A.VCH_SRNO = C.VCH_SRNO And A.IT_CODE = C.IT_CODE) LEFT JOIN  ITEM_MAST AS B ON A.CO_CODE = B.CO_CODE And A.IT_CODE = B.IT_CODE) LEFT JOIN PRODUCT_MAST AS D ON B.CO_CODE = D.CO_CODE And B.PR_CODE = D.PR_CODE WHERE A.CO_CODE = '$co_code' AND A.LC_CODE = '$lc_code' AND A.CO_YEAR = '$year' ";
+          "SELECT A.TAG_NO As TagNo,B.IT_NAME As ItmName,D.PR_CODE,C.ITM_SIZE As Size,C.ITM_PCS as Pcs,C.ITM_GWT As Grwt,C.ITM_NWT AS NetWt,C.LBR_PRC As LbrPrc,C.LBR_RATE As LRate,C.LBR_AMT LbrAmt,C.OTH_AMT OthAmt,C.ITM_MRP As Mrp,C.VCH_SRNO,C.LBR_TYPE AS LbrType,C.RATE_TYPE AS RateType,B.GR_CODE as GrCode, C.DESIGN_IMG_ID AS DesignImgId from ((MAIN_STOCK AS A INNER JOIN BAR_DETL AS C ON A.CO_CODE = C.CO_CODE  And A.TAG_NO = C.TAG_NO And A.VCH_SRNO = C.VCH_SRNO And A.IT_CODE = C.IT_CODE) LEFT JOIN  ITEM_MAST AS B ON A.CO_CODE = B.CO_CODE And A.IT_CODE = B.IT_CODE) LEFT JOIN PRODUCT_MAST AS D ON B.CO_CODE = D.CO_CODE And B.PR_CODE = D.PR_CODE WHERE A.CO_CODE = '$co_code' AND A.LC_CODE = '$lc_code' AND A.CO_YEAR = '$year' ";
 
       if (widget.ItType != '') {
         query += "AND B.IT_TYPE = '${widget.ItType}' ";
@@ -117,7 +117,7 @@ class _CategoryproductScreenState extends State<CategoryproductScreen> {
 //        }
 
       query +=
-          "GROUP BY D.PR_CODE,A.TAG_NO,B.IT_NAME,B.IT_CODE,C.ITM_SIZE,C.ITM_PCS,C.ITM_GWT,C.ITM_NWT,C.LBR_PRC,C.LBR_RATE,C.LBR_AMT,C.OTH_AMT,  C.ITM_MRP,C.VCH_SRNO,C.LBR_TYPE,C.RATE_TYPE, B.GR_CODE HAVING SUM(CASE WHEN ITM_SIGN='+' THEN A.VCH_SRNO ELSE -A.VCH_SRNO END) > 0  ORDER BY A.TAG_NO DESC";
+          "GROUP BY D.PR_CODE,A.TAG_NO,B.IT_NAME,B.IT_CODE,C.ITM_SIZE,C.ITM_PCS,C.ITM_GWT,C.ITM_NWT,C.LBR_PRC,C.LBR_RATE,C.LBR_AMT,C.OTH_AMT,  C.ITM_MRP,C.VCH_SRNO,C.LBR_TYPE,C.RATE_TYPE, B.GR_CODE, C.DESIGN_IMG_ID HAVING SUM(CASE WHEN ITM_SIGN='+' THEN A.VCH_SRNO ELSE -A.VCH_SRNO END) > 0  ORDER BY A.TAG_NO DESC";
       log("query ${query}");
       dynamic result = await sqlConnection.queryDatabase(query);
       log("Resuult ${result}");
@@ -456,8 +456,18 @@ class _CategoryproductScreenState extends State<CategoryproductScreen> {
                             .webImage
                             .toLowerCase() ==
                         "y") {
-                      imagePath =
-                          "${Provider.of<CommonCompanyYearSelectionProvider>(context, listen: false).webPath}${searchCategoryProductList[index]["TagNo"]}_${BigInt.from(searchCategoryProductList[index]["VCH_SRNO"])}.jpg";
+
+                      if(searchCategoryProductList[index]["DesignImgId"] != 'N'){
+                        imagePath =
+                        "${Provider.of<CommonCompanyYearSelectionProvider>(context, listen: false).webPath}${searchCategoryProductList[index]["DesignImgId"]}.jpg";
+
+                      }else{
+                        imagePath =
+                        "${Provider.of<CommonCompanyYearSelectionProvider>(context, listen: false).webPath}${searchCategoryProductList[index]["TagNo"]}_${BigInt.from(searchCategoryProductList[index]["VCH_SRNO"])}.jpg";
+
+                      }
+
+
                     }
                     print("Image $imagePath");
                     return GestureDetector(
