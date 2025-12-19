@@ -103,6 +103,10 @@ class AppDelegate: FlutterAppDelegate {
                 let args = call.arguments as! Dictionary<String, Any>
                 self?.getStockFilterGrpData(result: result, coCode: args["coCode"] as! String)
             }
+            else if call.method == "getStockFilterDgnData" {
+                let args = call.arguments as! Dictionary<String, Any>
+                self?.getStockFilterDgnData(result: result, coCode: args["coCode"] as! String)
+            }
             else if call.method == "getStockFilterItmData" {
                 let args = call.arguments as! Dictionary<String, Any>
                 self?.getStockFilterItmData(result: result, coCode: args["coCode"] as! String)
@@ -449,6 +453,15 @@ class AppDelegate: FlutterAppDelegate {
         sqlClient?.execute( "SELECT GR_CODE,GR_NAME FROM GROUP_MAST WHERE CO_CODE='" +
                             coCode +
                             "'") { results in
+            result(results)
+        };
+    }
+    private func getStockFilterDgnData(result: @escaping FlutterResult,coCode:String) {
+        print("INside getStockFilterDgnData from xcode")
+        sqlClient = SQLClient.sharedInstance()
+        sqlClient?.execute( "SELECT DESIGN_NO FROM BAR_DETL WHERE CO_CODE='" +
+                            coCode +
+                            "' AND DESIGN_NO <> '' GROUP BY DESIGN_NO") { results in
             result(results)
         };
     }

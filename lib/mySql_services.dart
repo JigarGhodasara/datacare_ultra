@@ -196,6 +196,14 @@ class MySQLService {
     return getStockFilterGrpData;
   }
 
+  Future<dynamic> getStockFilterDgnData(String coCode) async {
+    final getStockFilterDgnData = await _channel.invokeMethod('getStockFilterDgnData',{
+      "coCode": coCode
+    });
+    print("getStockFilterDgnData $getStockFilterDgnData");
+    return getStockFilterDgnData;
+  }
+
 
   Future<dynamic> getStockFilterItmData(String coCode) async {
     final getStockFilterItmData = await _channel.invokeMethod('getStockFilterItmData',{
