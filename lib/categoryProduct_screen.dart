@@ -860,10 +860,11 @@ class _CategoryproductScreenState extends State<CategoryproductScreen> {
                     // if key_WEB_IMAGE == y
                     // then use path from key_WEB_PATH (tagUrl = "\(key_WEB_PATH)\(strTag)_\(strImageID).jpg")
                     String imagePath = "";
-                    print(Provider.of<CommonCompanyYearSelectionProvider>(
-                            context,
-                            listen: false)
-                        .webImage);
+                    print("WEbImage ${Provider.of<CommonCompanyYearSelectionProvider>(
+                        context,
+                        listen: false)
+                        .webImage
+                  }");
                     if (Provider.of<CommonCompanyYearSelectionProvider>(context,
                                 listen: false)
                             .webImage
@@ -871,10 +872,13 @@ class _CategoryproductScreenState extends State<CategoryproductScreen> {
                         "y") {
 
                       if(searchCategoryProductList[index]["DesignImgId"] != 'N'){
+                        print("aa");
                         imagePath =
                         "${Provider.of<CommonCompanyYearSelectionProvider>(context, listen: false).webPath}${searchCategoryProductList[index]["DesignImgId"]}.jpg";
 
                       }else{
+                        print("aa BB");
+
                         imagePath =
                         "${Provider.of<CommonCompanyYearSelectionProvider>(context, listen: false).webPath}${searchCategoryProductList[index]["TagNo"]}_${BigInt.from(searchCategoryProductList[index]["VCH_SRNO"])}.jpg";
 
@@ -882,7 +886,7 @@ class _CategoryproductScreenState extends State<CategoryproductScreen> {
 
 
                     }
-                    print("Image $imagePath");
+                    print("Image AA $imagePath");
                     return GestureDetector(
                       onTap: (){
                         Navigator.push(context, MaterialPageRoute(builder: (context)=> TagestimateScreen(productImage: imagePath,tagNo:searchCategoryProductList[index]["TagNo"].toString() ,VchSrNo:BigInt.from(searchCategoryProductList[index]["VCH_SRNO"]).toString() ,)));

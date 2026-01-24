@@ -59,6 +59,28 @@ class _CompanyYearSelectionState extends State<CompanyYearSelection> {
 
   }
 
+
+  getYearBaseOnLocation(String coCode)async{
+    if(Platform.isAndroid) {
+      yearData = await sqlConnection.queryDatabase(
+          "SELECT CO_YEAR As Year,OP_DATE,CL_DATE FROM YEAR_MAST WHERE CO_CODE = '" +
+              coCode +
+              "' ORDER BY CO_YEAR desc");
+      year.clear();
+      year.addAll(jsonDecode(yearData));
+      selectedYear = year[0]['Year'].toString();
+    }else {
+      dynamic yearsData = await MySQLService().getYears(coCode);
+      year.clear();
+      yearData = yearsData[0];
+      year.addAll(yearData);
+      selectedYear = year[0]['Year'].toString();
+    }
+    setState(() {
+
+    });
+  }
+
   getData() async {
     loadingProvider.startLoading();
   if (Platform.isAndroid) {
@@ -257,6 +279,7 @@ class _CompanyYearSelectionState extends State<CompanyYearSelection> {
                                             companyName.forEach((data){
                                               if(data['Show'] == value){
                                                 sName = data['sName'];
+                                                getYearBaseOnLocation(data["CoCode"]);
                                               }
                                             });
                                             setState(() {});

@@ -68,6 +68,8 @@ class _TagestimateScreenState extends State<TagestimateScreen> {
   String fillterGst = "3.00";
   String hddNo = "";
   bool selectedGST = true;
+  bool printImageInPdf = false;
+
 
   @override
   void initState() {
@@ -87,11 +89,11 @@ class _TagestimateScreenState extends State<TagestimateScreen> {
       }
       getPrintLable();
     });
-  hddNo = Provider.of<CommonCompanyYearSelectionProvider>(
-      context,
-      listen: false).hdd;
+    hddNo =
+        Provider.of<CommonCompanyYearSelectionProvider>(context, listen: false)
+            .hdd;
 
-  print("HDD NO $hddNo");
+    print("HDD NO $hddNo");
     // if(widget.productImage != null && widget.tagNo != null && widget.VchSrNo != null){
     // }
   }
@@ -131,19 +133,21 @@ class _TagestimateScreenState extends State<TagestimateScreen> {
       query =
           "SELECT * FROM COL_MAST WHERE CO_CODE = '${co_code!}' AND BOOK_NAME = 'SALES' AND YES_NO = 'Y'";
 
-    log("query $query");
-    dynamic result = await sqlConnection.queryDatabase(query);
-    if (jsonDecode(result).length != 0) {
+      log("query $query");
+      dynamic result = await sqlConnection.queryDatabase(query);
+      if (jsonDecode(result).length != 0) {
+        print("result");
+        print(result);
+        printingLable = jsonDecode(result);
+      }
+    } else {
+      dynamic res = await MySQLService().getPrintLable(
+          "SELECT * FROM COL_MAST WHERE CO_CODE = '${co_code!}' AND BOOK_NAME = 'SALES' AND YES_NO = 'Y'");
       print("result");
-      print(result);
-      printingLable = jsonDecode(result);
-    }}else{
-     dynamic res = await MySQLService().getPrintLable("SELECT * FROM COL_MAST WHERE CO_CODE = '${co_code!}' AND BOOK_NAME = 'SALES' AND YES_NO = 'Y'");
-     print("result");
-     print("result $res");
-     if(res[0].length != 0){
-       printingLable = res[0];
-     }
+      print("result $res");
+      if (res[0].length != 0) {
+        printingLable = res[0];
+      }
     }
   }
 
@@ -237,12 +241,11 @@ class _TagestimateScreenState extends State<TagestimateScreen> {
   }
 
   void saveToDb(XFile image) async {
-
     final compressedBytes = await FlutterImageCompress.compressWithFile(
       image.path,
-      minWidth: 1920,   // keep enough resolution
+      minWidth: 1920, // keep enough resolution
       minHeight: 1920,
-      quality: 95,      // keep quality high, but reduce extra weight
+      quality: 95, // keep quality high, but reduce extra weight
       format: CompressFormat.jpeg, // use jpeg for smaller size
     );
     if (compressedBytes == null) return;
@@ -724,7 +727,9 @@ class _TagestimateScreenState extends State<TagestimateScreen> {
     widget.VchSrNo = BigInt.from(productDetail["VCH_SRNO"]).toString();
     var temRate = 0.0;
     var intLbrPRC = productDetail["LBR_PRC"];
-    fillterLbrRate = double.parse(productDetail["LBR_RATE"].toString()) != 0.0 ? double.parse(productDetail["LBR_RATE"].toString()).toStringAsFixed(2):"";
+    fillterLbrRate = double.parse(productDetail["LBR_RATE"].toString()) != 0.0
+        ? double.parse(productDetail["LBR_RATE"].toString()).toStringAsFixed(2)
+        : "";
     print("lbr ${fillterLbrRate}");
     var intOthAmount = productDetail["OTH_AMT"];
     if (fillterItemRate.isNotEmpty && fillterItemRate != "0") {
@@ -751,7 +756,9 @@ class _TagestimateScreenState extends State<TagestimateScreen> {
     if (Provider.of<CommonCompanyYearSelectionProvider>(context, listen: false)
             .amountType ==
         "N") {
-      itAmount = itmRate * (productDetail["TagNwt"] + double.parse(intLbrGhat.toStringAsFixed(3)));
+      itAmount = itmRate *
+          (productDetail["TagNwt"] +
+              double.parse(intLbrGhat.toStringAsFixed(3)));
     } else if (Provider.of<CommonCompanyYearSelectionProvider>(context,
                 listen: false)
             .amountType ==
@@ -764,7 +771,9 @@ class _TagestimateScreenState extends State<TagestimateScreen> {
       itAmount = itmRate * productDetail["ITM_FINE"]; // other users
       // itAmount = itmRate * (productDetail["TagNwt"]+((productDetail["TagNwt"]*16)/100)); // For only Ganda user vijaywada customer
     } else {
-      itAmount = itmRate * (productDetail["TagNwt"] + double.parse(intLbrGhat.toStringAsFixed(3)));
+      itAmount = itmRate *
+          (productDetail["TagNwt"] +
+              double.parse(intLbrGhat.toStringAsFixed(3)));
     }
     var LbrRate = 0.0;
     var LbrAmt = 0.0;
@@ -777,7 +786,9 @@ class _TagestimateScreenState extends State<TagestimateScreen> {
       LbrAmt = LbrRate * (tempGwtNwt + intLbrGhat);
       intLbrPRC = double.parse(fillterLbrPrc);
     } else if (fillterLbrRate.isNotEmpty && fillterLbrRate != "0") {
-      LbrAmt = productDetail['LBR_TYPE'] == "P" ? double.parse(fillterLbrRate)*productDetail['ITM_PCS'] : double.parse(fillterLbrRate) * (tempGwtNwt + intLbrGhat);
+      LbrAmt = productDetail['LBR_TYPE'] == "P"
+          ? double.parse(fillterLbrRate) * productDetail['ITM_PCS']
+          : double.parse(fillterLbrRate) * (tempGwtNwt + intLbrGhat);
       LbrRate = double.parse(fillterLbrRate);
       intLbrPRC = 0.0;
     } else if (fillterLbrCharges.isNotEmpty && fillterLbrCharges != "0") {
@@ -1570,7 +1581,7 @@ class _TagestimateScreenState extends State<TagestimateScreen> {
                       //         ),
                       //       ),
 
-                   // For ganda user below
+                      // For ganda user below
 
                       // Padding(
                       //   padding: const EdgeInsets.only(
@@ -1634,39 +1645,49 @@ class _TagestimateScreenState extends State<TagestimateScreen> {
                             ),
                       printingLable == null
                           ? SizedBox()
-                          : hddNo != "VK289NEPH"? SizedBox() : printingLable?.any(
-                            (e) =>
-                        e["COL_NAME"]
-                            .toString()
-                            .toLowerCase() ==
-                            "ght%" &&
-                            e["YES_NO"] == "Y",
-                      ) ??
-                          false
-                          ? Padding(
-                        padding: const EdgeInsets.only(
-                            right: 12.0, left: 12.0, top: 8),
-                        child: Row(
-                          children: [
-                            Text(
-                              "Total Weight :",
-                              style: GoogleFonts.nunito(
-                                  fontWeight: FontWeight.w900,
-                                  fontSize: 12),
-                            ),
-                            Spacer(),
-                            Text(
-                              productDetail == null
-                                  ? "-:-"
-                                  : double.parse((productDetail["TagNwt"]+((productDetail["TagNwt"]*productDetail["ITM_GHT_PRC"])/100)).toString()).toStringAsFixed(3),
-                              style: GoogleFonts.nunito(
-                                  fontWeight: FontWeight.w900,
-                                  fontSize: 12),
-                            ),
-                          ],
-                        ),
-                      )
-                          : SizedBox(),
+                          : hddNo != "VK289NEPH"
+                              ? SizedBox()
+                              : printingLable?.any(
+                                        (e) =>
+                                            e["COL_NAME"]
+                                                    .toString()
+                                                    .toLowerCase() ==
+                                                "ght%" &&
+                                            e["YES_NO"] == "Y",
+                                      ) ??
+                                      false
+                                  ? Padding(
+                                      padding: const EdgeInsets.only(
+                                          right: 12.0, left: 12.0, top: 8),
+                                      child: Row(
+                                        children: [
+                                          Text(
+                                            "Total Weight :",
+                                            style: GoogleFonts.nunito(
+                                                fontWeight: FontWeight.w900,
+                                                fontSize: 12),
+                                          ),
+                                          Spacer(),
+                                          Text(
+                                            productDetail == null
+                                                ? "-:-"
+                                                : double.parse((productDetail[
+                                                                "TagNwt"] +
+                                                            ((productDetail[
+                                                                        "TagNwt"] *
+                                                                    productDetail[
+                                                                        "ITM_GHT_PRC"]) /
+                                                                100))
+                                                        .toString())
+                                                    .toStringAsFixed(3),
+                                            style: GoogleFonts.nunito(
+                                                fontWeight: FontWeight.w900,
+                                                fontSize: 12),
+                                          ),
+                                        ],
+                                      ),
+                                    )
+                                  : SizedBox(),
                       Padding(
                         padding: const EdgeInsets.only(
                             right: 12.0, left: 12.0, top: 8),
@@ -1917,6 +1938,23 @@ class _TagestimateScreenState extends State<TagestimateScreen> {
                           ],
                         ),
                       ),
+                      Row(
+                        children: [
+                          Checkbox(
+                            value: printImageInPdf,
+                            onChanged: (value) {
+                              setState(() {
+                                printImageInPdf = value ?? true;
+                              });
+                            },
+                          ),
+                          const Text(
+                            'Print Item Image in Estimate',
+                            style: TextStyle(fontSize: 14),
+                          ),
+                        ],
+                      ),
+
                     ],
                   ),
                 ),
@@ -2025,64 +2063,92 @@ class _TagestimateScreenState extends State<TagestimateScreen> {
 
       otherDetailsData = data[0];
     }
-
+    final byteForImage;
+    if(printImageInPdf){
+       byteForImage = await getByteCode(productImage);
+    }else{
+      byteForImage = null;
+    }
+    final blockedHddList = [
+      "VK289NEPH",
+      "VK103NEVK",
+      "VK061NEVK",
+      "HM208NEPK",
+      "AB000NEAB"
+    ];
     pdf.addPage(
       pw.MultiPage(
         pageFormat: PdfPageFormat.a4,
-        margin: const pw.EdgeInsets.all(24),
-        build: (context) =>[ pw.Center(
-          child: pw.ConstrainedBox(
-            constraints: const pw.BoxConstraints(maxWidth: double.infinity),
-            child: pw.Column(
-              crossAxisAlignment: pw.CrossAxisAlignment.center,
-              children: [
-                hddNo == "VK289NEPH" ||
-                    hddNo == "VK103NEVK" ||
-                    hddNo == "VK061NEVK"
-                ? pw.SizedBox() :
-                pw.Column(
-                  children: [
-                    pw.Text(
-                      "${companyDetails["CO_NAME"]}",
-                      style: pw.TextStyle(
-                          fontSize: 24, fontWeight: pw.FontWeight.bold),
-                      textAlign: pw.TextAlign.center,
-                    ),
-                    pw.Text(
-                      "${companyDetails["CO_ADD1"]}, ${companyDetails["CO_ADD2"]}",
-                      style: pw.TextStyle(fontSize: 18),
-                      textAlign: pw.TextAlign.center,
-                    ),
-                    pw.Text(
-                      "${companyDetails["CO_ADD3"]}, ${companyDetails["CO_CITY"]}-${companyDetails["CO_PIN"]}",
-                      style: pw.TextStyle(fontSize: 18),
-                      textAlign: pw.TextAlign.center,
-                    ),
-                    pw.Text(
-                      "Mo: ${companyDetails["CO_MOBILE"]}",
-                      style: pw.TextStyle(fontSize: 18),
-                      textAlign: pw.TextAlign.center,
-                    ),
-                  ]
-                ),
-                pw.SizedBox(height: 10),
-                pw.Text(
-                  "Date : ${DateFormat("dd/MM/yyyy").format(DateTime.now())}",
-                  style: pw.TextStyle(fontSize: 18),
-                ),
-                pw.SizedBox(height: 8),
-                pw.Text(
-                  "${productDetail["IT_NAME"]}",
-                  style: pw.TextStyle(
-                      fontSize: 22, fontWeight: pw.FontWeight.bold),
-                  textAlign: pw.TextAlign.center,
-                ),
-                pw.SizedBox(height: 15),
+        // margin: const pw.EdgeInsets.all(24),
+        build: (context) => [
+          pw.Center(
+            child: pw.ConstrainedBox(
+              constraints: const pw.BoxConstraints(maxWidth: double.infinity),
+              child: pw.Column(
+                crossAxisAlignment: pw.CrossAxisAlignment.center,
+                children: [
+                  blockedHddList.contains(hddNo)
+                      ? pw.SizedBox()
+                      : pw.Column(children: [
+                          pw.Text(
+                            "${companyDetails["CO_NAME"]}",
+                            style: pw.TextStyle(
+                                fontSize: 24, fontWeight: pw.FontWeight.bold),
+                            textAlign: pw.TextAlign.center,
+                          ),
+                          pw.Text(
+                            "${companyDetails["CO_ADD1"]}, ${companyDetails["CO_ADD2"]}",
+                            style: pw.TextStyle(fontSize: 24,fontWeight: pw.FontWeight.bold),
+                            textAlign: pw.TextAlign.center,
+                          ),
+                          pw.Text(
+                            "${companyDetails["CO_ADD3"]}, ${companyDetails["CO_CITY"]}-${companyDetails["CO_PIN"]}",
+                            style: pw.TextStyle(fontSize: 24,fontWeight: pw.FontWeight.bold),
+                            textAlign: pw.TextAlign.center,
+                          ),
+                          pw.Text(
+                            "Mo: ${companyDetails["CO_MOBILE"]}",
+                            style: pw.TextStyle(fontSize: 24,fontWeight: pw.FontWeight.bold),
+                            textAlign: pw.TextAlign.center,
+                          ),
+                        ]),
+                  blockedHddList.contains(hddNo)
+                      ? pw.Text(
+                          "Estimate",
+                          style: pw.TextStyle(
+                              fontSize: 22, fontWeight: pw.FontWeight.bold),
+                          textAlign: pw.TextAlign.center,
+                        )
+                      : pw.SizedBox(),
+                  pw.SizedBox(height: 10),
+                  pw.Text(
+                    "Date : ${DateFormat("dd/MM/yyyy").format(DateTime.now())}",
+                    style: pw.TextStyle(fontSize: 24,fontWeight: pw.FontWeight.bold),
+                  ),
+                  pw.SizedBox(height: 8),
+                  pw.Text(
+                    "${productDetail["IT_NAME"]}",
+                    style: pw.TextStyle(
+                        fontSize: 22, fontWeight: pw.FontWeight.bold),
+                    textAlign: pw.TextAlign.center,
+                  ),
+                  pw.SizedBox(height: 15),
 
                 // Your original full table (unchanged)
                 // pw.Center(
                 //   child:
                 // ),
+                  byteForImage != null ?
+                  pw.Container(
+                    height: 250,
+                    width: 250,// 🔥 KEY POINT
+                    alignment: pw.Alignment.center,
+                    padding: const pw.EdgeInsets.all(6),
+                    child: pw.Image(
+                      pw.MemoryImage(byteForImage),
+                      fit: pw.BoxFit.contain,
+                    ),
+                  ):pw.SizedBox(),
                 pw.Table(
                   border: pw.TableBorder(
                     left: pw.BorderSide(),
@@ -2105,7 +2171,7 @@ class _TagestimateScreenState extends State<TagestimateScreen> {
                                     pw.EdgeInsets.only(right: 10, left: 80),
                                     child: pw.Text(
                                       "Tag No :",
-                                      style: pw.TextStyle(fontSize: 18),
+                                      style: pw.TextStyle(fontSize: 24,fontWeight: pw.FontWeight.bold),
                                     )),
                               )),
                           pw.Expanded(
@@ -2116,7 +2182,7 @@ class _TagestimateScreenState extends State<TagestimateScreen> {
                                         horizontal: 20, vertical: 5),
                                     child: pw.Text(
                                       widget.tagNo.toString(),
-                                      style: pw.TextStyle(fontSize: 18),
+                                      style: pw.TextStyle(fontSize: 24,fontWeight: pw.FontWeight.bold),
                                     ),
                                   )))
                         ]),
@@ -2130,7 +2196,7 @@ class _TagestimateScreenState extends State<TagestimateScreen> {
                                       padding: pw.EdgeInsets.only(right: 10),
                                       child: pw.Text(
                                         "Pcs :",
-                                        style: pw.TextStyle(fontSize: 18),
+                                        style: pw.TextStyle(fontSize: 24,fontWeight: pw.FontWeight.bold),
                                       )))),
                           pw.Expanded(
                               child: pw.Align(
@@ -2140,7 +2206,7 @@ class _TagestimateScreenState extends State<TagestimateScreen> {
                                           horizontal: 20, vertical: 5),
                                       child: pw.Text(
                                         productDetail["ITM_PCS"].toString(),
-                                        style: pw.TextStyle(fontSize: 18),
+                                        style: pw.TextStyle(fontSize: 24,fontWeight: pw.FontWeight.bold),
                                       ))))
                         ]),
                     pw.TableRow(
@@ -2156,7 +2222,7 @@ class _TagestimateScreenState extends State<TagestimateScreen> {
                                     padding: pw.EdgeInsets.only(right: 10),
                                     child: pw.Text(
                                       "Design :",
-                                      style: pw.TextStyle(fontSize: 18),
+                                      style: pw.TextStyle(fontSize: 24,fontWeight: pw.FontWeight.bold),
                                     ),
                                   ))),
                           productDetail == null ||
@@ -2176,7 +2242,7 @@ class _TagestimateScreenState extends State<TagestimateScreen> {
                                           : productDetail[
                                       "DESIGN_NO"] ??
                                           "-:-",
-                                      style: pw.TextStyle(fontSize: 18),
+                                      style: pw.TextStyle(fontSize: 24,fontWeight: pw.FontWeight.bold),
                                     ),
                                   )))
                         ]),
@@ -2190,7 +2256,7 @@ class _TagestimateScreenState extends State<TagestimateScreen> {
                                       padding: pw.EdgeInsets.only(right: 10),
                                       child: pw.Text(
                                         "Gr Wt :",
-                                        style: pw.TextStyle(fontSize: 18),
+                                        style: pw.TextStyle(fontSize: 24,fontWeight: pw.FontWeight.bold),
                                       )))),
                           pw.Expanded(
                               child: pw.Align(
@@ -2202,7 +2268,7 @@ class _TagestimateScreenState extends State<TagestimateScreen> {
                                       double.parse(productDetail["ITM_GWT"]
                                           .toString())
                                           .toStringAsFixed(3),
-                                      style: pw.TextStyle(fontSize: 18),
+                                      style: pw.TextStyle(fontSize: 24,fontWeight: pw.FontWeight.bold),
                                     ),
                                   )))
                         ]),
@@ -2216,7 +2282,7 @@ class _TagestimateScreenState extends State<TagestimateScreen> {
                                       padding: pw.EdgeInsets.only(right: 10),
                                       child: pw.Text(
                                         "Nt Wt :",
-                                        style: pw.TextStyle(fontSize: 18),
+                                        style: pw.TextStyle(fontSize: 24,fontWeight: pw.FontWeight.bold),
                                       )))),
                           pw.Expanded(
                               child: pw.Align(
@@ -2228,7 +2294,7 @@ class _TagestimateScreenState extends State<TagestimateScreen> {
                                       double.parse(productDetail["TagNwt"]
                                           .toString())
                                           .toStringAsFixed(3),
-                                      style: pw.TextStyle(fontSize: 18),
+                                      style: pw.TextStyle(fontSize: 24,fontWeight: pw.FontWeight.bold),
                                     ),
                                   )))
                         ]),
@@ -2248,7 +2314,7 @@ class _TagestimateScreenState extends State<TagestimateScreen> {
                     //                   pw.EdgeInsets.only(right: 10),
                     //                   child: pw.Text(
                     //                     "West% :",
-                    //                     style: pw.TextStyle(fontSize: 18),
+                    //                     style: pw.TextStyle(fontSize: 24,fontWeight: pw.FontWeight.bold),
                     //                   )))),
                     //       productDetail == null || provider.amountType != "F"
                     //           ? pw.SizedBox()
@@ -2265,7 +2331,7 @@ class _TagestimateScreenState extends State<TagestimateScreen> {
                     //                       ? "-"
                     //                       : "${double.parse(productDetail["ITM_WEST_PRC"].toString()).toStringAsFixed(2)}%" ??
                     //                       "-:-",
-                    //                   style: pw.TextStyle(fontSize: 18),
+                    //                   style: pw.TextStyle(fontSize: 24,fontWeight: pw.FontWeight.bold),
                     //                 ),
                     //               )))
                     //     ]),
@@ -2282,7 +2348,7 @@ class _TagestimateScreenState extends State<TagestimateScreen> {
                                               pw.EdgeInsets.only(right: 10),
                                           child: pw.Text(
                                             "Fine Weight :",
-                                            style: pw.TextStyle(fontSize: 18),
+                                            style: pw.TextStyle(fontSize: 24,fontWeight: pw.FontWeight.bold),
                                           )))),
                           productDetail == null || provider.amountType != "F"
                               ? pw.SizedBox()
@@ -2299,7 +2365,7 @@ class _TagestimateScreenState extends State<TagestimateScreen> {
                                           ? "-"
                                           : double.parse(((productDetail["TagNwt"]*16)/100).toString()).toStringAsFixed(3) ??
                                           "-:-",
-                                      style: pw.TextStyle(fontSize: 18),
+                                      style: pw.TextStyle(fontSize: 24,fontWeight: pw.FontWeight.bold),
                                     ),
                                   )))
                         ]),
@@ -2325,7 +2391,7 @@ class _TagestimateScreenState extends State<TagestimateScreen> {
                                     right: 10),
                                 child: pw.Text(
                                   "${printingLable.where((e) => e["COL_NAME"] == "Ght%" && e["YES_NO"] == "Y").first["COL_NEW_NAME"]}",
-                                  style: pw.TextStyle(fontSize: 18),
+                                  style: pw.TextStyle(fontSize: 24,fontWeight: pw.FontWeight.bold),
                                 ),
                               ),
                             ),
@@ -2353,7 +2419,7 @@ class _TagestimateScreenState extends State<TagestimateScreen> {
                                           ? "-:-"
                                           :"${double.parse( productDetail["ITM_GHT_PRC"]
                                           .toString()).toStringAsFixed(2)}%",
-                                      style: pw.TextStyle(fontSize: 18),
+                                      style: pw.TextStyle(fontSize: 24,fontWeight: pw.FontWeight.bold),
                                     ),
                                   )))
                               : pw.SizedBox())
@@ -2379,7 +2445,7 @@ class _TagestimateScreenState extends State<TagestimateScreen> {
                                 right: 10),
                             child: pw.Text(
                               "${printingLable.where((e) => e["COL_NAME"] == "GhtWt" && e["YES_NO"] == "Y").first["COL_NEW_NAME"]} :",
-                              style: pw.TextStyle(fontSize: 18),
+                              style: pw.TextStyle(fontSize: 24,fontWeight: pw.FontWeight.bold),
                             ),
                           ),
                         ),
@@ -2407,7 +2473,7 @@ class _TagestimateScreenState extends State<TagestimateScreen> {
                                       productDetail["ITM_GHAT"]
                                           .toString())
                                       .toStringAsFixed(3),
-                                  style: pw.TextStyle(fontSize: 18),
+                                  style: pw.TextStyle(fontSize: 24,fontWeight: pw.FontWeight.bold),
                                 ),
                               )))
                           : pw.SizedBox())
@@ -2434,7 +2500,7 @@ class _TagestimateScreenState extends State<TagestimateScreen> {
                                 right: 10),
                             child: pw.Text(
                               "Total Weight :",
-                              style: pw.TextStyle(fontSize: 18),
+                              style: pw.TextStyle(fontSize: 24,fontWeight: pw.FontWeight.bold),
                             ),
                           ),
                         ),
@@ -2461,7 +2527,7 @@ class _TagestimateScreenState extends State<TagestimateScreen> {
                                   double.parse(
                                       (productDetail["TagNwt"]+((productDetail["TagNwt"]*productDetail["ITM_GHT_PRC"])/100)).toString())
                                       .toStringAsFixed(3),
-                                  style: pw.TextStyle(fontSize: 18),
+                                  style: pw.TextStyle(fontSize: 24,fontWeight: pw.FontWeight.bold),
                                 ),
                               )))
                           : pw.SizedBox())
@@ -2478,7 +2544,7 @@ class _TagestimateScreenState extends State<TagestimateScreen> {
                                       padding: pw.EdgeInsets.only(right: 10),
                                       child: pw.Text(
                                         "Rate 1 Gm :",
-                                        style: pw.TextStyle(fontSize: 18),
+                                        style: pw.TextStyle(fontSize: 24,fontWeight: pw.FontWeight.bold),
                                       )))),
                           pw.Expanded(
                               child: pw.Align(
@@ -2489,7 +2555,7 @@ class _TagestimateScreenState extends State<TagestimateScreen> {
                                     child: pw.Text(
                                       double.parse(itemRate.toString())
                                           .toStringAsFixed(2),
-                                      style: pw.TextStyle(fontSize: 18),
+                                      style: pw.TextStyle(fontSize: 24,fontWeight: pw.FontWeight.bold),
                                     ),
                                   )))
                         ]),
@@ -2507,7 +2573,7 @@ class _TagestimateScreenState extends State<TagestimateScreen> {
                                             "UAE"
                                             ? "Metal Value (AED)"
                                             : "Item Amt :",
-                                        style: pw.TextStyle(fontSize: 18),
+                                        style: pw.TextStyle(fontSize: 24,fontWeight: pw.FontWeight.bold),
                                       )))),
                           pw.Expanded(
                               child: pw.Align(
@@ -2519,7 +2585,7 @@ class _TagestimateScreenState extends State<TagestimateScreen> {
                                       double.parse(itemAmount.toString())
                                           .toStringAsFixed(2) ??
                                           "-:-",
-                                      style: pw.TextStyle(fontSize: 18),
+                                      style: pw.TextStyle(fontSize: 24,fontWeight: pw.FontWeight.bold),
                                     ),
                                   )))
                         ]),
@@ -2536,7 +2602,7 @@ class _TagestimateScreenState extends State<TagestimateScreen> {
                                       pw.EdgeInsets.only(right: 10),
                                       child: pw.Text(
                                         "${commonCompanyYearSelectionProvider.CoSname == "UAE" ? "Making" : "Lbr"} prc % :",
-                                        style: pw.TextStyle(fontSize: 18),
+                                        style: pw.TextStyle(fontSize: 24,fontWeight: pw.FontWeight.bold),
                                       )))),
                           lbrPrc == "0.0"
                               ? pw.SizedBox()
@@ -2550,7 +2616,7 @@ class _TagestimateScreenState extends State<TagestimateScreen> {
                                       double.parse(lbrPrc.toString())
                                           .toStringAsFixed(2) ??
                                           "-:-",
-                                      style: pw.TextStyle(fontSize: 18),
+                                      style: pw.TextStyle(fontSize: 24,fontWeight: pw.FontWeight.bold),
                                     ),
                                   )))
                         ]),
@@ -2567,7 +2633,7 @@ class _TagestimateScreenState extends State<TagestimateScreen> {
                                       pw.EdgeInsets.only(right: 10),
                                       child: pw.Text(
                                         "${commonCompanyYearSelectionProvider.CoSname == "UAE" ? "Making" : "Lbr"} Rate :",
-                                        style: pw.TextStyle(fontSize: 18),
+                                        style: pw.TextStyle(fontSize: 24,fontWeight: pw.FontWeight.bold),
                                       )))),
                           lbrRate == "0.00"
                               ? pw.SizedBox()
@@ -2581,7 +2647,7 @@ class _TagestimateScreenState extends State<TagestimateScreen> {
                                       double.parse(lbrRate.toString())
                                           .toStringAsFixed(2) ??
                                           "-:-",
-                                      style: pw.TextStyle(fontSize: 18),
+                                      style: pw.TextStyle(fontSize: 24,fontWeight: pw.FontWeight.bold),
                                     ),
                                   )))
                         ]),
@@ -2598,7 +2664,7 @@ class _TagestimateScreenState extends State<TagestimateScreen> {
                                           right: 10, left: 3),
                                       child: pw.Text(
                                         "${commonCompanyYearSelectionProvider.CoSname == "UAE" ? "Making" : "Lbr"} ${commonCompanyYearSelectionProvider.CoSname == "UAE" ? "Charges(AED)" : "Amt"} :",
-                                        style: pw.TextStyle(fontSize: 18),
+                                        style: pw.TextStyle(fontSize: 24,fontWeight: pw.FontWeight.bold),
                                       )))),
                           lbrAmmount == "0.0"
                               ? pw.SizedBox()
@@ -2612,7 +2678,7 @@ class _TagestimateScreenState extends State<TagestimateScreen> {
                                       double.parse(lbrAmmount.toString())
                                           .toStringAsFixed(2) ??
                                           "-:-",
-                                      style: pw.TextStyle(fontSize: 18),
+                                      style: pw.TextStyle(fontSize: 24,fontWeight: pw.FontWeight.bold),
                                     ),
                                   )))
                         ]),
@@ -2629,8 +2695,8 @@ class _TagestimateScreenState extends State<TagestimateScreen> {
                                           right: 10, left: 3),
                                       child: pw.Text(
                                         "Oth ${commonCompanyYearSelectionProvider.CoSname == "UAE" ? "Charges(AED)" : "Amt"} :",
-                                        style: const pw.TextStyle(
-                                            fontSize: 18),
+                                        style: pw.TextStyle(fontSize: 24,fontWeight: pw.FontWeight.bold),
+
                                       )))),
                           othAmmount == "0.0"
                               ? pw.SizedBox()
@@ -2644,8 +2710,8 @@ class _TagestimateScreenState extends State<TagestimateScreen> {
                                       double.parse(othAmmount.toString())
                                           .toStringAsFixed(2) ??
                                           "-:-",
-                                      style:
-                                      const pw.TextStyle(fontSize: 18),
+                                      style: pw.TextStyle(fontSize: 24,fontWeight: pw.FontWeight.bold),
+
                                     ),
                                   )))
                         ]),
@@ -2678,7 +2744,7 @@ class _TagestimateScreenState extends State<TagestimateScreen> {
                                       double.parse(mrp.toString())
                                           .toStringAsFixed(2) ??
                                           "-:-",
-                                      style: pw.TextStyle(fontSize: 18),
+                                      style: pw.TextStyle(fontSize: 24,fontWeight: pw.FontWeight.bold),
                                     ),
                                   )))
                         ]),
@@ -2693,7 +2759,7 @@ class _TagestimateScreenState extends State<TagestimateScreen> {
                                       padding: pw.EdgeInsets.only(right: 10),
                                       child: pw.Text(
                                         "Net ${commonCompanyYearSelectionProvider.CoSname == "UAE" ? "Value(AED)" : "Amt"} :",
-                                        style: pw.TextStyle(fontSize: 18),
+                                        style: pw.TextStyle(fontSize: 24,fontWeight: pw.FontWeight.bold),
                                       )))),
                           pw.Expanded(
                               child: pw.Align(
@@ -2705,7 +2771,7 @@ class _TagestimateScreenState extends State<TagestimateScreen> {
                                       double.parse(netAmmount)
                                           .toStringAsFixed(2) ??
                                           "-:-",
-                                      style: pw.TextStyle(fontSize: 18),
+                                      style: pw.TextStyle(fontSize: 24,fontWeight: pw.FontWeight.bold),
                                     ),
                                   )))
                         ]),
@@ -2723,7 +2789,7 @@ class _TagestimateScreenState extends State<TagestimateScreen> {
                                             "UAE"
                                             ? "Vat(AED) :"
                                             : "Gst Tax :",
-                                        style: pw.TextStyle(fontSize: 18),
+                                        style: pw.TextStyle(fontSize: 24,fontWeight: pw.FontWeight.bold),
                                       )))),
                           pw.Expanded(
                               child: pw.Align(
@@ -2734,12 +2800,18 @@ class _TagestimateScreenState extends State<TagestimateScreen> {
                                     child: pw.Text(
                                       double.parse(gstTax).toStringAsFixed(2) ??
                                           "-:-",
-                                      style: pw.TextStyle(fontSize: 18),
+                                      style: pw.TextStyle(fontSize: 24,fontWeight: pw.FontWeight.bold),
                                     ),
                                   )))
                         ]),
                   ],
                 ),
+                  pw.SizedBox(height: 20),
+                  pw.Text(
+                    "Total ${commonCompanyYearSelectionProvider.CoSname == "UAE" ? "Value(AED)" : "Amt"} : ${double.parse(totalAmount).toStringAsFixed(2)}",
+                    style: pw.TextStyle(
+                        fontSize: 30, fontWeight: pw.FontWeight.bold),
+                  ),
                 if (otherDetailsData != null &&
                     otherDetailsData.isNotEmpty) ...[
                   pw.SizedBox(height: 15),
@@ -2772,90 +2844,84 @@ class _TagestimateScreenState extends State<TagestimateScreen> {
                                  padding: const pw.EdgeInsets.all(5),
                                  child: pw.Text("Stone",
                                      style: pw.TextStyle(
-                                         fontWeight: pw.FontWeight.bold,fontSize: 18))),
+                                         fontWeight: pw.FontWeight.bold,fontSize: 24))),
                              pw.Padding(
                                  padding: const pw.EdgeInsets.all(5),
                                  child: pw.Text("Pcs",
                                      style: pw.TextStyle(
-                                         fontWeight: pw.FontWeight.bold,fontSize: 18))),
+                                         fontWeight: pw.FontWeight.bold,fontSize: 24))),
                              pw.Padding(
                                  padding: const pw.EdgeInsets.all(5),
                                  child: pw.Text("CT Weight",
                                      style: pw.TextStyle(
-                                         fontWeight: pw.FontWeight.bold,fontSize: 18))),
+                                         fontWeight: pw.FontWeight.bold,fontSize: 24))),
                              pw.Padding(
                                  padding: const pw.EdgeInsets.all(5),
                                  child: pw.Text("Rate",
                                      style: pw.TextStyle(
-                                         fontWeight: pw.FontWeight.bold,fontSize: 18))),
+                                         fontWeight: pw.FontWeight.bold,fontSize: 24))),
                              pw.Padding(
                                  padding: const pw.EdgeInsets.all(5),
                                  child: pw.Text("Net Amount",
                                      style: pw.TextStyle(
-                                         fontWeight: pw.FontWeight.bold,fontSize: 18))),
+                                         fontWeight: pw.FontWeight.bold,fontSize: 24))),
                            ],
                          ),
 
-                         // Dynamic rows
-                         ...otherDetailsData.map<pw.TableRow>((row) {
-                           String pcs = row["IT_PCS"]?.toString() ?? "0";
+                          // Dynamic rows
+                          ...otherDetailsData.map<pw.TableRow>((row) {
+                            String pcs = row["IT_PCS"]?.toString() ?? "0";
 
-                           String gwt = row["IT_GWT"] != null
-                               ? (double.tryParse(row["IT_GWT"].toString())
-                               ?.toStringAsFixed(2) ??
-                               "0.00")
-                               : "0.00";
+                            String gwt = row["IT_GWT"] != null
+                                ? (double.tryParse(row["IT_GWT"].toString())
+                                        ?.toStringAsFixed(2) ??
+                                    "0.00")
+                                : "0.00";
 
-                           String rate = row["IT_RATE"] != null
-                               ? (double.tryParse(row["IT_RATE"].toString())
-                               ?.toStringAsFixed(2) ??
-                               "0.00")
-                               : "0.00";
+                            String rate = row["IT_RATE"] != null
+                                ? (double.tryParse(row["IT_RATE"].toString())
+                                        ?.toStringAsFixed(2) ??
+                                    "0.00")
+                                : "0.00";
 
-                           String netAmt = row["IT_NET_AMT"] != null
-                               ? (double.tryParse(row["IT_NET_AMT"].toString())
-                               ?.toStringAsFixed(2) ??
-                               "0.00")
-                               : "0.00";
+                            String netAmt = row["IT_NET_AMT"] != null
+                                ? (double.tryParse(row["IT_NET_AMT"].toString())
+                                        ?.toStringAsFixed(2) ??
+                                    "0.00")
+                                : "0.00";
 
-                           return pw.TableRow(children: [
-                             pw.Padding(
-                                 padding: const pw.EdgeInsets.all(5),
-                                 child: pw.Text(row["IT_CODE"] ?? "-",style: pw.TextStyle(fontSize:
-                                 18))),
-                             pw.Padding(
-                                 padding: const pw.EdgeInsets.all(5),
-                                 child: pw.Text(pcs,style: pw.TextStyle(fontSize:
-                                 18))),
-                             pw.Padding(
-                                 padding: const pw.EdgeInsets.all(5),
-                                 child: pw.Text(gwt,style: pw.TextStyle(fontSize:
-                                 18))),
-                             pw.Padding(
-                                 padding: const pw.EdgeInsets.all(5),
-                                 child: pw.Text(rate,style: pw.TextStyle(fontSize:
-                                 18))),
-                             pw.Padding(
-                                 padding: const pw.EdgeInsets.all(5),
-                                 child: pw.Text(netAmt,style: pw.TextStyle(fontSize:
-                                 18))),
-                           ]);
-                         }).toList(),
-                       ],
-                     ),
-                   ]
-                 )
-                ],
+                            return pw.TableRow(children: [
+                              pw.Padding(
+                                  padding: const pw.EdgeInsets.all(5),
+                                  child: pw.Text(row["IT_CODE"] ?? "-",
+                                      style: pw.TextStyle(fontSize: 24,fontWeight: pw.FontWeight.bold))),
+                              pw.Padding(
+                                  padding: const pw.EdgeInsets.all(5),
+                                  child: pw.Text(pcs,
+                                      style: pw.TextStyle(fontSize: 24,fontWeight: pw.FontWeight.bold))),
+                              pw.Padding(
+                                  padding: const pw.EdgeInsets.all(5),
+                                  child: pw.Text(gwt,
+                                      style: pw.TextStyle(fontSize: 24,fontWeight: pw.FontWeight.bold))),
+                              pw.Padding(
+                                  padding: const pw.EdgeInsets.all(5),
+                                  child: pw.Text(rate,
+                                      style: pw.TextStyle(fontSize: 24,fontWeight: pw.FontWeight.bold))),
+                              pw.Padding(
+                                  padding: const pw.EdgeInsets.all(5),
+                                  child: pw.Text(netAmt.substring(0, netAmt.length - 3),
+                                      style: pw.TextStyle(fontSize: 24,fontWeight: pw.FontWeight.bold))),
+                            ]);
+                          }).toList(),
+                        ],
+                      ),
+                    ])
+                  ],
 
-                pw.SizedBox(height: 20),
-                pw.Text(
-                  "Total ${commonCompanyYearSelectionProvider.CoSname == "UAE" ? "Value(AED)" : "Amt"} : ${double.parse(totalAmount).toStringAsFixed(2)}",
-                  style: pw.TextStyle(
-                      fontSize: 22, fontWeight: pw.FontWeight.bold),
-                ),
+
                 pw.Text(
                   "Thank you! Visit Again",
-                  style: pw.TextStyle(fontSize: 18),
+                  style: pw.TextStyle(fontSize: 24,fontWeight: pw.FontWeight.bold),
                 ),
               ],
             ),
@@ -2907,6 +2973,24 @@ class _TagestimateScreenState extends State<TagestimateScreen> {
       return byteData?.buffer.asUint8List();
     }
     return null;
+  }
+
+  Future<Uint8List?> getByteCode(String url)async{
+    final bytes;
+    if (url.toLowerCase().contains("http")) {
+      // Download the image
+      final response = await http.get(Uri.parse(url));
+      if (response.statusCode != 200) {
+        // throw Exception('Failed to load image');
+        return null;
+      }
+
+      // Load the image into memory
+      bytes = response.bodyBytes;
+    } else {
+      bytes = File(url).readAsBytes();
+    }
+    return bytes;
   }
 
   Future<void> _processAndShareImage(String url) async {
