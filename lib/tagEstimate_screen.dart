@@ -2069,13 +2069,13 @@ class _TagestimateScreenState extends State<TagestimateScreen> {
     }else{
       byteForImage = null;
     }
-    final blockedHddList = [
-      "VK289NEPH",
-      "VK103NEVK",
-      "VK061NEVK",
-      "HM208NEPK",
-      "AB000NEAB"
-    ];
+    // final blockedHddList = [
+    //   "VK289NEPH",
+    //   "VK103NEVK",
+    //   "VK061NEVK",
+    //   "HM208NEPK",
+    //   "AB000NEAB"
+    // ];
     pdf.addPage(
       pw.MultiPage(
         pageFormat: PdfPageFormat.a4,
@@ -2087,40 +2087,41 @@ class _TagestimateScreenState extends State<TagestimateScreen> {
               child: pw.Column(
                 crossAxisAlignment: pw.CrossAxisAlignment.center,
                 children: [
-                  blockedHddList.contains(hddNo)
-                      ? pw.SizedBox()
-                      : pw.Column(children: [
-                          pw.Text(
-                            "${companyDetails["CO_NAME"]}",
-                            style: pw.TextStyle(
-                                fontSize: 24, fontWeight: pw.FontWeight.bold),
-                            textAlign: pw.TextAlign.center,
-                          ),
-                          pw.Text(
-                            "${companyDetails["CO_ADD1"]}, ${companyDetails["CO_ADD2"]}",
-                            style: pw.TextStyle(fontSize: 24,fontWeight: pw.FontWeight.bold),
-                            textAlign: pw.TextAlign.center,
-                          ),
-                          pw.Text(
-                            "${companyDetails["CO_ADD3"]}, ${companyDetails["CO_CITY"]}-${companyDetails["CO_PIN"]}",
-                            style: pw.TextStyle(fontSize: 24,fontWeight: pw.FontWeight.bold),
-                            textAlign: pw.TextAlign.center,
-                          ),
-                          pw.Text(
-                            "Mo: ${companyDetails["CO_MOBILE"]}",
-                            style: pw.TextStyle(fontSize: 24,fontWeight: pw.FontWeight.bold),
-                            textAlign: pw.TextAlign.center,
-                          ),
-                        ]),
-                  blockedHddList.contains(hddNo)
-                      ? pw.Text(
+                  // blockedHddList.contains(hddNo)
+                  //     ? pw.SizedBox()
+                  //     : pw.Column(children: [
+                  //         pw.Text(
+                  //           "${companyDetails["CO_NAME"]}",
+                  //           style: pw.TextStyle(
+                  //               fontSize: 24, fontWeight: pw.FontWeight.bold),
+                  //           textAlign: pw.TextAlign.center,
+                  //         ),
+                  //         pw.Text(
+                  //           "${companyDetails["CO_ADD1"]}, ${companyDetails["CO_ADD2"]}",
+                  //           style: pw.TextStyle(fontSize: 24,fontWeight: pw.FontWeight.bold),
+                  //           textAlign: pw.TextAlign.center,
+                  //         ),
+                  //         pw.Text(
+                  //           "${companyDetails["CO_ADD3"]}, ${companyDetails["CO_CITY"]}-${companyDetails["CO_PIN"]}",
+                  //           style: pw.TextStyle(fontSize: 24,fontWeight: pw.FontWeight.bold),
+                  //           textAlign: pw.TextAlign.center,
+                  //         ),
+                  //         pw.Text(
+                  //           "Mo: ${companyDetails["CO_MOBILE"]}",
+                  //           style: pw.TextStyle(fontSize: 24,fontWeight: pw.FontWeight.bold),
+                  //           textAlign: pw.TextAlign.center,
+                  //         ),
+                  //       ]),
+                  // blockedHddList.contains(hddNo)
+                  //     ?
+                  pw.Text(
                           "Estimate",
                           style: pw.TextStyle(
                               fontSize: 22, fontWeight: pw.FontWeight.bold),
                           textAlign: pw.TextAlign.center,
                         )
-                      : pw.SizedBox(),
-                  pw.SizedBox(height: 10),
+                      // : pw.SizedBox(),
+                  ,pw.SizedBox(height: 10),
                   pw.Text(
                     "Date : ${DateFormat("dd/MM/yyyy").format(DateTime.now())}",
                     style: pw.TextStyle(fontSize: 24,fontWeight: pw.FontWeight.bold),
