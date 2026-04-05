@@ -989,11 +989,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
   }
 
   // ═══════════════════════════════════════════════════════════════════════════
-  // PINNED HEADER  (blue zone + top bar + welcome card – never scrolls)
+  // FIXED HEADER  –  blue zone + orbs + top bar + welcome card (never scrolls)
   // ═══════════════════════════════════════════════════════════════════════════
 
   Widget _buildFixedHeader(String coName, double w) {
     return Container(
+      // Blue gradient fills the entire header block
       decoration: const BoxDecoration(
         gradient: LinearGradient(
           begin: Alignment.topLeft,
@@ -1007,11 +1008,13 @@ class _DashboardScreenState extends State<DashboardScreen> {
         ),
       ),
       child: SafeArea(
+        // Only respect top safe-area (status bar); let body handle the bottom
         bottom: false,
         child: Stack(
+          // Allow orbs to bleed slightly outside the stack bounds
           clipBehavior: Clip.none,
           children: [
-            // ── Decorative orbs ────────────────────────────────────────
+            // ── Orb 1 (top-right) ────────────────────────────────────────
             Positioned(
               right: -w * 0.14,
               top: 6,
@@ -1026,6 +1029,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 ),
               ),
             ),
+            // ── Orb 2 (left-mid) ─────────────────────────────────────────
             Positioned(
               left: -w * 0.22,
               top: 72,
@@ -1040,9 +1044,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 ),
               ),
             ),
-            // ── Actual header content ───────────────────────────────────
+            // ── Visible content (sits on top of orbs) ────────────────────
             Column(
               mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 _buildTopBar(coName, w),
                 _buildWelcomeCard(coName),
@@ -1071,13 +1076,15 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
     return Scaffold(
       backgroundColor: _pageBg,
+      // ── Outer Column: fixed header on top, scrollable body below ──────────
       body: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // ── PINNED HEADER  (never scrolls) ──────────────────────────────
+
+          // ① PINNED HEADER — stays put while user scrolls
           _buildFixedHeader(coName, w),
 
-          // ── SCROLLABLE BODY ──────────────────────────────────────────────
+          // ② SCROLLABLE BODY — only this part moves
           Expanded(
             child: SingleChildScrollView(
               physics: const ClampingScrollPhysics(),
@@ -1134,6 +1141,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
               ),
             ),
           ),
+
         ],
       ),
     );
