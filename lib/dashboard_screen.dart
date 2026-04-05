@@ -448,17 +448,18 @@ class _DashboardScreenState extends State<DashboardScreen> {
               height: 66,
               padding: const EdgeInsets.all(13),
               decoration: BoxDecoration(
+                color: Colors.white,
                 borderRadius: BorderRadius.circular(22),
-                gradient: LinearGradient(
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                  colors: [_ctaFill, _brandDark],
-                ),
                 boxShadow: [
                   BoxShadow(
-                    color: _ctaFill.withValues(alpha: 0.38),
+                    color: _ctaFill.withValues(alpha: 0.18),
                     blurRadius: 20,
                     offset: const Offset(0, 8),
+                  ),
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.06),
+                    blurRadius: 10,
+                    offset: const Offset(0, 4),
                   ),
                 ],
               ),
