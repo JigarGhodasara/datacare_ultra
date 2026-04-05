@@ -989,6 +989,73 @@ class _DashboardScreenState extends State<DashboardScreen> {
   }
 
   // ═══════════════════════════════════════════════════════════════════════════
+  // PINNED HEADER  (blue zone + top bar + welcome card – never scrolls)
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  Widget _buildFixedHeader(String coName, double w) {
+    return Container(
+      decoration: const BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            Color(0xFF0D47A1),
+            Color(0xFF1565C0),
+            Color(0xFF1976D2),
+          ],
+          stops: [0.0, 0.52, 1.0],
+        ),
+      ),
+      child: SafeArea(
+        bottom: false,
+        child: Stack(
+          clipBehavior: Clip.none,
+          children: [
+            // ── Decorative orbs ────────────────────────────────────────
+            Positioned(
+              right: -w * 0.14,
+              top: 6,
+              child: IgnorePointer(
+                child: Container(
+                  width: w * 0.58,
+                  height: w * 0.58,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: Colors.white.withValues(alpha: 0.055),
+                  ),
+                ),
+              ),
+            ),
+            Positioned(
+              left: -w * 0.22,
+              top: 72,
+              child: IgnorePointer(
+                child: Container(
+                  width: w * 0.42,
+                  height: w * 0.42,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: Colors.white.withValues(alpha: 0.035),
+                  ),
+                ),
+              ),
+            ),
+            // ── Actual header content ───────────────────────────────────
+            Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                _buildTopBar(coName, w),
+                _buildWelcomeCard(coName),
+                const SizedBox(height: 18),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // ═══════════════════════════════════════════════════════════════════════════
   // BUILD
   // ═══════════════════════════════════════════════════════════════════════════
 
@@ -1004,85 +1071,29 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
     return Scaffold(
       backgroundColor: _pageBg,
-      body: Stack(
+      body: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // ── Deep-blue gradient header zone ──────────────────────────────
-          Positioned(
-            top: 0,
-            left: 0,
-            right: 0,
-            height: 230,
-            child: const DecoratedBox(
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                  colors: [
-                    Color(0xFF0D47A1),
-                    Color(0xFF1565C0),
-                    Color(0xFF1976D2),
-                  ],
-                  stops: [0.0, 0.52, 1.0],
-                ),
-              ),
-            ),
-          ),
+          // ── PINNED HEADER  (never scrolls) ──────────────────────────────
+          _buildFixedHeader(coName, w),
 
-          // ── Decorative orbs (non-interactive) ───────────────────────────
-          Positioned(
-            right: -w * 0.14,
-            top: 10,
-            child: IgnorePointer(
-              child: Container(
-                width: w * 0.58,
-                height: w * 0.58,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: Colors.white.withValues(alpha: 0.055),
-                ),
-              ),
-            ),
-          ),
-          Positioned(
-            left: -w * 0.22,
-            top: 90,
-            child: IgnorePointer(
-              child: Container(
-                width: w * 0.42,
-                height: w * 0.42,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: Colors.white.withValues(alpha: 0.035),
-                ),
-              ),
-            ),
-          ),
-
-          // ── Scrollable content ───────────────────────────────────────────
-          SafeArea(
-            bottom: false,
+          // ── SCROLLABLE BODY ──────────────────────────────────────────────
+          Expanded(
             child: SingleChildScrollView(
               physics: const ClampingScrollPhysics(),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Top bar (inside the blue zone)
-                  _buildTopBar(coName, w),
-
-                  // Welcome card (floats over blue → white transition)
-                  _buildWelcomeCard(coName),
-
                   const SizedBox(height: 28),
 
-                  // ── Today's Rates ──────────────────────────────────────
+                  // ── Today's Rates ────────────────────────────────────────
                   _buildSectionHeader(
                     "Today's Rates",
                     'Gold & Silver reference for your session',
                   ),
                   const SizedBox(height: 12),
                   Padding(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 20),
+                    padding: const EdgeInsets.symmetric(horizontal: 20),
                     child: AnimatedRateBox(
                       todayGoldRate: todayGoldRate,
                       todaySilverRate: todaySilverRate,
@@ -1091,7 +1102,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
                   const SizedBox(height: 28),
 
-                  // ── Quick Actions ──────────────────────────────────────
+                  // ── Quick Actions ─────────────────────────────────────────
                   _buildSectionHeader(
                     'Quick Actions',
                     'Shortcuts to your daily tools',
@@ -1101,13 +1112,13 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
                   const SizedBox(height: 18),
 
-                  // ── Cash on Hand (conditional) ─────────────────────────
+                  // ── Cash on Hand (conditional) ────────────────────────────
                   if (sType != "B" && sType != "S") ...[
                     CashOnHandBox(cashAmount: cashOnHandAmount),
                     const SizedBox(height: 18),
                   ],
 
-                  // ── Reports ────────────────────────────────────────────
+                  // ── Reports ───────────────────────────────────────────────
                   _buildSectionHeader(
                     'Reports',
                     'Financial & inventory insights',
