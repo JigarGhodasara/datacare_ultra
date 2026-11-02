@@ -54,5 +54,17 @@
     <string>This app needs camera access to scan QR codes</string>
     <key>NSPhotoLibraryUsageDescription</key>
     <string>We need access to your photo library to select images for upload on server.</string>
+    <!-- Schemes the app probes with canLaunchUrl. iOS returns false for any
+         scheme not listed here, which would silently disable the WhatsApp,
+         call, SMS and App Store buttons. -->
+    <key>LSApplicationQueriesSchemes</key>
+    <array>
+        <string>itms-apps</string>
+        <string>itms-beta</string>
+        <string>whatsapp</string>
+        <string>tel</string>
+        <string>sms</string>
+        <string>mailto</string>
+    </array>
 </dict>
 </plist>

@@ -1,6 +1,6 @@
 import 'dart:ui';
 
-class AppImage{
+class AppImage {
   static var base = "assets/";
   static var appLogo = "${base}bg_remove.png";
   static var splashBackGround = "${base}bg_splash.jpg";

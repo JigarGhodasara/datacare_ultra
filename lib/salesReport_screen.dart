@@ -4,11 +4,9 @@ import 'dart:io';
 import 'package:DataCareUltra/mySql_services.dart';
 import 'package:DataCareUltra/provider/commonCompanyYearSelectionProvider.dart';
 import 'package:DataCareUltra/provider/loading_provider.dart';
+import 'package:DataCareUltra/utils/book_picker.dart';
 import 'package:DataCareUltra/salesZoomingReport.dart';
-import 'package:DataCareUltra/utils/colors.dart';
 import 'package:DataCareUltra/utils/images.dart';
-import 'package:dropdown_button2/dropdown_button2.dart';
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
@@ -19,16 +17,35 @@ import 'package:url_launcher/url_launcher_string.dart';
 import 'package:whatsapp_unilink/whatsapp_unilink.dart';
 
 class SalesReportScreen extends StatefulWidget {
-  const SalesReportScreen({Key? key}) : super(key: key);
+  /// Date the report should open on.
+  ///
+  /// Passed by the Day Book so that drilling into Sales keeps the day the user
+  /// was already looking at, instead of silently resetting to today and
+  /// showing figures for a different date than the one they filtered.
+  final DateTime? initialFrom;
+  final DateTime? initialTo;
+
+  const SalesReportScreen({Key? key, this.initialFrom, this.initialTo})
+      : super(key: key);
 
   @override
   State<SalesReportScreen> createState() => _SalesreportScreenState();
 }
 
 class _SalesreportScreenState extends State<SalesReportScreen> {
+  static const Color _brand = Color(0xFF006EB7);
+  static const Color _textPrimary = Color(0xFF0F172A);
+  static const Color _textSecondary = Color(0xFF64748B);
+  static const Color _border = Color(0xFFCBD5E1);
+  static const Color _pageBg = Color(0xFFF8FAFC);
+  static const Color _success = Color(0xFF059669);
+  static const Color _danger = Color(0xFFDC2626);
+
+  Color get _cta => _brand;
+
   final sqlConnection = SqlConnection.getInstance();
-  DateTime fromDate = DateTime.now();
-  DateTime toDate = DateTime.now();
+  late DateTime fromDate = widget.initialFrom ?? DateTime.now();
+  late DateTime toDate = widget.initialTo ?? DateTime.now();
   late LoadingProvider loadingProvider;
   List<dynamic> salesReport = [];
   List<dynamic> searchSalesReport = [];
@@ -40,7 +57,6 @@ class _SalesreportScreenState extends State<SalesReportScreen> {
 
   @override
   void initState() {
-    // TODO: implement initState
     super.initState();
     loadingProvider = Provider.of<LoadingProvider>(context, listen: false);
     co_code =
@@ -53,7 +69,6 @@ class _SalesreportScreenState extends State<SalesReportScreen> {
         Provider.of<CommonCompanyYearSelectionProvider>(context, listen: false)
             .co_year;
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      // Update your state here
       getSalesReport();
     });
     getFillterBookData();
@@ -61,51 +76,50 @@ class _SalesreportScreenState extends State<SalesReportScreen> {
 
   getSalesReport() async {
     loadingProvider.startLoading();
-    setState(() {
-    });
-    if (Platform.isAndroid) {
-      var query =
-          "SELECT A.CO_CODE,A.LC_CODE,A.CO_YEAR,(convert(varchar(50),A.VCH_DATE,105)) as VCH_DATE,A.VCH_NO,A.CO_BOOK,B.BOOK_NAME,C.AC_NAME,C.AC_MOBILE, A.MAIN_USER, SUM(ITM_PCS) As Pcs,Sum(A.ITM_GWT) As Gwt,SUM(A.ITM_NWT) As Nwt,SUM(A.ITM_FINE) As Fine, (Select D.TOT_AMT From SL_DATA AS D Where A.CO_CODE = D.CO_CODE AND A.LC_CODE = D.LC_CODE AND A.CO_YEAR = D.CO_YEAR AND A.CO_BOOK = D.CO_BOOK  AND A.VCH_NO = D.VCH_NO ) As NetAmt, (Select E.BILL_OS From SL_DATA AS E Where A.CO_CODE = E.CO_CODE AND A.LC_CODE = E.LC_CODE AND A.CO_YEAR = E.CO_YEAR AND A.CO_BOOK = E.CO_BOOK  AND A.VCH_NO = E.VCH_NO ) As OsAmt from (MAIN_STOCK AS A LEFT JOIN BOOK_DATA AS B ON A.CO_CODE = B.CO_CODE AND A.LC_CODE = B.LC_CODE AND A.CO_BOOK = B.CO_BOOK) LEFT JOIN AC_MAST AS C ON A.CO_CODE = C.CO_CODE AND A.AC_CODE = C.AC_CODE WHERE A.CO_CODE = '" +
-              co_code +
-              "' AND A.LC_CODE = '" +
-              lc_code +
-              "' AND A.CO_YEAR = '" +
-              year +
-              "' AND A.ITM_SIGN = '-' AND A.VCH_DATE >= '" +
-              DateFormat("MM/dd/yyyy").format(fromDate) +
-              "' AND A.VCH_DATE <= '" +
-              DateFormat("MM/dd/yyyy").format(toDate) +
-              "' AND B.MAIN_BOOK IN ('SALES','SALES RETURN') ";
-
-      // is for fillter
-
-      if (selectedBook != "Select book") {
-        query += "AND A.CO_BOOK = '" + selectedBook.split("-")[0] + "' ";
-      }
-
-      query +=
-          "GROUP BY A.CO_CODE,A.LC_CODE,A.CO_YEAR,A.VCH_DATE,A.VCH_NO,A.CO_BOOK,B.BOOK_NAME,C.AC_NAME,C.AC_MOBILE,A.MAIN_USER ORDER BY A.VCH_DATE,A.CO_BOOK,A.VCH_NO";
-      print("query ${query}");
-      dynamic result = await sqlConnection.queryDatabase(query);
-      print("data ${result}");
-      salesReport = jsonDecode(result);
-      searchSalesReport = jsonDecode(result);
-
-      print("searchSalesReport $searchSalesReport");
-    } else {
-      dynamic salesData = await MySQLService().getSalesReport(
-          co_code,
-          lc_code,
-          year,
-          DateFormat("MM/dd/yyyy").format(fromDate),
-          DateFormat("MM/dd/yyyy").format(toDate),
-          selectedBook);
-      salesReport = salesData[0];
-      searchSalesReport = salesData[0];
-    }
-
-    loadingProvider.stopLoading();
     setState(() {});
+    try {
+      if (Platform.isAndroid) {
+        var query =
+            "SELECT A.CO_CODE,A.LC_CODE,A.CO_YEAR,(convert(varchar(50),A.VCH_DATE,105)) as VCH_DATE,A.VCH_NO,A.CO_BOOK,B.BOOK_NAME,C.AC_NAME,C.AC_MOBILE, A.MAIN_USER, SUM(ITM_PCS) As Pcs,Sum(A.ITM_GWT) As Gwt,SUM(A.ITM_NWT) As Nwt,SUM(A.ITM_FINE) As Fine, (Select D.TOT_AMT From SL_DATA AS D Where A.CO_CODE = D.CO_CODE AND A.LC_CODE = D.LC_CODE AND A.CO_YEAR = D.CO_YEAR AND A.CO_BOOK = D.CO_BOOK  AND A.VCH_NO = D.VCH_NO ) As NetAmt, (Select E.BILL_OS From SL_DATA AS E Where A.CO_CODE = E.CO_CODE AND A.LC_CODE = E.LC_CODE AND A.CO_YEAR = E.CO_YEAR AND A.CO_BOOK = E.CO_BOOK  AND A.VCH_NO = E.VCH_NO ) As OsAmt from (MAIN_STOCK AS A LEFT JOIN BOOK_DATA AS B ON A.CO_CODE = B.CO_CODE AND A.LC_CODE = B.LC_CODE AND A.CO_BOOK = B.CO_BOOK) LEFT JOIN AC_MAST AS C ON A.CO_CODE = C.CO_CODE AND A.AC_CODE = C.AC_CODE WHERE A.CO_CODE = '" +
+                co_code +
+                "' AND A.LC_CODE = '" +
+                lc_code +
+                "' AND A.CO_YEAR = '" +
+                year +
+                "' AND A.ITM_SIGN = '-' AND A.VCH_DATE >= '" +
+                DateFormat("MM/dd/yyyy").format(fromDate) +
+                "' AND A.VCH_DATE <= '" +
+                DateFormat("MM/dd/yyyy").format(toDate) +
+                "' AND B.MAIN_BOOK IN ('SALES','SALES RETURN') ";
+
+        if (selectedBook != "Select book") {
+          query += "AND A.CO_BOOK = '" + selectedBook.split("-")[0] + "' ";
+        }
+
+        query +=
+            "GROUP BY A.CO_CODE,A.LC_CODE,A.CO_YEAR,A.VCH_DATE,A.VCH_NO,A.CO_BOOK,B.BOOK_NAME,C.AC_NAME,C.AC_MOBILE,A.MAIN_USER ORDER BY A.VCH_DATE,A.CO_BOOK,A.VCH_NO";
+        dynamic result = await sqlConnection.queryDatabase(query);
+        salesReport = jsonDecode(result);
+        searchSalesReport = jsonDecode(result);
+      } else {
+        dynamic salesData = await MySQLService().getSalesReport(
+            co_code,
+            lc_code,
+            year,
+            DateFormat("MM/dd/yyyy").format(fromDate),
+            DateFormat("MM/dd/yyyy").format(toDate),
+            selectedBook);
+        salesReport = salesData[0];
+        searchSalesReport = salesData[0];
+      }
+    } catch (e) {
+      salesReport = [];
+      searchSalesReport = [];
+      if (mounted) _toast("Could not load sales report. Please try again.");
+    } finally {
+      loadingProvider.stopLoading();
+      if (mounted) setState(() {});
+    }
   }
 
   getFillterBookData() async {
@@ -117,22 +131,100 @@ class _SalesreportScreenState extends State<SalesReportScreen> {
           "' AND MAIN_BOOK in ('SALES','WHSALES') AND CUR_USE='Y'";
 
       dynamic bookResult = await sqlConnection.queryDatabase(query);
-      print("Book Data ${bookResult}");
       List<dynamic> data = jsonDecode(bookResult);
-      data.forEach((action) {
+      for (final action in data) {
         bookData.add("${action["CO_BOOK"]}-${action["BOOK_NAME"]}");
-      });
+      }
     } else {
       dynamic salesFilterData = await MySQLService().getSalesFilterData(
         co_code,
         lc_code,
       );
-      salesFilterData[0].forEach((action) {
+      for (final action in salesFilterData[0]) {
         bookData.add("${action["CO_BOOK"]}-${action["BOOK_NAME"]}");
-      });
-      print("Saleeee $salesFilterData");
+      }
     }
   }
+
+  // ---------- action helpers ----------
+
+  void _toast(String message) {
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        content: Text(
+          message,
+          style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w600),
+        ),
+      ),
+    );
+  }
+
+  String _mobile(dynamic data) => '${data['AC_MOBILE'] ?? ''}'.trim();
+
+  String _fmt(dynamic value, int decimals) {
+    final parsed = double.tryParse('${value ?? ''}');
+    if (parsed == null || parsed == 0) return '';
+    return parsed.toStringAsFixed(decimals);
+  }
+
+  String _invoiceMessage(dynamic data) {
+    final net = _fmt(data['NetAmt'], 2);
+    final os = _fmt(data['OsAmt'], 2);
+    final buffer = StringBuffer();
+    buffer.writeln('*Thanks For Buying Ornaments*');
+    buffer.writeln('Invoice No : ${data['VCH_NO'] ?? ''}');
+    buffer.writeln('Invoice Date : ${data['VCH_DATE'] ?? ''}');
+    buffer.writeln('Sales Amount : $net');
+    buffer.writeln('Os Amount : $os');
+    buffer.write('${data['AC_NAME'] ?? ''}');
+    return buffer.toString();
+  }
+
+  Future<void> _sendWhatsApp(dynamic data) async {
+    final mobile = _mobile(data);
+    if (mobile.isEmpty) {
+      _toast('Mobile number does not exist');
+      return;
+    }
+    final link = WhatsAppUnilink(
+      phoneNumber: '+91$mobile',
+      text: _invoiceMessage(data),
+    );
+    await launchUrlString('$link', mode: LaunchMode.externalApplication);
+  }
+
+  Future<void> _makeCall(dynamic data) async {
+    final mobile = _mobile(data);
+    if (mobile.isEmpty) {
+      _toast('Mobile number does not exist');
+      return;
+    }
+    await launchUrlString('tel:+91$mobile');
+  }
+
+  Future<void> _sendSms(dynamic data) async {
+    final mobile = _mobile(data);
+    if (mobile.isEmpty) {
+      _toast('Mobile number does not exist');
+      return;
+    }
+    final body = Uri.encodeComponent(_invoiceMessage(data));
+    await launchUrlString('sms:+91$mobile?body=$body');
+  }
+
+  Future<void> _shareMessage(dynamic data) async {
+    final box = context.findRenderObject() as RenderBox?;
+    await Share.share(
+      _invoiceMessage(data),
+      sharePositionOrigin:
+          box == null ? null : box.localToGlobal(Offset.zero) & box.size,
+    );
+  }
+
+  // ---------- filter sheet ----------
 
   fillterData(
       {required List<dynamic> bookList,
@@ -143,204 +235,307 @@ class _SalesreportScreenState extends State<SalesReportScreen> {
     DateTime from = fromD;
     DateTime to = toD;
     showModalBottomSheet(
-        constraints: BoxConstraints(
-          maxHeight: double.infinity,
-        ),
-        scrollControlDisabledMaxHeightRatio: 0.8,
-        useSafeArea: true,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.only(
-              topLeft: Radius.circular(25), topRight: Radius.circular(25)),
-        ),
-        context: context,
-        builder: (context) =>
-            StatefulBuilder(builder: (context, setModalState) {
-              return Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 15.0),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Padding(
-                      padding: const EdgeInsets.only(top: 20.0, bottom: 5),
-                      child: Row(
-                        children: [
-                          GestureDetector(
-                              onTap: () => Navigator.pop(context),
-                              child: Icon(Icons.close)),
-                          Spacer(),
-                          GestureDetector(
-                            onTap: () {
-                              fromDate = DateTime.now();
-                              toDate = DateTime.now();
-                              selectedBook = "Select book";
-                              getSalesReport();
-                              Navigator.pop(context);
-                            },
-                            child: Text(
-                              "Clear All",
-                              style: TextStyle(
-                                  fontSize: 15,
-                                  color: Color(0xFF006EB7),
-                                  fontWeight: FontWeight.w600),
-                            ),
+      context: context,
+      isScrollControlled: true,
+      useSafeArea: true,
+      backgroundColor: Colors.transparent,
+      barrierColor: Colors.black.withValues(alpha: 0.45),
+      builder: (context) => StatefulBuilder(builder: (context, setModalState) {
+        final viewInsets = MediaQuery.of(context).viewInsets.bottom;
+        final safeBottom = MediaQuery.of(context).padding.bottom;
+        final maxSheetH = MediaQuery.of(context).size.height * 0.88;
+
+        Widget filterLabel(String text) {
+          return Padding(
+            padding: const EdgeInsets.only(bottom: 8),
+            child: Row(
+              children: [
+                Container(
+                  width: 4,
+                  height: 18,
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.topCenter,
+                      end: Alignment.bottomCenter,
+                      colors: [_cta, _cta.withValues(alpha: 0.55)],
+                    ),
+                    borderRadius: BorderRadius.circular(3),
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Text(
+                  text,
+                  style: GoogleFonts.plusJakartaSans(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w800,
+                    letterSpacing: 0.5,
+                    color: _textSecondary,
+                  ),
+                ),
+              ],
+            ),
+          );
+        }
+
+        Widget dateBox(DateTime value, VoidCallback onTap) {
+          return Expanded(
+            child: Material(
+              color: Colors.transparent,
+              child: InkWell(
+                borderRadius: BorderRadius.circular(14),
+                onTap: onTap,
+                child: Ink(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                  decoration: BoxDecoration(
+                    gradient: const LinearGradient(
+                      colors: [Color(0xFFFFFFFF), Color(0xFFF8FAFC)],
+                    ),
+                    borderRadius: BorderRadius.circular(14),
+                    border: Border.all(color: _cta.withValues(alpha: 0.35)),
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(Icons.calendar_today_rounded, size: 18, color: _cta),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          DateFormat('dd-MM-yyyy').format(value),
+                          style: GoogleFonts.plusJakartaSans(
+                            fontWeight: FontWeight.w700,
+                            fontSize: 14,
+                            color: _textPrimary,
                           ),
-                          SizedBox(
-                            width: 20,
-                          ),
-                          GestureDetector(
-                            onTap: () {
-                              fromDate = from;
-                              toDate = to;
-                              selectedBook = selectedbook;
-                              getSalesReport();
-                              Navigator.pop(context);
-                            },
-                            child: Text(
-                              "Apply Filter",
-                              style: TextStyle(
-                                  fontSize: 15,
-                                  color: Color(0xFF006EB7),
-                                  fontWeight: FontWeight.w600),
-                            ),
-                          ),
-                        ],
+                          overflow: TextOverflow.ellipsis,
+                        ),
                       ),
+                      Icon(Icons.keyboard_arrow_down_rounded,
+                          color: _cta, size: 22),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          );
+        }
+
+        return Padding(
+          padding: EdgeInsets.only(bottom: viewInsets),
+          child: Align(
+            alignment: Alignment.bottomCenter,
+            child: ConstrainedBox(
+              constraints: BoxConstraints(maxHeight: maxSheetH),
+              child: Container(
+                width: double.infinity,
+                margin: const EdgeInsets.fromLTRB(12, 0, 12, 10),
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(24),
+                  gradient: LinearGradient(
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                    colors: [
+                      Colors.white,
+                      Color.lerp(Colors.white, _pageBg, 0.22)!,
+                    ],
+                  ),
+                  border: Border.all(color: _cta.withValues(alpha: 0.1)),
+                  boxShadow: [
+                    BoxShadow(
+                      color: _cta.withValues(alpha: 0.12),
+                      blurRadius: 40,
+                      offset: const Offset(0, -8),
+                      spreadRadius: -8,
                     ),
-                    Divider(),
-                    SizedBox(
-                      height: 20,
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.18),
+                      blurRadius: 24,
+                      offset: const Offset(0, 12),
                     ),
-                    Expanded(
-                        child: SingleChildScrollView(
+                  ],
+                ),
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(24),
+                  child: SingleChildScrollView(
+                    physics: const BouncingScrollPhysics(),
+                    child: Padding(
+                      padding: EdgeInsets.fromLTRB(20, 10, 20, safeBottom + 16),
                       child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisSize: MainAxisSize.min,
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: [
-                          Text(
-                            "From To Date",
-                            style: TextStyle(
-                                fontSize: 15,
-                                color: Color(0xFF006EB7),
-                                fontWeight: FontWeight.w600),
-                          ),
-                          SizedBox(
-                            height: 10,
+                          Center(
+                            child: Container(
+                              width: 44,
+                              height: 5,
+                              margin: const EdgeInsets.only(bottom: 14),
+                              decoration: BoxDecoration(
+                                gradient: LinearGradient(
+                                  colors: [
+                                    _border,
+                                    _border.withValues(alpha: 0.4),
+                                  ],
+                                ),
+                                borderRadius: BorderRadius.circular(99),
+                              ),
+                            ),
                           ),
                           Row(
                             children: [
-                              Expanded(
-                                child: GestureDetector(
-                                  onTap: () async {
-                                    DateTime? dat =
-                                        await _selectDate(context, from);
-                                    from = dat!;
-                                    setModalState(() {});
-                                  },
+                              Material(
+                                color: Colors.transparent,
+                                child: InkWell(
+                                  onTap: () => Navigator.pop(context),
+                                  borderRadius: BorderRadius.circular(12),
                                   child: Container(
-                                    padding:
-                                        EdgeInsets.symmetric(horizontal: 15),
-                                    margin: EdgeInsets.only(right: 7.5),
+                                    padding: const EdgeInsets.all(10),
                                     decoration: BoxDecoration(
-                                        borderRadius: BorderRadius.circular(12),
-                                        border: Border.all(
-                                            color: Color(0xFF006EB7))),
-                                    child: SizedBox(
-                                      height: 40,
-                                      child: Row(
-                                        children: [
-                                          Text(DateFormat("dd/MM/yyyy")
-                                              .format(from)),
-                                          Spacer(),
-                                          Icon(Icons.keyboard_arrow_down)
-                                        ],
+                                      color: _pageBg,
+                                      borderRadius: BorderRadius.circular(12),
+                                      border: Border.all(
+                                        color: _border.withValues(alpha: 0.65),
                                       ),
+                                    ),
+                                    child: Icon(
+                                      Icons.close_rounded,
+                                      color: _textSecondary,
+                                      size: 20,
                                     ),
                                   ),
                                 ),
                               ),
                               Expanded(
-                                child: GestureDetector(
-                                  onTap: () async {
-                                    DateTime? dat =
-                                        await _selectDate(context, to);
-                                    to = dat!;
-                                    setModalState(() {});
-                                  },
-                                  child: Container(
-                                    padding:
-                                        EdgeInsets.symmetric(horizontal: 15),
-                                    margin: EdgeInsets.only(left: 7.5),
-                                    decoration: BoxDecoration(
-                                        borderRadius: BorderRadius.circular(12),
-                                        border: Border.all(
-                                            color: Color(0xFF006EB7))),
-                                    child: SizedBox(
-                                      height: 40,
-                                      child: Row(
-                                        children: [
-                                          Text(DateFormat("dd/MM/yyyy")
-                                              .format(to)),
-                                          Spacer(),
-                                          Icon(Icons.keyboard_arrow_down)
-                                        ],
-                                      ),
+                                child: Text(
+                                  'Filters',
+                                  textAlign: TextAlign.center,
+                                  style: GoogleFonts.plusJakartaSans(
+                                    fontSize: 19,
+                                    fontWeight: FontWeight.w800,
+                                    letterSpacing: -0.45,
+                                    color: _textPrimary,
+                                  ),
+                                ),
+                              ),
+                              TextButton(
+                                style: TextButton.styleFrom(
+                                  foregroundColor: _cta,
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 12,
+                                    vertical: 8,
+                                  ),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                    side: BorderSide(
+                                      color: _cta.withValues(alpha: 0.35),
                                     ),
                                   ),
                                 ),
-                              )
+                                onPressed: () {
+                                  fromDate = DateTime.now();
+                                  toDate = DateTime.now();
+                                  selectedBook = "Select book";
+                                  getSalesReport();
+                                  Navigator.pop(context);
+                                },
+                                child: Text(
+                                  'Clear all',
+                                  style: GoogleFonts.plusJakartaSans(
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.w800,
+                                  ),
+                                ),
+                              ),
                             ],
                           ),
+                          const SizedBox(height: 12),
+                          Divider(
+                            height: 1,
+                            thickness: 1,
+                            color: _border.withValues(alpha: 0.65),
+                          ),
+                          const SizedBox(height: 18),
+                          filterLabel('Date range'),
+                          Row(
+                            children: [
+                              dateBox(from, () async {
+                                DateTime? dat =
+                                    await _selectDate(context, from);
+                                if (dat != null) from = dat;
+                                setModalState(() {});
+                              }),
+                              const SizedBox(width: 10),
+                              dateBox(to, () async {
+                                DateTime? dat = await _selectDate(context, to);
+                                if (dat != null) to = dat;
+                                setModalState(() {});
+                              }),
+                            ],
+                          ),
+                          const SizedBox(height: 18),
+                          filterLabel('Book'),
+                          bookPickerField(
+                            label: selectedbook,
+                            onTap: () async {
+                              final picked = await showBookPicker(
+                                context: context,
+                                selected: selectedbook,
+                                options: bookList
+                                    .map((b) => PickerOption(
+                                        b.toString(), b.toString()))
+                                    .toList(),
+                              );
+                              if (picked != null) {
+                                selectedbook = picked;
+                                setModalState(() {});
+                              }
+                            },
+                          ),
+                          const SizedBox(height: 22),
                           SizedBox(
-                            height: 10,
-                          ),
-                          Text(
-                            "Book",
-                            style: TextStyle(
-                                fontSize: 15,
-                                color: Color(0xFF006EB7),
-                                fontWeight: FontWeight.w600),
-                          ),
-                          Container(
-                            margin: EdgeInsets.only(top: 10),
-                            decoration: BoxDecoration(
-                                color: Color(0xFFe7edeb),
-                                borderRadius: BorderRadius.circular(8.0)),
-                            child: DropdownButtonHideUnderline(
-                              child: Theme(
-                                data: Theme.of(context).copyWith(
-                                  canvasColor: Color(0xfff1f1f1),
+                            width: double.infinity,
+                            child: FilledButton(
+                              style: FilledButton.styleFrom(
+                                backgroundColor: _cta,
+                                foregroundColor: Colors.white,
+                                padding: const EdgeInsets.symmetric(
+                                  vertical: 16,
                                 ),
-                                child: DropdownButton2(
-                                    dropdownStyleData: DropdownStyleData(),
-                                    isExpanded: true,
-                                    value: selectedbook,
-                                    items: bookList.map((dynamic items) {
-                                      return DropdownMenuItem(
-                                        value: items,
-                                        child: Text(items),
-                                      );
-                                    }).toList(),
-                                    onChanged: (value) {
-                                      print(value);
-                                      selectedbook = value.toString();
-                                      setModalState(() {});
-                                    }),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(14.75),
+                                ),
+                                elevation: 0,
+                              ),
+                              onPressed: () {
+                                fromDate = from;
+                                toDate = to;
+                                selectedBook = selectedbook;
+                                getSalesReport();
+                                Navigator.pop(context);
+                              },
+                              child: Text(
+                                'Apply filters',
+                                style: GoogleFonts.plusJakartaSans(
+                                  fontWeight: FontWeight.w800,
+                                  fontSize: 15,
+                                  letterSpacing: 0.2,
+                                ),
                               ),
                             ),
                           ),
-                          SizedBox(
-                            height: 40,
-                          ),
                         ],
                       ),
-                    ))
-                  ],
+                    ),
+                  ),
                 ),
-              );
-            }));
+              ),
+            ),
+          ),
+        );
+      }),
+    );
   }
 
   Future<DateTime?> _selectDate(BuildContext context, DateTime init) async {
-    DateTime? newSelectedDate = await showDatePicker(
+    return showDatePicker(
       context: context,
       initialDate: init,
       firstDate: DateTime(2000),
@@ -348,85 +543,345 @@ class _SalesreportScreenState extends State<SalesReportScreen> {
       builder: (context, child) {
         return Theme(
           data: Theme.of(context).copyWith(
-            colorScheme: ColorScheme.light(
-              primary: AppColor.blueColor, // <-- SEE HERE
-              onPrimary: Colors.white, // <-- SEE HERE
+            colorScheme: const ColorScheme.light(
+              primary: _brand,
+              onPrimary: Colors.white,
             ),
             textButtonTheme: TextButtonThemeData(
-              style: TextButton.styleFrom(
-                foregroundColor: Colors.black, // button text color
-              ),
+              style: TextButton.styleFrom(foregroundColor: Colors.black),
             ),
           ),
           child: child!,
         );
       },
-      // builder: (BuildContext context, Widget child) {
-      //   return Theme(
-      //     data: ThemeData.dark().copyWith(
-      //       colorScheme: ColorScheme.dark(
-      //         primary: Colors.deepPurple,
-      //         onPrimary: Colors.white,
-      //         surface: Colors.blueGrey,
-      //         onSurface: Colors.yellow,
-      //       ),
-      //       dialogBackgroundColor: Colors.blue[500],
-      //     ),
-      //     child: child,
-      //   );
-      // }
     );
+  }
 
-    // if (newSelectedDate != null) {
-    return newSelectedDate;
-    // _selectedDate = newSelectedDate;
-    // _textEditingController
-    //   ..text = DateFormat.yMMMd().format(_selectedDate)
-    //   ..selection = TextSelection.fromPosition(TextPosition(
-    //       offset: _textEditingController.text.length,
-    //       affinity: TextAffinity.upstream));
-    // }
+  // ---------- card widgets ----------
+
+  Widget _detailLine(String label, String value, {Color? valueColor}) {
+    if (value.trim().isEmpty) return const SizedBox.shrink();
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 6),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          SizedBox(
+            width: 104,
+            child: Text(
+              label,
+              style: GoogleFonts.plusJakartaSans(
+                fontSize: 13,
+                fontWeight: FontWeight.w600,
+                color: _textSecondary,
+                height: 1.3,
+              ),
+            ),
+          ),
+          Text(
+            ': ',
+            style: GoogleFonts.plusJakartaSans(
+              fontSize: 13,
+              fontWeight: FontWeight.w600,
+              color: _border,
+            ),
+          ),
+          Expanded(
+            child: Text(
+              value,
+              style: GoogleFonts.plusJakartaSans(
+                fontSize: 14,
+                fontWeight: FontWeight.w700,
+                height: 1.3,
+                color: valueColor ?? _textPrimary,
+                letterSpacing: -0.1,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _actionChip({required VoidCallback onTap, required Widget child}) {
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(14),
+        child: Ink(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(14),
+            color: _pageBg,
+            border: Border.all(color: _border.withValues(alpha: 0.65)),
+          ),
+          child: child,
+        ),
+      ),
+    );
+  }
+
+  Widget _salesCard(dynamic data, {required bool isLast}) {
+    return Padding(
+      padding: EdgeInsets.only(bottom: isLast ? 0 : 12),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(22),
+          onTap: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => SalesZoomingReport(
+                  vchNo: '${data["VCH_NO"] ?? ''}',
+                  coBook: '${data["CO_BOOK"] ?? ''}',
+                  bookName: '${data["BOOK_NAME"] ?? ''}',
+                ),
+              ),
+            );
+          },
+          child: Container(
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(22),
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [
+                  _cta.withValues(alpha: 0.4),
+                  _cta.withValues(alpha: 0.08),
+                ],
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: _cta.withValues(alpha: 0.12),
+                  blurRadius: 22,
+                  offset: const Offset(0, 10),
+                ),
+              ],
+            ),
+            padding: const EdgeInsets.all(1.25),
+            child: Container(
+              padding: const EdgeInsets.fromLTRB(16, 16, 16, 14),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(20.75),
+                boxShadow: const [
+                  BoxShadow(
+                    color: Color(0x060F172A),
+                    blurRadius: 12,
+                    offset: Offset(0, 4),
+                  ),
+                ],
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Expanded(
+                        child: Text(
+                          '${data["AC_NAME"] ?? ''}',
+                          style: GoogleFonts.plusJakartaSans(
+                            color: _cta,
+                            fontWeight: FontWeight.w800,
+                            fontSize: 17,
+                            height: 1.25,
+                            letterSpacing: -0.35,
+                          ),
+                        ),
+                      ),
+                      Icon(
+                        Icons.chevron_right_rounded,
+                        color: _textSecondary.withValues(alpha: 0.65),
+                        size: 26,
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
+                  Divider(
+                    height: 1,
+                    thickness: 1,
+                    color: _border.withValues(alpha: 0.65),
+                  ),
+                  const SizedBox(height: 12),
+                  _detailLine('Mobile', '${data["AC_MOBILE"] ?? ''}'),
+                  _detailLine('Invoice date', '${data["VCH_DATE"] ?? ''}'),
+                  _detailLine('Book name', '${data["BOOK_NAME"] ?? ''}'),
+                  _detailLine('Sales weight', _fmt(data["Nwt"], 3)),
+                  _detailLine('Sales amount', _fmt(data["NetAmt"], 2),
+                      valueColor: _success),
+                  _detailLine('Os amount', _fmt(data["OsAmt"], 2),
+                      valueColor: _danger),
+                  _detailLine('Entry user', '${data["MAIN_USER"] ?? ''}'),
+                  const SizedBox(height: 6),
+                  Divider(
+                    height: 1,
+                    thickness: 1,
+                    color: _border.withValues(alpha: 0.65),
+                  ),
+                  const SizedBox(height: 12),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Align(
+                          child: _actionChip(
+                            onTap: () => _sendWhatsApp(data),
+                            child: Image.asset(AppImage.whatsapp, scale: 18),
+                          ),
+                        ),
+                      ),
+                      Expanded(
+                        child: Align(
+                          child: _actionChip(
+                            onTap: () => _makeCall(data),
+                            child: Image.asset(AppImage.telephone, scale: 18),
+                          ),
+                        ),
+                      ),
+                      Expanded(
+                        child: Align(
+                          child: _actionChip(
+                            onTap: () => _sendSms(data),
+                            child: Image.asset(AppImage.chat, scale: 18),
+                          ),
+                        ),
+                      ),
+                      Expanded(
+                        child: Align(
+                          child: _actionChip(
+                            onTap: () => _shareMessage(data),
+                            child: Image.asset(AppImage.share, scale: 18),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _emptyState() {
+    return Center(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Container(
+            padding: const EdgeInsets.all(22),
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: _cta.withValues(alpha: 0.08),
+            ),
+            child: Icon(
+              Icons.receipt_long_rounded,
+              size: 46,
+              color: _cta.withValues(alpha: 0.7),
+            ),
+          ),
+          const SizedBox(height: 16),
+          Text(
+            'No sales records found',
+            style: GoogleFonts.plusJakartaSans(
+              fontSize: 16,
+              fontWeight: FontWeight.w800,
+              color: _textPrimary,
+            ),
+          ),
+          const SizedBox(height: 6),
+          Text(
+            'Try adjusting your filters or search',
+            style: GoogleFonts.plusJakartaSans(
+              fontSize: 13,
+              fontWeight: FontWeight.w500,
+              color: _textSecondary,
+            ),
+          ),
+        ],
+      ),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: _pageBg,
       appBar: AppBar(
-        title: Text(
-          "Sales Report",
-          style: GoogleFonts.nunito(
-              fontSize: 22,
-              fontWeight: FontWeight.w700,
-              color: Color(0xFF006EB7)),
-        ),
-        centerTitle: true,
-// elevation: 5,
-        backgroundColor: Colors.white,
+        elevation: 0,
+        scrolledUnderElevation: 0,
+        backgroundColor: Colors.transparent,
+        foregroundColor: _textPrimary,
         automaticallyImplyLeading: false,
-        leading: GestureDetector(
-          onTap: () {
-            Navigator.pop(context);
-          },
-          child: Icon(
-            Icons.keyboard_arrow_left_rounded,
-            color: Color(0xFF006EB7),
-            size: 45,
+        centerTitle: true,
+        flexibleSpace: Container(
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+              colors: [
+                Colors.white,
+                Colors.white.withValues(alpha: 0.96),
+                _pageBg,
+              ],
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: const Color(0xFF0F172A).withValues(alpha: 0.04),
+                blurRadius: 16,
+                offset: const Offset(0, 6),
+              ),
+            ],
+          ),
+        ),
+        leading: Material(
+          color: Colors.transparent,
+          child: InkWell(
+            onTap: () => Navigator.pop(context),
+            borderRadius: BorderRadius.circular(12),
+            child: Icon(
+              Icons.arrow_back_ios_new_rounded,
+              color: _cta,
+              size: 22,
+            ),
+          ),
+        ),
+        title: Text(
+          'Sales report',
+          style: GoogleFonts.plusJakartaSans(
+            fontSize: 18,
+            fontWeight: FontWeight.w800,
+            letterSpacing: -0.35,
+            color: _cta,
+          ),
+        ),
+        bottom: PreferredSize(
+          preferredSize: const Size.fromHeight(1),
+          child: Divider(
+            height: 1,
+            thickness: 1,
+            color: _border.withValues(alpha: 0.65),
           ),
         ),
         actions: [
-          GestureDetector(
-            onTap: () {
-              fillterData(
-                  bookList: bookData,
-                  selectedBookValue: selectedBook,
-                  fromD: fromDate,
-                  toD: toDate);
-            },
-            child: Padding(
-              padding: const EdgeInsets.only(right: 8.0),
-              child: Icon(
-                Icons.filter_list_alt,
-                color: Color(0xFF006EB7),
+          Material(
+            color: Colors.transparent,
+            child: InkWell(
+              onTap: () {
+                fillterData(
+                    bookList: bookData,
+                    selectedBookValue: selectedBook,
+                    fromD: fromDate,
+                    toD: toDate);
+              },
+              borderRadius: BorderRadius.circular(12),
+              child: Padding(
+                padding: const EdgeInsets.only(right: 12, left: 4),
+                child: Icon(Icons.tune_rounded, color: _cta, size: 26),
               ),
             ),
           ),
@@ -434,43 +889,76 @@ class _SalesreportScreenState extends State<SalesReportScreen> {
       ),
       body: Column(
         children: [
-          SizedBox(
-            height: 15,
-          ),
+          const SizedBox(height: 12),
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 15.0),
-            child: TextFormField(
-                readOnly: false,
-                cursorColor: Color(0xFF006EB7),
+            padding: const EdgeInsets.symmetric(horizontal: 16.0),
+            child: Container(
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(16),
+                gradient: LinearGradient(
+                  colors: [
+                    _cta.withValues(alpha: 0.2),
+                    _cta.withValues(alpha: 0.06),
+                  ],
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: _cta.withValues(alpha: 0.1),
+                    blurRadius: 20,
+                    offset: const Offset(0, 8),
+                  ),
+                ],
+              ),
+              padding: const EdgeInsets.all(1.25),
+              child: TextFormField(
+                cursorColor: _cta,
                 keyboardType: TextInputType.text,
-                // inputFormatters: formatters,
-                // textCapitalization: textCapitalization ?? TextCapitalization.none,
-                // maxLength: maxLength,
+                style: GoogleFonts.plusJakartaSans(
+                  fontSize: 15,
+                  fontWeight: FontWeight.w600,
+                  color: _textPrimary,
+                ),
                 decoration: InputDecoration(
-                  hintText: "Search with account name",
+                  hintText: 'Search by account name',
+                  hintStyle: GoogleFonts.plusJakartaSans(
+                    color: _textSecondary.withValues(alpha: 0.85),
+                    fontWeight: FontWeight.w500,
+                    fontSize: 14,
+                  ),
                   counterText: '',
-                  contentPadding: EdgeInsets.only(left: 8, top: 0),
+                  filled: true,
+                  fillColor: Colors.white,
+                  contentPadding:
+                      const EdgeInsets.symmetric(horizontal: 4, vertical: 14),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(14.75),
+                    borderSide: BorderSide.none,
+                  ),
                   enabledBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(8),
-                    borderSide: BorderSide(
-                        width: 2, color: Color(0xFF006EB7)), //<-- SEE HERE
+                    borderRadius: BorderRadius.circular(14.75),
+                    borderSide:
+                        BorderSide(color: _border.withValues(alpha: 0.5)),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(14.75),
+                    borderSide: BorderSide(color: _cta, width: 1.5),
                   ),
                   prefixIcon: Padding(
-                      padding: EdgeInsets.only(left: 8, right: 8),
-                      child: Container(
-                        margin: EdgeInsets.symmetric(vertical: 8),
-                        decoration: BoxDecoration(
-                            color: Colors.orange.withOpacity(0.3),
-                            borderRadius: BorderRadius.circular(5)),
-                        child: Icon(
-                          Icons.search,
-                          color: Colors.orange,
+                    padding: const EdgeInsets.only(left: 10, right: 6),
+                    child: Container(
+                      margin: const EdgeInsets.symmetric(vertical: 10),
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(10),
+                        gradient: LinearGradient(
+                          colors: [
+                            _cta.withValues(alpha: 0.18),
+                            _cta.withValues(alpha: 0.06),
+                          ],
                         ),
-                      )),
-                  focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(8),
-                    borderSide: BorderSide(
-                        width: 2, color: Color(0xFF006EB7)), //<-- SEE HERE
+                      ),
+                      child: Icon(Icons.search_rounded, color: _cta, size: 22),
+                    ),
                   ),
                 ),
                 onChanged: (value) {
@@ -489,384 +977,34 @@ class _SalesreportScreenState extends State<SalesReportScreen> {
                     searchSalesReport.addAll(salesReport);
                     setState(() {});
                   }
-                }),
+                },
+              ),
+            ),
           ),
-          loadingProvider.isLoading ? SizedBox() :
-          searchSalesReport.length == 0
-              ? Expanded(
-                  child: Center(
-                    child: Text(
-                      "No record found",
-                          style: GoogleFonts.nunito(
-                          color: Color(0xFF006EB7),
-                          fontWeight: FontWeight.bold,
-                          fontSize: 18),
-                    ),
+          const SizedBox(height: 8),
+          Expanded(
+            child: Consumer<LoadingProvider>(
+              builder: (context, loading, _) {
+                if (loading.isLoading) {
+                  return Center(
+                    child: CircularProgressIndicator(color: _cta),
+                  );
+                }
+                if (searchSalesReport.isEmpty) {
+                  return _emptyState();
+                }
+                return ListView.builder(
+                  physics: const BouncingScrollPhysics(),
+                  padding: const EdgeInsets.fromLTRB(16, 8, 16, 20),
+                  itemCount: searchSalesReport.length,
+                  itemBuilder: (context, index) => _salesCard(
+                    searchSalesReport[index],
+                    isLast: index == searchSalesReport.length - 1,
                   ),
-                )
-              : Expanded(
-                  child: ListView.builder(
-                      itemCount: searchSalesReport.length,
-                      itemBuilder: (context, index) => InkWell(
-                        onTap: (){
-                          Navigator.push(context, MaterialPageRoute(builder: (context)=>SalesZoomingReport(vchNo: searchSalesReport[index]["VCH_NO"], coBook: searchSalesReport[index]["CO_BOOK"],bookName:searchSalesReport[index]["BOOK_NAME"])));
-                        },
-                        child: Padding(
-                              padding: EdgeInsets.only(
-                                  top: 15.0,
-                                  left: 15,
-                                  right: 15,
-                                  bottom: index == searchSalesReport.length - 1
-                                      ? 15
-                                      : 0),
-                              child: Container(
-                                padding: const EdgeInsets.all(15),
-                                decoration: BoxDecoration(
-                                    color: Colors.grey[200],
-                                    borderRadius: BorderRadius.circular(18),
-                                    boxShadow: [
-                                      BoxShadow(
-                                          blurRadius: 10,
-                                          spreadRadius: -10,
-                                          offset: Offset(2, 3))
-                                    ]),
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(
-                                      searchSalesReport[index]["AC_NAME"],
-                                      style: GoogleFonts.nunito(
-                                          color: Color(0xFF006EB7),
-                                          fontWeight: FontWeight.bold,
-                                          fontSize: 18),
-                                    ),
-                                    SizedBox(
-                                      height: 10,
-                                    ),
-                                    Divider(
-                                      height: 2,
-                                      color: Colors.grey,
-                                    ),
-                                    SizedBox(
-                                      height: 8,
-                                    ),
-                                    Row(
-                                      children: [
-                                        Column(
-                                          crossAxisAlignment:
-                                              CrossAxisAlignment.start,
-                                          children: [
-                                            Text(
-                                              "Mobile",
-                                              style: GoogleFonts.nunito(
-                                                  color: Color(0xFF006EB7),
-                                                  fontWeight: FontWeight.w500,
-                                                  fontSize: 15),
-                                            ),
-                                            SizedBox(
-                                              height: 3.5,
-                                            ),
-                                            Text(
-                                              "Invoice Date",
-                                              style: GoogleFonts.nunito(
-                                                  color: Color(0xFF006EB7),
-                                                  fontWeight: FontWeight.w500,
-                                                  fontSize: 15),
-                                            ),
-                                            SizedBox(
-                                              height: 3.5,
-                                            ),
-                                            Text(
-                                              "Book Name",
-                                              style: GoogleFonts.nunito(
-                                                  color: Color(0xFF006EB7),
-                                                  fontWeight: FontWeight.w500,
-                                                  fontSize: 15),
-                                            ),
-                                            SizedBox(
-                                              height: 3.5,
-                                            ),
-                                            Text(
-                                              "Sales Weight",
-                                              style: GoogleFonts.nunito(
-                                                  color: Color(0xFF006EB7),
-                                                  fontWeight: FontWeight.w500,
-                                                  fontSize: 15),
-                                            ),
-                                            SizedBox(
-                                              height: 3.5,
-                                            ),
-                                            Text(
-                                              "Sales Amount",
-                                              style: GoogleFonts.nunito(
-                                                  color: Color(0xFF006EB7),
-                                                  fontWeight: FontWeight.w500,
-                                                  fontSize: 15),
-                                            ),
-                                            SizedBox(
-                                              height: 3.5,
-                                            ),
-                                            Text(
-                                              "Os Amount",
-                                              style: GoogleFonts.nunito(
-                                                  color: Color(0xFF006EB7),
-                                                  fontWeight: FontWeight.w500,
-                                                  fontSize: 15),
-                                            ),
-                                            SizedBox(
-                                              height: 3.5,
-                                            ),
-                                            Text(
-                                              "Entry User",
-                                              style: GoogleFonts.nunito(
-                                                  color: Color(0xFF006EB7),
-                                                  fontWeight: FontWeight.w500,
-                                                  fontSize: 15),
-                                            ),
-                                          ],
-                                        ),
-                                        SizedBox(
-                                          width: 40,
-                                        ),
-                                        Column(
-                                          crossAxisAlignment:
-                                              CrossAxisAlignment.start,
-                                          children: [
-                                            Text(
-                                              ":",
-                                              style: GoogleFonts.nunito(
-                                                  fontWeight: FontWeight.w500,
-                                                  fontSize: 15),
-                                            ),
-                                            SizedBox(
-                                              height: 3.5,
-                                            ),
-                                            Text(
-                                              ":",
-                                              style: GoogleFonts.nunito(
-                                                  fontWeight: FontWeight.w500,
-                                                  fontSize: 15),
-                                            ),
-                                            SizedBox(
-                                              height: 3.5,
-                                            ),
-                                            Text(
-                                              ":",
-                                              style: GoogleFonts.nunito(
-                                                  fontWeight: FontWeight.w500,
-                                                  fontSize: 15),
-                                            ),
-                                            SizedBox(
-                                              height: 3.5,
-                                            ),
-                                            Text(
-                                              ":",
-                                              style: GoogleFonts.nunito(
-                                                  fontWeight: FontWeight.w500,
-                                                  fontSize: 15),
-                                            ),
-                                            SizedBox(
-                                              height: 3.5,
-                                            ),
-                                            Text(
-                                              ":",
-                                              style: GoogleFonts.nunito(
-                                                  fontWeight: FontWeight.w500,
-                                                  fontSize: 15),
-                                            ),
-                                            SizedBox(
-                                              height: 3.5,
-                                            ),
-                                            Text(
-                                              ":",
-                                              style: GoogleFonts.nunito(
-                                                  fontWeight: FontWeight.w500,
-                                                  fontSize: 15),
-                                            ),
-                                            SizedBox(
-                                              height: 3.5,
-                                            ),
-                                            Text(
-                                              ":",
-                                              style: GoogleFonts.nunito(
-                                                  fontWeight: FontWeight.w500,
-                                                  fontSize: 15),
-                                            ),
-                                          ],
-                                        ),
-                                        SizedBox(
-                                          width: 40,
-                                        ),
-                                        Column(
-                                          crossAxisAlignment:
-                                              CrossAxisAlignment.start,
-                                          children: [
-                                            Text(
-                                              searchSalesReport[index]
-                                                  ["AC_MOBILE"],
-                                              style: GoogleFonts.nunito(
-                                                  fontWeight: FontWeight.w500,
-                                                  fontSize: 15),
-                                            ),
-                                            SizedBox(
-                                              height: 3.5,
-                                            ),
-                                            Text(
-                                              searchSalesReport[index]
-                                                  ["VCH_DATE"],
-                                              style: GoogleFonts.nunito(
-                                                  fontWeight: FontWeight.w500,
-                                                  fontSize: 15),
-                                            ),
-                                            SizedBox(
-                                              height: 3.5,
-                                            ),
-                                            Text(
-                                              searchSalesReport[index]
-                                                  ["BOOK_NAME"],
-                                              style: GoogleFonts.nunito(
-                                                  fontWeight: FontWeight.w500,
-                                                  fontSize: 15),
-                                            ),
-                                            SizedBox(
-                                              height: 3.5,
-                                            ),
-                                            Text(
-                                              searchSalesReport[index]["Nwt"] == 0
-                                                  ? ""
-                                                  : double.parse(
-                                                          searchSalesReport[index]
-                                                                  ["Nwt"]
-                                                              .toString())
-                                                      .toStringAsFixed(3),
-                                              style: GoogleFonts.nunito(
-                                                  fontWeight: FontWeight.w500,
-                                                  fontSize: 15),
-                                            ),
-                                            SizedBox(
-                                              height: 3.5,
-                                            ),
-                                            Text(
-                                              searchSalesReport[index]
-                                                          ["NetAmt"] ==
-                                                      null
-                                                  ? ""
-                                                  : searchSalesReport[index]
-                                                              ["NetAmt"] ==
-                                                          0
-                                                      ? ""
-                                                      : double.parse(
-                                                              searchSalesReport[
-                                                                          index]
-                                                                      ["NetAmt"]
-                                                                  .toString())
-                                                          .toStringAsFixed(2),
-                                              style: GoogleFonts.nunito(
-                                                  fontWeight: FontWeight.w500,
-                                                  fontSize: 15),
-                                            ),
-                                            SizedBox(
-                                              height: 3.5,
-                                            ),
-                                            Text(
-                                              searchSalesReport[index]["OsAmt"] ==
-                                                      null
-                                                  ? ""
-                                                  : searchSalesReport[index]
-                                                              ["OsAmt"] ==
-                                                          0
-                                                      ? ""
-                                                      : double.parse(
-                                                              searchSalesReport[
-                                                                          index]
-                                                                      ["OsAmt"]
-                                                                  .toString())
-                                                          .toStringAsFixed(2),
-                                              style: GoogleFonts.nunito(
-                                                  fontWeight: FontWeight.w500,
-                                                  fontSize: 15),
-                                            ),
-                                            SizedBox(
-                                              height: 3.5,
-                                            ),
-                                            Text(
-                                              searchSalesReport[index]
-                                                  ["MAIN_USER"],
-                                              style: GoogleFonts.nunito(
-                                                  fontWeight: FontWeight.w500,
-                                                  fontSize: 15),
-                                            ),
-                                          ],
-                                        ),
-                                      ],
-                                    ),
-                                    SizedBox(
-                                      height: 8,
-                                    ),
-                                    Divider(
-                                      height: 2,
-                                      color: Colors.grey,
-                                    ),
-                                    SizedBox(
-                                      height: 10,
-                                    ),
-                                    Row(
-                                      mainAxisAlignment:
-                                          MainAxisAlignment.spaceEvenly,
-                                      children: [
-                                        GestureDetector(
-                                          onTap: () async {
-                                            final link = WhatsAppUnilink(
-                                                phoneNumber:
-                                                    '+91${searchSalesReport[index]["AC_MOBILE"]}',
-                                                text:
-                                                    "*Thanks For Buying Ornaments* \n Invoice No : ${searchSalesReport[index]["VCH_NO"]} \n Invoice Date : ${searchSalesReport[index]["VCH_DATE"]} \n Sales Amount : ${searchSalesReport[index]["NetAmt"] == 0 ? "" : double.parse(searchSalesReport[index]["NetAmt"].toString()).toStringAsFixed(2)} \n Os Amount :  ${searchSalesReport[index]["OsAmt"] == 0 ? "" : double.parse(searchSalesReport[index]["OsAmt"].toString()).toStringAsFixed(2)} \n ${searchSalesReport[index]["AC_NAME"]}");
-                                            // Convert the WhatsAppUnilink instance to a Uri.
-                                            // The "launch" method is part of "url_launcher".
-                                            await launchUrlString('$link');
-                                          },
-                                          child: Image.asset(
-                                            AppImage.whatsapp,
-                                            scale: 18,
-                                          ),
-                                        ),
-                                        GestureDetector(
-                                          onTap: () {
-                                            launchUrlString(
-                                                "tel://+91${searchSalesReport[index]["AC_MOBILE"]}");
-                                          },
-                                          child: Image.asset(
-                                            AppImage.telephone,
-                                            scale: 18,
-                                          ),
-                                        ),
-                                        GestureDetector(
-                                          onTap: () {
-                                            launchUrlString(
-                                                'sms:+91${searchSalesReport[index]["AC_MOBILE"]}?body=*Thanks For Buying Ornaments* \n Invoice No : ${searchSalesReport[index]["VCH_NO"]} \n Invoice Date : ${searchSalesReport[index]["VCH_DATE"]} \n Sales Amount : ${searchSalesReport[index]["NetAmt"] == 0 ? "" : double.parse(searchSalesReport[index]["NetAmt"].toString()).toStringAsFixed(2)} \n Os Amount :  ${searchSalesReport[index]["OsAmt"] == 0 ? "" : double.parse(searchSalesReport[index]["OsAmt"].toString()).toStringAsFixed(2)} \n ${searchSalesReport[index]["AC_NAME"]}');
-                                          },
-                                          child: Image.asset(
-                                            AppImage.chat,
-                                            scale: 18,
-                                          ),
-                                        ),
-                                        GestureDetector(
-                                          onTap: () {
-                                            Share.share(
-                                                "*Thanks For Buying Ornaments* \n Invoice No : ${searchSalesReport[index]["VCH_NO"]} \n Invoice Date : ${searchSalesReport[index]["VCH_DATE"]} \n Sales Amount : ${searchSalesReport[index]["NetAmt"] == 0 ? "" : double.parse(searchSalesReport[index]["NetAmt"].toString()).toStringAsFixed(2)} \n Os Amount :  ${searchSalesReport[index]["OsAmt"] == 0 ? "" : double.parse(searchSalesReport[index]["OsAmt"].toString()).toStringAsFixed(2)} \n ${searchSalesReport[index]["AC_NAME"]}");
-                                          },
-                                          child: Image.asset(
-                                            AppImage.share,
-                                            scale: 18,
-                                          ),
-                                        ),
-                                      ],
-                                    )
-                                  ],
-                                ),
-                              ),
-                            ),
-                      )))
+                );
+              },
+            ),
+          ),
         ],
       ),
     );

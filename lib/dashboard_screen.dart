@@ -3,11 +3,17 @@ import 'dart:developer';
 import 'dart:io';
 import 'dart:math' as math;
 
+import 'package:DataCareUltra/utils/preffrance.dart';
+import 'package:DataCareUltra/utils/keys.dart';
 import 'package:DataCareUltra/dailyRate_screen.dart';
+import 'package:DataCareUltra/dayBook_screen.dart';
+import 'package:DataCareUltra/graphReports_screen.dart';
 import 'package:DataCareUltra/ledgerReport_screen.dart';
 import 'package:DataCareUltra/mySql_services.dart';
+import 'package:DataCareUltra/outstanding_screen.dart';
 import 'package:DataCareUltra/phoneBook_screen.dart';
 import 'package:DataCareUltra/provider/commonCompanyYearSelectionProvider.dart';
+import 'package:DataCareUltra/utils/quick_action_grid.dart';
 import 'package:DataCareUltra/qrCode_screen.dart';
 import 'package:DataCareUltra/reminder_screen.dart';
 import 'package:DataCareUltra/salesOrderReport_screen.dart';
@@ -16,10 +22,13 @@ import 'package:DataCareUltra/stockReport_screen.dart';
 import 'package:DataCareUltra/tagEstimate_screen.dart';
 import 'package:DataCareUltra/tagImage_screen.dart';
 import 'package:DataCareUltra/utils/cashonhand.dart';
-import 'package:DataCareUltra/utils/colors.dart';
+import 'package:DataCareUltra/tagStockReport_screen.dart';
+import 'package:DataCareUltra/utils/app_toast.dart';
+import 'package:DataCareUltra/utils/edition.dart';
 import 'package:DataCareUltra/utils/images.dart';
 import 'package:DataCareUltra/utils/ratebox_screen.dart';
 import 'package:DataCareUltra/whSalesReport_screen.dart';
+import 'package:DataCareUltra/whTagEstimate_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
@@ -31,7 +40,7 @@ import 'package:sql_connection/sql_connection.dart';
 // ─────────────────────────────────────────────────────────────────────────────
 
 class DashboardScreen extends StatefulWidget {
-  const DashboardScreen({Key? key}) : super(key: key);
+  const DashboardScreen({super.key});
 
   @override
   State<DashboardScreen> createState() => _DashboardScreenState();
@@ -39,219 +48,181 @@ class DashboardScreen extends StatefulWidget {
 
 class _DashboardScreenState extends State<DashboardScreen> {
   // ── Design tokens ─────────────────────────────────────────────────────────
-  static const Color _brand       = Color(0xFF1565C0);
-  static const Color _brandDark   = Color(0xFF0D47A1);
-  static const Color _brandLight  = Color(0xFF1976D2);
-  static const Color _pageBg      = Color(0xFFEEF2F7);
+  // Shared with every report screen so the app reads as one product.
+  static const Color _brand = Color(0xFF006EB7);
+  static const Color _pageBg = Color(0xFFF8FAFC);
   static const Color _textPrimary = Color(0xFF0F172A);
   static const Color _textSecondary = Color(0xFF64748B);
-  static const Color _border      = Color(0xFFCBD5E1);
 
   // Accent palette for report tiles
   static const Color _accentPurple = Color(0xFF7C3AED);
-  static const Color _accentGreen  = Color(0xFF059669);
-  static const Color _accentAmber  = Color(0xFFD97706);
-  static const Color _accentCyan   = Color(0xFF0891B2);
-  static const Color _accentRed    = Color(0xFFDC2626);
+  static const Color _accentGreen = Color(0xFF059669);
+  static const Color _accentAmber = Color(0xFFD97706);
+  static const Color _accentCyan = Color(0xFF0891B2);
+  static const Color _accentRed = Color(0xFFDC2626);
 
-  Color get _ctaFill => AppColor.PRIMARY_COLOR ?? _brand;
+  static const Color _hairline = Color(0xFFEEF2F6);
+
+  /// Whether the Tag Stock Report appears under Reports. The screen is
+  /// finished; it is simply not being offered to customers yet. Set to true
+  /// to put the tile back — nothing else needs to change.
+  static const bool _showTagStockReport = false;
+
+  Color get _ctaFill => _brand;
+
+  /// One soft, neutral shadow for every raised surface.
+  ///
+  /// Colour-tinted shadows with a wide blur and no negative spread were
+  /// bleeding well past the card and reading as a visible coloured square
+  /// behind it. Colour now lives in the fill only; the shadow stays neutral
+  /// and pulled in tight so it reads as depth, not as a box.
+  static List<BoxShadow> get _cardShadow => [
+        BoxShadow(
+          color: _textPrimary.withValues(alpha: 0.06),
+          blurRadius: 14,
+          offset: const Offset(0, 4),
+          spreadRadius: -3,
+        ),
+      ];
+
+  /// Slightly deeper version for the hero card, same neutral treatment.
+  static List<BoxShadow> get _heroShadow => [
+        BoxShadow(
+          color: _textPrimary.withValues(alpha: 0.08),
+          blurRadius: 24,
+          offset: const Offset(0, 10),
+          spreadRadius: -8,
+        ),
+      ];
 
   // ── State ─────────────────────────────────────────────────────────────────
   final sqlConnection = SqlConnection.getInstance();
-  String todayGoldRate    = '';
-  String todaySilverRate  = '';
+  String todayGoldRate = '';
+  String todaySilverRate = '';
   String cashOnHandAmount = '';
 
-  /// Legacy list kept for compatibility (not rendered in current build).
-  List report = [
-    {"name": "Ledger Report", "image": AppImage.notebook},
-    {"name": "Stock Report",  "image": AppImage.databaseGif},
-    {"name": "Sales Report",  "image": AppImage.statistics},
-    {"name": "Tag Image",     "image": AppImage.notebook},
-    {"name": "PhoneBook",     "image": AppImage.contactBook},
-    {"name": "Estimate",      "image": AppImage.costBook},
-  ];
+  /// Shown in place of a rate that hasn't loaded, so the card never renders
+  /// a blank space that looks like a layout bug.
+  String get _goldRate => todayGoldRate.trim().isEmpty ? '—' : todayGoldRate;
+  String get _silverRate =>
+      todaySilverRate.trim().isEmpty ? '—' : todaySilverRate;
 
   // ── Lifecycle ─────────────────────────────────────────────────────────────
   @override
   void initState() {
     super.initState();
-    getGoldSilverRate();
-    getHdd();
+    _loadDashboard();
+  }
+
+  Future<void> _loadDashboard() async {
+    // One after the other: both query over the same shared SQL connection, so
+    // running them together risked the rate box or cash-on-hand coming back
+    // empty for no visible reason.
+    await getGoldSilverRate();
+    await getHdd();
   }
 
   // ═══════════════════════════════════════════════════════════════════════════
   // BUSINESS LOGIC  –  UNCHANGED
   // ═══════════════════════════════════════════════════════════════════════════
 
-  void getGoldSilverRate() async {
-    String co_code =
-        Provider.of<CommonCompanyYearSelectionProvider>(context, listen: false)
-            .co_code;
-    String lc_code =
-        Provider.of<CommonCompanyYearSelectionProvider>(context, listen: false)
-            .lc_code;
-    if (Platform.isAndroid) {
-      dynamic result = await sqlConnection.queryDatabase(
-          "SELECT FINE_GL_RATE,FINE_SL_RATE,A.VCH_DATE FROM RATE_MAST AS A INNER JOIN GROUP_MAST AS B ON A.CO_CODE = B.CO_CODE AND A.GR_CODE = B.GR_CODE WHERE A.CO_CODE = '" +
-              co_code +
-              "' AND A.LC_CODE = '" +
-              lc_code +
-              "' AND A.VCH_DATE <= '" +
-              DateFormat("MM/dd/yyyy").format(DateTime.now()) +
-              "' AND B.RATE_DISPLAY = 'Y' GROUP BY FINE_GL_RATE,FINE_SL_RATE,A.VCH_DATE ORDER BY A.VCH_DATE DESC ");
-      print("result for rate $result");
-      if (jsonDecode(result).length != 0) {
-        todayGoldRate   = jsonDecode(result)[0]['FINE_GL_RATE'].toString();
-        todaySilverRate = jsonDecode(result)[0]['FINE_SL_RATE'].toString();
+  Future<void> getGoldSilverRate() async {
+    // Captured before the first await: reading a Provider off `context` after
+    // an async gap is unsafe once this screen can be popped mid-request.
+    final provider =
+        Provider.of<CommonCompanyYearSelectionProvider>(context, listen: false);
+    String co_code = provider.co_code;
+    String lc_code = provider.lc_code;
+    try {
+      if (Platform.isAndroid) {
+        dynamic result = await sqlConnection.queryDatabase(
+            "SELECT FINE_GL_RATE,FINE_SL_RATE,A.VCH_DATE FROM RATE_MAST AS A INNER JOIN GROUP_MAST AS B ON A.CO_CODE = B.CO_CODE AND A.GR_CODE = B.GR_CODE WHERE A.CO_CODE = '" +
+                co_code +
+                "' AND A.LC_CODE = '" +
+                lc_code +
+                "' AND A.VCH_DATE <= '" +
+                DateFormat("MM/dd/yyyy").format(DateTime.now()) +
+                "' AND B.RATE_DISPLAY = 'Y' GROUP BY FINE_GL_RATE,FINE_SL_RATE,A.VCH_DATE ORDER BY A.VCH_DATE DESC ");
+        print("result for rate $result");
+        if (jsonDecode(result).length != 0) {
+          todayGoldRate = jsonDecode(result)[0]['FINE_GL_RATE'].toString();
+          todaySilverRate = jsonDecode(result)[0]['FINE_SL_RATE'].toString();
+        }
+        dynamic resultOfweb = await sqlConnection.queryDatabase(
+            "SELECT WEB_IMAGE,WEB_PATH FROM CO_SET_NEW WHERE CO_CODE ='" +
+                co_code +
+                "' ");
+        print("resultofWeb $resultOfweb");
+        print("resultofWeb ${jsonDecode(resultOfweb)[0]["WEB_IMAGE"]}");
+        provider.changeWebImage(jsonDecode(resultOfweb)[0]["WEB_IMAGE"]);
+        provider.changeWebPath(jsonDecode(resultOfweb)[0]["WEB_PATH"]);
+        // Record the host we are actually connected to, so a WEB_PATH that
+        // names the shop's own LAN address can be re-pointed at it.
+        provider.changeServerHost(await Preffrance().getString(Keys.HOST));
+        dynamic rateSetting = await sqlConnection.queryDatabase(
+            "SELECT SL_AMT_TYPE FROM CO_SET WHERE CO_CODE ='" + co_code + "' ");
+        provider.changeAmountType(jsonDecode(rateSetting)[0]["SL_AMT_TYPE"]);
+        String cashOnHandQuery =
+            "Select Sum(A.CR_AMT-A.DR_AMT) as BalAmt FROM AC_DATA AS A LEFT JOIN AC_MAST AS B ON A.CO_CODE = B.CO_CODE AND A.AC_CODE = B.AC_CODE WHERE A.CO_CODE = '$co_code' and A.LC_CODE = '$lc_code'  AND A.AC_CODE = '00001' and VCH_DATE <= '${DateFormat("MM/dd/yyyy").format(DateTime.now())}'";
+        dynamic resultOfCashonHand =
+            await sqlConnection.queryDatabase(cashOnHandQuery);
+        log("Query $resultOfCashonHand");
+        cashOnHandAmount =
+            jsonDecode(resultOfCashonHand)[0]['BalAmt'].toString();
+        print("RateSetting result ${provider.amountType}");
+      } else {
+        dynamic result = await MySQLService().getRates(
+            co_code, lc_code, DateFormat("MM/dd/yyyy").format(DateTime.now()));
+        print("Here value $result");
+        if (result[0].length != 0) {
+          todayGoldRate = result[0][0]['FINE_GL_RATE'].toString();
+          todaySilverRate = result[0][0]['FINE_SL_RATE'].toString();
+        }
+        dynamic image = await MySQLService().getForImage(co_code);
+        print("IMagesss $image");
+        provider.changeWebImage(image[0][0]["WEB_IMAGE"]);
+        provider.changeWebPath(image[0][0]["WEB_PATH"]);
+        // Record the host we are actually connected to, so a WEB_PATH that
+        // names the shop's own LAN address can be re-pointed at it.
+        provider.changeServerHost(await Preffrance().getString(Keys.HOST));
+        dynamic rateSetting = await MySQLService().getRateSetting(co_code);
+        provider.changeAmountType(rateSetting[0][0]["SL_AMT_TYPE"]);
+        dynamic cashonhandResult = await MySQLService().getCashOnHand(
+            co_code,
+            lc_code,
+            DateFormat("MM/dd/yyyy").format(DateTime.now()).toString());
+        cashOnHandAmount = cashonhandResult[0][0]['BalAmt'].toString();
       }
-      dynamic resultOfweb = await sqlConnection.queryDatabase(
-          "SELECT WEB_IMAGE,WEB_PATH FROM CO_SET_NEW WHERE CO_CODE ='" +
-              co_code +
-              "' ");
-      print("resultofWeb $resultOfweb");
-      print("resultofWeb ${jsonDecode(resultOfweb)[0]["WEB_IMAGE"]}");
-      Provider.of<CommonCompanyYearSelectionProvider>(context, listen: false)
-          .changeWebImage(jsonDecode(resultOfweb)[0]["WEB_IMAGE"]);
-      Provider.of<CommonCompanyYearSelectionProvider>(context, listen: false)
-          .changeWebPath(jsonDecode(resultOfweb)[0]["WEB_PATH"]);
-      dynamic rateSetting = await sqlConnection.queryDatabase(
-          "SELECT SL_AMT_TYPE FROM CO_SET WHERE CO_CODE ='" + co_code + "' ");
-      Provider.of<CommonCompanyYearSelectionProvider>(context, listen: false)
-          .changeAmountType(jsonDecode(rateSetting)[0]["SL_AMT_TYPE"]);
-      String cashOnHandQuery =
-          "Select Sum(A.CR_AMT-A.DR_AMT) as BalAmt FROM AC_DATA AS A LEFT JOIN AC_MAST AS B ON A.CO_CODE = B.CO_CODE AND A.AC_CODE = B.AC_CODE WHERE A.CO_CODE = '$co_code' and A.LC_CODE = '$lc_code'  AND A.AC_CODE = '00001' and VCH_DATE <= '${DateFormat("MM/dd/yyyy").format(DateTime.now())}'";
-      dynamic resultOfCashonHand =
-          await sqlConnection.queryDatabase(cashOnHandQuery);
-      log("Query $resultOfCashonHand");
-      cashOnHandAmount =
-          jsonDecode(resultOfCashonHand)[0]['BalAmt'].toString();
-      print(
-          "RateSetting result ${Provider.of<CommonCompanyYearSelectionProvider>(context, listen: false).amountType}");
-    } else {
-      dynamic result = await MySQLService().getRates(
-          co_code, lc_code, DateFormat("MM/dd/yyyy").format(DateTime.now()));
-      print("Here value $result");
-      if (result[0].length != 0) {
-        todayGoldRate   = result[0][0]['FINE_GL_RATE'].toString();
-        todaySilverRate = result[0][0]['FINE_SL_RATE'].toString();
+    } catch (e) {
+      log('Error loading dashboard rates: $e');
+      if (mounted) {
+        showAppToast(context, "Could not load today's rates. Pull to refresh.");
       }
-      dynamic image = await MySQLService().getForImage(co_code);
-      print("IMagesss $image");
-      Provider.of<CommonCompanyYearSelectionProvider>(context, listen: false)
-          .changeWebImage(image[0][0]["WEB_IMAGE"]);
-      Provider.of<CommonCompanyYearSelectionProvider>(context, listen: false)
-          .changeWebPath(image[0][0]["WEB_PATH"]);
-      dynamic rateSetting = await MySQLService().getRateSetting(co_code);
-      Provider.of<CommonCompanyYearSelectionProvider>(context, listen: false)
-          .changeAmountType(rateSetting[0][0]["SL_AMT_TYPE"]);
-      dynamic cashonhandResult = await MySQLService().getCashOnHand(
-          co_code,
-          lc_code,
-          DateFormat("MM/dd/yyyy").format(DateTime.now()).toString());
-      cashOnHandAmount = cashonhandResult[0][0]['BalAmt'].toString();
-    }
-    setState(() {});
-  }
-
-  void getHdd() async {
-    if (Platform.isAndroid) {
-      dynamic result =
-          await sqlConnection.queryDatabase("SELECT * FROM HDD_MAST");
-      print("HDD NO $result");
-      if (jsonDecode(result).length != 0) {
-        print("hdd No ${jsonDecode(result)[0]['REF_NO']}");
-        Provider.of<CommonCompanyYearSelectionProvider>(context, listen: false)
-            .changedHdd(jsonDecode(result)[0]['REF_NO']);
-      }
-    } else {
-      dynamic result =
-          await MySQLService().getHdd("SELECT * FROM HDD_MAST");
-      if (result[0].length != 0) {
-        Provider.of<CommonCompanyYearSelectionProvider>(context, listen: false)
-            .changedHdd(result[0][0]['REF_NO']);
-      }
-      print("Here value $result");
+    } finally {
+      if (mounted) setState(() {});
     }
   }
 
-  // ═══════════════════════════════════════════════════════════════════════════
-  // LEGACY WIDGET  –  Kept for compatibility (not called in build)
-  // ═══════════════════════════════════════════════════════════════════════════
-
-  Widget rateContainer(
-      {required String title, required String rate, required image}) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 20.0),
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          onTap: () {
-            Navigator.push(context,
-                MaterialPageRoute(builder: (context) => DailyrateScreen()));
-          },
-          borderRadius: BorderRadius.circular(20),
-          child: Ink(
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: [_ctaFill, _ctaFill.withValues(alpha: 0.82)],
-              ),
-              borderRadius: BorderRadius.circular(20),
-              boxShadow: [
-                BoxShadow(
-                  color: _ctaFill.withValues(alpha: 0.35),
-                  blurRadius: 16,
-                  offset: const Offset(0, 8),
-                ),
-              ],
-            ),
-            child: Row(
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    color: AppColor.goldenColor.withValues(alpha: 0.95),
-                    borderRadius: const BorderRadius.only(
-                      topLeft: Radius.circular(20),
-                      bottomLeft: Radius.circular(20),
-                    ),
-                  ),
-                  child: Center(
-                      child: Image.asset(image, height: 48, width: 48)),
-                ),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    children: [
-                      Text(title,
-                          style: GoogleFonts.plusJakartaSans(
-                              color: Colors.white,
-                              fontWeight: FontWeight.w800,
-                              fontSize: 17)),
-                      const SizedBox(height: 4),
-                      Text(rate,
-                          style: GoogleFonts.plusJakartaSans(
-                              color: Colors.white.withValues(alpha: 0.95),
-                              fontWeight: FontWeight.w700,
-                              fontSize: 16)),
-                    ],
-                  ),
-                ),
-                Padding(
-                  padding: const EdgeInsets.only(right: 12.0),
-                  child: Image.asset(AppImage.goldChart,
-                      color: Colors.white.withValues(alpha: 0.9),
-                      height: 56,
-                      width: 56),
-                ),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
+  Future<void> getHdd() async {
+    final provider =
+        Provider.of<CommonCompanyYearSelectionProvider>(context, listen: false);
+    try {
+      if (Platform.isAndroid) {
+        dynamic result =
+            await sqlConnection.queryDatabase("SELECT * FROM HDD_MAST");
+        if (jsonDecode(result).length != 0) {
+          provider.changedHdd(jsonDecode(result)[0]['REF_NO']);
+        }
+      } else {
+        dynamic result = await MySQLService().getHdd("SELECT * FROM HDD_MAST");
+        if (result[0].length != 0) {
+          provider.changedHdd(result[0][0]['REF_NO']);
+        }
+      }
+    } catch (e) {
+      // Non-fatal: the HDD reference is only used for licensing display.
+      log('Error loading HDD reference: $e');
+    }
   }
 
   // ═══════════════════════════════════════════════════════════════════════════
@@ -312,8 +283,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
           const SizedBox(width: 10),
           // Date chip
           Container(
-            padding:
-                const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
             decoration: BoxDecoration(
               color: Colors.white.withValues(alpha: 0.16),
               borderRadius: BorderRadius.circular(11),
@@ -337,7 +307,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
   // ── Welcome / hero card ──────────────────────────────────────────────────────
   Widget _buildWelcomeCard(String coName) {
-    final now  = DateTime.now();
+    final now = DateTime.now();
     final hour = now.hour;
     final greeting = hour < 12
         ? 'Good Morning'
@@ -353,19 +323,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(26),
-          boxShadow: [
-            BoxShadow(
-              color: _brand.withValues(alpha: 0.22),
-              blurRadius: 36,
-              offset: const Offset(0, 16),
-              spreadRadius: -8,
-            ),
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.07),
-              blurRadius: 22,
-              offset: const Offset(0, 8),
-            ),
-          ],
+          border: Border.all(color: _hairline),
+          boxShadow: _heroShadow,
         ),
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.center,
@@ -377,8 +336,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 children: [
                   // "Live session" badge
                   Container(
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 9, vertical: 5),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
                     decoration: BoxDecoration(
                       color: const Color(0xFFDCFCE7),
                       borderRadius: BorderRadius.circular(8),
@@ -450,18 +409,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
               decoration: BoxDecoration(
                 color: Colors.white,
                 borderRadius: BorderRadius.circular(22),
-                boxShadow: [
-                  BoxShadow(
-                    color: _ctaFill.withValues(alpha: 0.18),
-                    blurRadius: 20,
-                    offset: const Offset(0, 8),
-                  ),
-                  BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.06),
-                    blurRadius: 10,
-                    offset: const Offset(0, 4),
-                  ),
-                ],
+                border: Border.all(color: _hairline),
+                boxShadow: _cardShadow,
               ),
               child: Image.asset(AppImage.appLogo, fit: BoxFit.contain),
             ),
@@ -524,106 +473,88 @@ class _DashboardScreenState extends State<DashboardScreen> {
   }
 
   // ── Individual quick-action tile ────────────────────────────────────────────
+  /// One tile in the Quick Actions grid: icon above its label.
+  ///
+  /// The icon used to sit beside the label, with "Tap to open" under it and a
+  /// chevron after it. Between them those three took around 83 of the 126dp a
+  /// half-width tile has on a 360dp phone, leaving the label too little to fit
+  /// "Tag Estimate" — so it broke mid-word and made that tile taller than its
+  /// neighbour. Stacking gives the label the tile's whole width, and the two
+  /// decorations it was competing with said nothing a grid of tappable cards
+  /// does not already say.
+  ///
+  /// Size comes from [quickActionTileWidth] and [quickActionTileHeight], the
+  /// same for every tile, so the grid stays square whatever the labels read.
   Widget _premiumActionTile({
     required String title,
     required String image,
     required Color accent,
+    required double width,
     required GestureTapCallback ontap,
   }) {
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        onTap: ontap,
-        borderRadius: BorderRadius.circular(20),
-        child: Ink(
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(20),
-            boxShadow: [
-              BoxShadow(
-                color: accent.withValues(alpha: 0.10),
-                blurRadius: 22,
-                offset: const Offset(0, 8),
-                spreadRadius: -2,
-              ),
-              BoxShadow(
-                color: Colors.black.withValues(alpha: 0.04),
-                blurRadius: 12,
-                offset: const Offset(0, 4),
-              ),
-            ],
-          ),
-          child: Padding(
-            padding:
-                const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
-            child: Row(
-              children: [
-                // Icon container
-                Container(
-                  width: 46,
-                  height: 46,
-                  padding: const EdgeInsets.all(11),
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(15),
-                    gradient: LinearGradient(
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                      colors: [
-                        accent,
-                        Color.lerp(accent, Colors.black, 0.22)!,
-                      ],
+    return SizedBox(
+      width: width,
+      height: quickActionTileHeight(),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: ontap,
+          borderRadius: BorderRadius.circular(18),
+          child: Ink(
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(18),
+              // Width named so the height sum in quick_action_grid.dart and
+              // the border drawn here cannot drift apart again.
+              border: Border.all(
+                  color: _hairline, width: kQuickActionBorderWidth),
+              boxShadow: _cardShadow,
+            ),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(
+                  horizontal: 6, vertical: kQuickActionVerticalPadding),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.start,
+                children: [
+                  Container(
+                    width: kQuickActionIconSize,
+                    height: kQuickActionIconSize,
+                    padding: const EdgeInsets.all(10),
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(14),
+                      gradient: LinearGradient(
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                        colors: [
+                          accent,
+                          Color.lerp(accent, Colors.black, 0.22)!,
+                        ],
+                      ),
                     ),
-                    boxShadow: [
-                      BoxShadow(
-                        color: accent.withValues(alpha: 0.36),
-                        blurRadius: 14,
-                        offset: const Offset(0, 5),
-                      ),
-                    ],
+                    child: Image.asset(image,
+                        color: Colors.white, fit: BoxFit.contain),
                   ),
-                  child: Image.asset(image,
-                      color: Colors.white, fit: BoxFit.contain),
-                ),
-                const SizedBox(width: 11),
-                // Text
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text(
-                        title,
-                        style: GoogleFonts.plusJakartaSans(
-                          color: _textPrimary,
-                          fontWeight: FontWeight.w700,
-                          fontSize: 13.5,
-                          letterSpacing: -0.2,
-                        ),
+                  const SizedBox(height: kQuickActionIconGap),
+                  // Two lines are reserved whether or not the label fills
+                  // them, so "Scan" and "WH Tag Estimate" are the same height.
+                  SizedBox(
+                    height: quickActionLabelHeight(),
+                    child: Text(
+                      title,
+                      textAlign: TextAlign.center,
+                      maxLines: kQuickActionLabelLines,
+                      overflow: TextOverflow.ellipsis,
+                      style: GoogleFonts.plusJakartaSans(
+                        color: _textPrimary,
+                        fontWeight: FontWeight.w700,
+                        fontSize: kQuickActionLabelSize,
+                        height: kQuickActionLabelLeading,
+                        letterSpacing: -0.1,
                       ),
-                      const SizedBox(height: 1),
-                      Text(
-                        'Tap to open',
-                        style: GoogleFonts.plusJakartaSans(
-                          color: _textSecondary,
-                          fontWeight: FontWeight.w500,
-                          fontSize: 10.5,
-                        ),
-                      ),
-                    ],
+                    ),
                   ),
-                ),
-                // Arrow
-                Container(
-                  width: 26,
-                  height: 26,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    color: accent.withValues(alpha: 0.08),
-                  ),
-                  child: Icon(Icons.arrow_forward_ios_rounded,
-                      size: 11, color: accent),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
         ),
@@ -631,127 +562,122 @@ class _DashboardScreenState extends State<DashboardScreen> {
     );
   }
 
-  // ── Quick-actions 2×2 grid ──────────────────────────────────────────────────
+  // ── Quick-actions grid ──────────────────────────────────────────────────────
+  /// Every quick action, in the order they appear.
+  ///
+  /// They were previously spelled out inside the layout, which is why the
+  /// fifth one ended up spanning the full width: there was no pair left to put
+  /// it beside. Keeping them as data lets the grid place however many there
+  /// are, at whatever column count the screen allows.
+  List<({String title, String image, Color accent, GestureTapCallback ontap})>
+      _quickActions(BuildContext context) {
+    CommonCompanyYearSelectionProvider edition() =>
+        Provider.of<CommonCompanyYearSelectionProvider>(context, listen: false);
+
+    void open(Widget screen) {
+      Navigator.push(
+          context, MaterialPageRoute(builder: (context) => screen));
+    }
+
+    return [
+      (
+        title: 'Scan',
+        image: AppImage.qr,
+        accent: _ctaFill,
+        ontap: () {
+          final sType = edition().sType;
+          if (sType == "B" || sType == "S") {
+            showUpgradeRequiredDialog(context);
+          } else {
+            open(QRViewExample(isFromTagScreen: false));
+          }
+        },
+      ),
+      (
+        title: 'Tag Estimate',
+        image: AppImage.tag,
+        accent: _accentPurple,
+        ontap: () => open(TagestimateScreen()),
+      ),
+      (
+        title: 'Reminder',
+        image: AppImage.bell,
+        accent: _accentAmber,
+        ontap: () {
+          // The licence lives on sType when there is one, and falls back to
+          // dType only when sType has not been set at all.
+          final sType = edition().sType;
+          if (sType == "E" || sType == "A") {
+            open(ReminderScreen());
+          } else if (sType != "") {
+            showUpgradeRequiredDialog(context);
+          } else {
+            final dType = edition().dType;
+            if (dType == "E" || dType == "A") {
+              open(ReminderScreen());
+            } else {
+              showUpgradeRequiredDialog(context);
+            }
+          }
+        },
+      ),
+      (
+        title: 'Phone Book',
+        image: AppImage.phonebook,
+        accent: _accentGreen,
+        ontap: () => open(PhonebookScreen()),
+      ),
+      (
+        title: 'WH Tag Estimate',
+        image: AppImage.tag,
+        accent: _accentCyan,
+        ontap: () => open(WhTagestimateScreen()),
+      ),
+      // Setting the day's rate is the first thing done every morning, and both
+      // estimate tiles above price from it. Until now the only way in was
+      // tapping the rate display, which gives no hint that it opens anything;
+      // that tap still works, this is the one people can find.
+      (
+        title: 'Daily Rate',
+        image: AppImage.gold,
+        accent: _accentRed,
+        ontap: () => open(const DailyrateScreen()),
+      ),
+    ];
+  }
+
+  /// Quick Actions as a grid of identical tiles, as many across as the screen
+  /// takes.
+  ///
+  /// The old 2 + 2 + 1 arrangement was fixed regardless of the device, so a
+  /// narrow phone squeezed the labels until they broke mid-word while a tablet
+  /// stretched five cards across half a metre. A [Wrap] of fixed-size tiles
+  /// handles both, and leaves any short last row aligned to the left where a
+  /// grid's last row belongs — rather than stretching one tile to fill it.
   Widget _buildQuickActionsGrid(BuildContext context) {
+    final actions = _quickActions(context);
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20),
-      child: Column(
-        children: [
-          // Row 1: Scan  |  Tag Estimate
-          Row(
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final columns = quickActionColumns(constraints.maxWidth,
+              itemCount: actions.length);
+          final width = quickActionTileWidth(constraints.maxWidth, columns);
+          return Wrap(
+            spacing: kQuickActionGap,
+            runSpacing: kQuickActionGap,
             children: [
-              Expanded(
-                child: _premiumActionTile(
-                  title: 'Scan',
-                  image: AppImage.qr,
-                  accent: _ctaFill,
-                  ontap: () {
-                    if (Provider.of<CommonCompanyYearSelectionProvider>(
-                                context,
-                                listen: false)
-                            .sType ==
-                        "B" ||
-                        Provider.of<CommonCompanyYearSelectionProvider>(
-                                context,
-                                listen: false)
-                            .sType ==
-                            "S") {
-                      showUpgradeRequiredDialog(context);
-                    } else {
-                      Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                              builder: (context) =>
-                                  QRViewExample(isFromTagScreen: false)));
-                    }
-                  },
+              for (final action in actions)
+                _premiumActionTile(
+                  title: action.title,
+                  image: action.image,
+                  accent: action.accent,
+                  width: width,
+                  ontap: action.ontap,
                 ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: _premiumActionTile(
-                  title: 'Tag Estimate',
-                  image: AppImage.tag,
-                  accent: _accentPurple,
-                  ontap: () {
-                    Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                            builder: (context) => TagestimateScreen()));
-                  },
-                ),
-              ),
             ],
-          ),
-          const SizedBox(height: 12),
-          // Row 2: Reminder  |  PhoneBook
-          Row(
-            children: [
-              Expanded(
-                child: _premiumActionTile(
-                  title: 'Reminder',
-                  image: AppImage.bell,
-                  accent: _accentAmber,
-                  ontap: () {
-                    if (Provider.of<CommonCompanyYearSelectionProvider>(
-                                context,
-                                listen: false)
-                            .sType ==
-                        "E" ||
-                        Provider.of<CommonCompanyYearSelectionProvider>(
-                                context,
-                                listen: false)
-                            .sType ==
-                            "A") {
-                      Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                              builder: (context) => ReminderScreen()));
-                    } else if (Provider.of<CommonCompanyYearSelectionProvider>(
-                            context,
-                            listen: false)
-                        .sType !=
-                        "") {
-                      showUpgradeRequiredDialog(context);
-                    } else {
-                      if (Provider.of<CommonCompanyYearSelectionProvider>(
-                                  context,
-                                  listen: false)
-                              .dType ==
-                          "E" ||
-                          Provider.of<CommonCompanyYearSelectionProvider>(
-                                  context,
-                                  listen: false)
-                              .dType ==
-                              "A") {
-                        Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                                builder: (context) => ReminderScreen()));
-                      } else {
-                        showUpgradeRequiredDialog(context);
-                      }
-                    }
-                  },
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: _premiumActionTile(
-                  title: 'PhoneBook',
-                  image: AppImage.phonebook,
-                  accent: _accentGreen,
-                  ontap: () {
-                    Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                            builder: (context) => PhonebookScreen()));
-                  },
-                ),
-              ),
-            ],
-          ),
-        ],
+          );
+        },
       ),
     );
   }
@@ -775,93 +701,89 @@ class _DashboardScreenState extends State<DashboardScreen> {
             decoration: BoxDecoration(
               color: Colors.white,
               borderRadius: BorderRadius.circular(20),
-              border: Border(
-                left: BorderSide(color: accent, width: 4),
-              ),
-              boxShadow: [
-                BoxShadow(
-                  color: accent.withValues(alpha: 0.08),
-                  blurRadius: 20,
-                  offset: const Offset(0, 7),
-                  spreadRadius: -2,
-                ),
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.04),
-                  blurRadius: 12,
-                  offset: const Offset(0, 4),
-                ),
-              ],
+              border: Border.all(color: _hairline),
+              boxShadow: _cardShadow,
             ),
-            child: Padding(
-              padding: const EdgeInsets.symmetric(
-                  horizontal: 16, vertical: 14),
-              child: Row(
-                children: [
-                  // Coloured icon box
-                  Container(
-                    width: 50,
-                    height: 50,
-                    padding: const EdgeInsets.all(12),
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(16),
-                      gradient: LinearGradient(
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
-                        colors: [
-                          accent,
-                          Color.lerp(accent, Colors.black, 0.2)!,
-                        ],
+            // The accent bar is a clipped child rather than a one-sided
+            // Border: BoxDecoration asserts a uniform border whenever a
+            // borderRadius is set, so `Border(left: ...)` threw in debug and
+            // silently drew an unrounded line in release.
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(20),
+              child: IntrinsicHeight(
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Container(width: 4, color: accent),
+                    Expanded(
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 16, vertical: 14),
+                        child: Row(
+                          children: [
+                            // Coloured icon box
+                            Container(
+                              width: 50,
+                              height: 50,
+                              padding: const EdgeInsets.all(12),
+                              decoration: BoxDecoration(
+                                borderRadius: BorderRadius.circular(16),
+                                gradient: LinearGradient(
+                                  begin: Alignment.topLeft,
+                                  end: Alignment.bottomRight,
+                                  colors: [
+                                    accent,
+                                    Color.lerp(accent, Colors.black, 0.2)!,
+                                  ],
+                                ),
+                              ),
+                              child: Image.asset(icon,
+                                  color: Colors.white, fit: BoxFit.contain),
+                            ),
+                            const SizedBox(width: 14),
+                            // Title + subtitle
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    title,
+                                    style: GoogleFonts.plusJakartaSans(
+                                      color: _textPrimary,
+                                      fontWeight: FontWeight.w700,
+                                      fontSize: 15,
+                                      letterSpacing: -0.3,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 2),
+                                  Text(
+                                    subtitle,
+                                    style: GoogleFonts.plusJakartaSans(
+                                      color: _textSecondary,
+                                      fontWeight: FontWeight.w500,
+                                      fontSize: 12,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            // Arrow pill
+                            Container(
+                              width: 32,
+                              height: 32,
+                              decoration: BoxDecoration(
+                                shape: BoxShape.circle,
+                                color: accent.withValues(alpha: 0.10),
+                              ),
+                              child: Icon(Icons.arrow_forward_ios_rounded,
+                                  size: 13, color: accent),
+                            ),
+                          ],
+                        ),
                       ),
-                      boxShadow: [
-                        BoxShadow(
-                          color: accent.withValues(alpha: 0.30),
-                          blurRadius: 12,
-                          offset: const Offset(0, 5),
-                        ),
-                      ],
                     ),
-                    child: Image.asset(icon,
-                        color: Colors.white, fit: BoxFit.contain),
-                  ),
-                  const SizedBox(width: 14),
-                  // Title + subtitle
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          title,
-                          style: GoogleFonts.plusJakartaSans(
-                            color: _textPrimary,
-                            fontWeight: FontWeight.w700,
-                            fontSize: 15,
-                            letterSpacing: -0.3,
-                          ),
-                        ),
-                        const SizedBox(height: 2),
-                        Text(
-                          subtitle,
-                          style: GoogleFonts.plusJakartaSans(
-                            color: _textSecondary,
-                            fontWeight: FontWeight.w500,
-                            fontSize: 12,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  // Arrow pill
-                  Container(
-                    width: 32,
-                    height: 32,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      color: accent.withValues(alpha: 0.10),
-                    ),
-                    child: Icon(Icons.arrow_forward_ios_rounded,
-                        size: 13, color: accent),
-                  ),
-                ],
+                  ],
+                ),
               ),
             ),
           ),
@@ -877,6 +799,67 @@ class _DashboardScreenState extends State<DashboardScreen> {
       child: Column(
         children: [
           // Ledger
+          // Day Book first: it is the "how did today go" summary an owner
+          // opens most, and it links onward into the detailed reports.
+          _premiumReportTile(
+            icon: AppImage.statistics,
+            title: 'Day Book',
+            subtitle: "Today's sales, orders & cash at a glance",
+            accent: _accentGreen,
+            ontap: () {
+              Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                      builder: (context) => const DayBookScreen()));
+            },
+          ),
+          _premiumReportTile(
+            icon: AppImage.goldChart,
+            title: 'Graph Reports',
+            subtitle: 'Sales trends & stock at a glance',
+            accent: _accentPurple,
+            ontap: () {
+              // Full editions only (E / U / P / A).
+              final licence = Provider.of<CommonCompanyYearSelectionProvider>(
+                  context,
+                  listen: false);
+              if (!hasFullEdition(licence.sType, licence.dType)) {
+                showUpgradeRequiredDialog(context);
+                return;
+              }
+              Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                      builder: (context) => const GraphReportsScreen()));
+            },
+          ),
+          // Built and working, but held back from the menu until it is
+          // switched on by hand — flip [_showTagStockReport].
+          if (_showTagStockReport)
+            _premiumReportTile(
+              icon: AppImage.tag,
+              title: 'Tag Stock Report',
+              subtitle: 'Tags in, tags out & stock with photos',
+              accent: _accentCyan,
+              ontap: () {
+                Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                        builder: (context) => const TagStockReportScreen()));
+              },
+            ),
+          _premiumReportTile(
+            icon: AppImage.ledger,
+            title: 'Outstanding',
+            subtitle: 'Who owes you, with one-tap reminders',
+            accent: _accentRed,
+            ontap: () {
+              Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                      builder: (context) => const OutstandingScreen()));
+            },
+          ),
           _premiumReportTile(
             icon: AppImage.ledger,
             title: 'Ledger Report',
@@ -886,8 +869,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
               Navigator.push(
                   context,
                   MaterialPageRoute(
-                      builder: (context) =>
-                          const LedgerreportScreen()));
+                      builder: (context) => const LedgerreportScreen()));
             },
           ),
           // Stock
@@ -900,8 +882,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
               Navigator.push(
                   context,
                   MaterialPageRoute(
-                      builder: (context) =>
-                          const StockreportScreen()));
+                      builder: (context) => const StockreportScreen()));
             },
           ),
           // Sales
@@ -911,10 +892,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
             subtitle: 'Sales performance & analytics',
             accent: _accentGreen,
             ontap: () {
-              Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                      builder: (context) => SalesReportScreen()));
+              Navigator.push(context,
+                  MaterialPageRoute(builder: (context) => SalesReportScreen()));
             },
           ),
           // Tag Image
@@ -924,10 +903,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
             subtitle: 'Product tag images & management',
             accent: _accentAmber,
             ontap: () {
-              Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                      builder: (context) => TagimageScreen()));
+              Navigator.push(context,
+                  MaterialPageRoute(builder: (context) => TagimageScreen()));
             },
           ),
           // WH Sales
@@ -937,23 +914,20 @@ class _DashboardScreenState extends State<DashboardScreen> {
             subtitle: 'Wholesale sales & distribution',
             accent: _accentCyan,
             ontap: () {
-              if (Provider.of<CommonCompanyYearSelectionProvider>(
-                          context,
-                          listen: false)
-                      .sType ==
-                  "B" ||
-                  Provider.of<CommonCompanyYearSelectionProvider>(
-                          context,
-                          listen: false)
-                      .sType ==
+              if (Provider.of<CommonCompanyYearSelectionProvider>(context,
+                              listen: false)
+                          .sType ==
+                      "B" ||
+                  Provider.of<CommonCompanyYearSelectionProvider>(context,
+                              listen: false)
+                          .sType ==
                       "S") {
                 showUpgradeRequiredDialog(context);
               } else {
                 Navigator.push(
                     context,
                     MaterialPageRoute(
-                        builder: (context) =>
-                            WhsalesreportScreen()));
+                        builder: (context) => WhsalesreportScreen()));
               }
             },
           ),
@@ -964,23 +938,20 @@ class _DashboardScreenState extends State<DashboardScreen> {
             subtitle: 'Pending & completed orders',
             accent: _accentRed,
             ontap: () {
-              if (Provider.of<CommonCompanyYearSelectionProvider>(
-                          context,
-                          listen: false)
-                      .sType ==
-                  "B" ||
-                  Provider.of<CommonCompanyYearSelectionProvider>(
-                          context,
-                          listen: false)
-                      .sType ==
+              if (Provider.of<CommonCompanyYearSelectionProvider>(context,
+                              listen: false)
+                          .sType ==
+                      "B" ||
+                  Provider.of<CommonCompanyYearSelectionProvider>(context,
+                              listen: false)
+                          .sType ==
                       "S") {
                 showUpgradeRequiredDialog(context);
               } else {
                 Navigator.push(
                     context,
                     MaterialPageRoute(
-                        builder: (context) =>
-                            SalesOrderReportScreen()));
+                        builder: (context) => SalesOrderReportScreen()));
               }
             },
           ),
@@ -1067,13 +1038,13 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final w      = MediaQuery.sizeOf(context).width;
-    final coName = Provider.of<CommonCompanyYearSelectionProvider>(
-            context, listen: false)
-        .co_name;
-    final sType  = Provider.of<CommonCompanyYearSelectionProvider>(
-            context, listen: false)
-        .sType;
+    final w = MediaQuery.sizeOf(context).width;
+    final coName =
+        Provider.of<CommonCompanyYearSelectionProvider>(context, listen: false)
+            .co_name;
+    final sType =
+        Provider.of<CommonCompanyYearSelectionProvider>(context, listen: false)
+            .sType;
 
     return Scaffold(
       backgroundColor: _pageBg,
@@ -1081,68 +1052,76 @@ class _DashboardScreenState extends State<DashboardScreen> {
       body: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-
           // ① PINNED HEADER — stays put while user scrolls
           _buildFixedHeader(coName, w),
 
           // ② SCROLLABLE BODY — only this part moves
           Expanded(
-            child: SingleChildScrollView(
-              physics: const ClampingScrollPhysics(),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const SizedBox(height: 28),
+            child: RefreshIndicator(
+              color: _ctaFill,
+              onRefresh: _loadDashboard,
+              child: SingleChildScrollView(
+                physics: const AlwaysScrollableScrollPhysics(
+                    parent: ClampingScrollPhysics()),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const SizedBox(height: 28),
 
-                  // ── Today's Rates ────────────────────────────────────────
-                  _buildSectionHeader(
-                    "Today's Rates",
-                    'Gold & Silver reference for your session',
-                  ),
-                  const SizedBox(height: 12),
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 20),
-                    child: AnimatedRateBox(
-                      todayGoldRate: todayGoldRate,
-                      todaySilverRate: todaySilverRate,
+                    // ── Today's Rates ────────────────────────────────────────
+                    _buildSectionHeader(
+                      "Today's Rates",
+                      'Gold & Silver reference for your session',
                     ),
-                  ),
+                    const SizedBox(height: 12),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 20),
+                      child: AnimatedRateBox(
+                        todayGoldRate: _goldRate,
+                        todaySilverRate: _silverRate,
+                        onTap: () => Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                              builder: (context) => const DailyrateScreen()),
+                        ),
+                      ),
+                    ),
 
-                  const SizedBox(height: 28),
+                    const SizedBox(height: 28),
 
-                  // ── Quick Actions ─────────────────────────────────────────
-                  _buildSectionHeader(
-                    'Quick Actions',
-                    'Shortcuts to your daily tools',
-                  ),
-                  const SizedBox(height: 12),
-                  _buildQuickActionsGrid(context),
+                    // ── Quick Actions ─────────────────────────────────────────
+                    _buildSectionHeader(
+                      'Quick Actions',
+                      'Shortcuts to your daily tools',
+                    ),
+                    const SizedBox(height: 12),
+                    _buildQuickActionsGrid(context),
 
-                  const SizedBox(height: 18),
-
-                  // ── Cash on Hand (conditional) ────────────────────────────
-                  if (sType != "B" && sType != "S") ...[
-                    CashOnHandBox(cashAmount: cashOnHandAmount),
                     const SizedBox(height: 18),
+
+                    // ── Cash on Hand (conditional) ────────────────────────────
+                    if (sType != "B" && sType != "S") ...[
+                      CashOnHandBox(cashAmount: cashOnHandAmount),
+                      const SizedBox(height: 18),
+                    ],
+
+                    // ── Reports ───────────────────────────────────────────────
+                    _buildSectionHeader(
+                      'Reports',
+                      'Financial & inventory insights',
+                    ),
+                    const SizedBox(height: 12),
+                    _buildReportsList(context),
+
+                    SizedBox(
+                      height: math.max(
+                          28, MediaQuery.of(context).padding.bottom + 20),
+                    ),
                   ],
-
-                  // ── Reports ───────────────────────────────────────────────
-                  _buildSectionHeader(
-                    'Reports',
-                    'Financial & inventory insights',
-                  ),
-                  const SizedBox(height: 12),
-                  _buildReportsList(context),
-
-                  SizedBox(
-                    height: math.max(
-                        28, MediaQuery.of(context).padding.bottom + 20),
-                  ),
-                ],
+                ),
               ),
             ),
           ),
-
         ],
       ),
     );
@@ -1154,7 +1133,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
 // ─────────────────────────────────────────────────────────────────────────────
 
 void showUpgradeRequiredDialog(BuildContext context) {
-  final cta = AppColor.PRIMARY_COLOR ?? const Color(0xFF1565C0);
+  const cta = Color(0xFF006EB7);
   showGeneralDialog(
     context: context,
     barrierDismissible: true,
@@ -1203,8 +1182,8 @@ void showUpgradeRequiredDialog(BuildContext context) {
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12),
                   ),
-                  padding: const EdgeInsets.symmetric(
-                      horizontal: 24, vertical: 12),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
                 ),
                 onPressed: () => Navigator.of(context).pop(),
                 child: Text(

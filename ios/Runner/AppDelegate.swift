@@ -47,7 +47,17 @@ class AppDelegate: FlutterAppDelegate {
                 let args = call.arguments as! Dictionary<String, Any>
                 self?.getLedgerReportData(result: result, coCode: args["coCode"] as! String,lcCode: args["lcCode"] as! String,date: args["date"] as! String,checkBox: args["checkBox"] as! Bool,grp: args["grp"] as! String,city: args["city"] as! String,area: args["area"] as! String)
             }
-            else if call.method == "getProductCategory" {
+            else if call.method == "getTagStockReport" {
+                let args = call.arguments as! Dictionary<String, Any>
+                self?.getTagStockReport(result: result,
+                                        coCode: args["coCode"] as! String,
+                                        lcCode: args["lcCode"] as! String,
+                                        year: args["year"] as! String,
+                                        section: args["section"] as! String,
+                                        fromDate: args["fromDate"] as! String,
+                                        toDate: args["toDate"] as! String)
+            }
+                        else if call.method == "getProductCategory" {
                 let args = call.arguments as! Dictionary<String, Any>
                 self?.getProductCategory(result: result, coCode: args["coCode"] as! String,itType: args["itType"] as! String)
             }
@@ -87,6 +97,10 @@ class AppDelegate: FlutterAppDelegate {
                 let args = call.arguments as! Dictionary<String, Any>
                 self?.getForImage(result: result, coCode: args["coCode"] as! String)
             }
+            else if call.method == "getDiscountDates" {
+                let args = call.arguments as! Dictionary<String, Any>
+                self?.getDiscountDates(result: result, coCode: args["coCode"] as! String)
+            }
             else if call.method == "getRateSetting" {
                 let args = call.arguments as! Dictionary<String, Any>
                 self?.getRateSetting(result: result, coCode: args["coCode"] as! String)
@@ -98,6 +112,14 @@ class AppDelegate: FlutterAppDelegate {
             else if call.method == "getSalesFilterData" {
                 let args = call.arguments as! Dictionary<String,Any>
                 self?.getSalesFilterData(result: result, coCode:args["coCode"] as! String,lcCode: args["lcCode"] as! String)
+            }
+            else if call.method == "getCategoryPreview" {
+                let args = call.arguments as! Dictionary<String,Any>
+                self?.getCategoryPreview(result: result, coCode:args["coCode"] as! String, itType: args["itType"] as! String)
+            }
+            else if call.method == "getWhSalesFilterData" {
+                let args = call.arguments as! Dictionary<String,Any>
+                self?.getWhSalesFilterData(result: result, coCode:args["coCode"] as! String,lcCode: args["lcCode"] as! String)
             }
             else if call.method == "getStockFilterGrpData" {
                 let args = call.arguments as! Dictionary<String, Any>
@@ -129,7 +151,7 @@ class AppDelegate: FlutterAppDelegate {
             }
             else if call.method == "getWhSalesReport" {
                 let args = call.arguments as! Dictionary<String, Any>
-                self?.getWhSalesReport(result: result, coCode: args["coCode"] as! String, lcCode: args["lcCode"] as! String, year: args["year"] as! String, fromDate: args["fromDate"] as! String, toDate: args["toDate"] as! String)
+                self?.getWhSalesReport(result: result, coCode: args["coCode"] as! String, lcCode: args["lcCode"] as! String, year: args["year"] as! String, fromDate: args["fromDate"] as! String, toDate: args["toDate"] as! String, selectedBook: args["selectedBook"] as? String ?? "")
             }
             else if call.method == "getSalesOrderReport" {
                 let args = call.arguments as! Dictionary<String, Any>
@@ -212,7 +234,6 @@ class AppDelegate: FlutterAppDelegate {
         sqlClient = SQLClient.sharedInstance()
         sqlClient?.disconnect()
         sqlClient?.connect(host, username: username, password: password, database: database, completion: { isSuccess in
-//            print(self.sqlClient.debugDescription)
             result(isSuccess)
         })
     }
@@ -304,10 +325,56 @@ class AppDelegate: FlutterAppDelegate {
             result(results)
         };
     }
+    /// Tag-level rows for the Tag Stock Report.
+    ///
+    /// Mirrors the Android query in ReportQueries.tagStockRows exactly — same
+    /// join, same columns, same ordering — so the two platforms cannot drift.
+    /// `section` is the Dart enum's name: inTag, outTag or stock.
+    private func getTagStockReport(result: @escaping FlutterResult, coCode: String, lcCode: String, year: String, section: String, fromDate: String, toDate: String) {
+        sqlClient = SQLClient.sharedInstance()
+
+        let columns = "A.TAG_NO AS TagNo, A.VCH_SRNO, A.IT_CODE, B.IT_NAME AS ItmName, " +
+            "C.DESIGN_IMG_ID AS DesignImgId, C.DESIGN_NO, C.ITM_SIZE AS Size, " +
+            "(convert(varchar(50),A.VCH_DATE,105)) AS VchDate, " +
+            "SUM(A.ITM_PCS) AS Pcs, SUM(A.ITM_GWT) AS Grwt, SUM(A.ITM_NWT) AS NetWt"
+
+        var runQuery = "SELECT " + columns +
+            " FROM ((MAIN_STOCK AS A INNER JOIN BAR_DETL AS C " +
+            "ON A.CO_CODE = C.CO_CODE AND A.TAG_NO = C.TAG_NO " +
+            "AND A.VCH_SRNO = C.VCH_SRNO AND A.IT_CODE = C.IT_CODE) " +
+            "LEFT JOIN ITEM_MAST AS B ON A.CO_CODE = B.CO_CODE " +
+            "AND A.IT_CODE = B.IT_CODE) " +
+            "WHERE A.CO_CODE = '" + coCode + "' AND A.LC_CODE = '" + lcCode + "' " +
+            "AND A.CO_YEAR = '" + year + "' AND A.TAG_NO <> 'N' "
+
+        // Direction comes from ITM_SIGN, which every transaction type agrees
+        // on, rather than from TR_TYPE.
+        if section == "inTag" {
+            runQuery += "AND A.ITM_SIGN = '+' AND A.VCH_DATE >= '" + fromDate + "' AND A.VCH_DATE <= '" + toDate + "' "
+        } else if section == "outTag" {
+            runQuery += "AND A.ITM_SIGN = '-' AND A.VCH_DATE >= '" + fromDate + "' AND A.VCH_DATE <= '" + toDate + "' "
+        }
+
+        runQuery += "GROUP BY A.TAG_NO, A.VCH_SRNO, A.IT_CODE, B.IT_NAME, " +
+            "C.DESIGN_IMG_ID, C.DESIGN_NO, C.ITM_SIZE, A.VCH_DATE "
+
+        if section == "stock" {
+            runQuery += "HAVING SUM(CASE WHEN A.ITM_SIGN='+' THEN A.VCH_SRNO ELSE -A.VCH_SRNO END) > 0 "
+        }
+
+        runQuery += "ORDER BY A.VCH_DATE DESC, A.TAG_NO DESC"
+
+        sqlClient?.execute(runQuery) { results in
+            result(results)
+        };
+    }
+
     private func getProductCategory(result: @escaping FlutterResult,coCode:String,itType:String) {
         print("INside getLedgerReportData from xcode")
         sqlClient = SQLClient.sharedInstance()
-    var runQuery = "SELECT B.PR_CODE,C.PR_NAME FROM (MAIN_STOCK AS A INNER JOIN ITEM_MAST AS B ON A.CO_CODE = B.CO_CODE AND A.IT_CODE = B.IT_CODE) " +
+    // NetWt mirrors the Android query: net stock weight per category, signed
+    // so sold pieces are taken back out. It drives the weight filter.
+    var runQuery = "SELECT B.PR_CODE,C.PR_NAME,SUM(CASE WHEN A.ITM_SIGN='+' THEN A.ITM_NWT ELSE -A.ITM_NWT END) AS NetWt FROM (MAIN_STOCK AS A INNER JOIN ITEM_MAST AS B ON A.CO_CODE = B.CO_CODE AND A.IT_CODE = B.IT_CODE) " +
         "INNER JOIN PRODUCT_MAST AS C ON B.CO_CODE = C.CO_CODE AND B.PR_CODE = C.PR_CODE WHERE A.CO_CODE = '" +
         coCode +
         "' AND A.TAG_NO <> 'N' "
@@ -404,6 +471,14 @@ class AppDelegate: FlutterAppDelegate {
             result(results)
         };
     }
+    private func getDiscountDates(result: @escaping FlutterResult,coCode:String) {
+        print("INside getDiscountDates from xcode")
+        sqlClient = SQLClient.sharedInstance()
+        sqlClient?.execute("SELECT F_DISC_DATE,T_DISC_DATE FROM CO_SET_NEW WHERE CO_CODE ='" + coCode + "' ") { results in
+            print(results)
+            result(results)
+        };
+    }
     private func getRateSetting(result: @escaping FlutterResult,coCode:String) {
         print("INside getRateSetting from xcode")
         sqlClient = SQLClient.sharedInstance()
@@ -443,6 +518,50 @@ class AppDelegate: FlutterAppDelegate {
         "' AND MAIN_BOOK in ('SALES','WHSALES') AND CUR_USE='Y'"
         
         
+        sqlClient?.execute(query) { results in
+            result(results)
+        };
+        }
+    /// Last piece shown in each product category, used for the thumbnail on the
+    /// Tag Image screen. The category grid lists ORDER BY TAG_NO DESC, so its
+    /// last card is the lowest tag number — hence ASC here. ROW_NUMBER keeps it
+    /// to one row per category, and the GROUP BY/HAVING mirrors the grid's
+    /// in-stock filter so the preview matches what the grid actually shows.
+    private func getCategoryPreview(result: @escaping FlutterResult,coCode:String,itType:String) {
+        print("INside getCategoryPreview from xcode")
+        sqlClient = SQLClient.sharedInstance()
+
+        var inner = "SELECT D.PR_CODE, C.DESIGN_IMG_ID AS DesignImgId, A.TAG_NO AS TagNo, C.VCH_SRNO, " +
+        "ROW_NUMBER() OVER (PARTITION BY D.PR_CODE ORDER BY A.TAG_NO ASC, C.VCH_SRNO ASC) AS rn " +
+        "FROM ((MAIN_STOCK AS A INNER JOIN BAR_DETL AS C ON A.CO_CODE = C.CO_CODE AND A.TAG_NO = C.TAG_NO AND A.VCH_SRNO = C.VCH_SRNO AND A.IT_CODE = C.IT_CODE) " +
+        "LEFT JOIN ITEM_MAST AS B ON A.CO_CODE = B.CO_CODE AND A.IT_CODE = B.IT_CODE) " +
+        "LEFT JOIN PRODUCT_MAST AS D ON B.CO_CODE = D.CO_CODE AND B.PR_CODE = D.PR_CODE " +
+        "WHERE A.CO_CODE = '" + coCode + "' AND A.TAG_NO <> 'N' "
+        if itType != "" {
+            inner += "AND B.IT_TYPE = '" + itType + "' "
+        }
+        inner += "GROUP BY D.PR_CODE, C.DESIGN_IMG_ID, A.TAG_NO, C.VCH_SRNO "
+        inner += "HAVING SUM(CASE WHEN ITM_SIGN='+' THEN A.VCH_SRNO ELSE -A.VCH_SRNO END) > 0 "
+        let query = "SELECT PR_CODE, DesignImgId, TagNo, VCH_SRNO FROM (" + inner + ") T WHERE rn = 1"
+
+        sqlClient?.execute(query) { results in
+            result(results)
+        };
+        }
+    private func getWhSalesFilterData(result: @escaping FlutterResult,coCode:String,lcCode:String) {
+        print("INside getWhSalesFilterData from xcode")
+        sqlClient = SQLClient.sharedInstance()
+
+        // Must stay in step with the WH Sales report's MAIN_BOOK condition
+        // below, otherwise the filter can offer a book that returns no rows.
+        // REPLACE handles the 'WH SALES' vs 'WHSALES' spacing difference and the
+        // LIKE clauses catch whichever wording the labour books use.
+        let query = "SELECT CO_BOOK,BOOK_NAME FROM BOOK_DATA WHERE CO_CODE = '" +
+        coCode +
+        "' AND LC_CODE='" +
+        lcCode +
+        "' AND (REPLACE(MAIN_BOOK,' ','') IN ('WHSALES','TOURSALES') OR REPLACE(MAIN_BOOK,' ','') LIKE '%LABOUR%' OR REPLACE(MAIN_BOOK,' ','') LIKE '%LBR%') AND CUR_USE='Y' ORDER BY CO_BOOK"
+
         sqlClient?.execute(query) { results in
             result(results)
         };
@@ -497,7 +616,7 @@ class AppDelegate: FlutterAppDelegate {
         sqlClient = SQLClient.sharedInstance()
         var query = "";
         if(VchsrNo == ""){
-        query = "SELECT B.IT_NAME,A.TAG_NO,A.IT_CODE,C.DESIGN_NO,C.ITM_SIZE,C.ITM_PCS,C.ITM_GWT,C.VCH_SRNO,B.PR_CODE,B.GR_CODE,(D.GR_RATE/10) As Rate,C.ITM_NWT AS TagNwt,C.ITM_FINE,C.LBR_AMT,C.OTH_AMT,C.LBR_PRC,C.ITM_GHT_PRC,C.ITM_GHT_WT as ITM_GHAT,C.ITM_MRP, C.LBR_RATE,C.VCH_DATE  from ((MAIN_STOCK AS A INNER JOIN BAR_DETL AS C ON A.CO_CODE = C.CO_CODE AND A.TAG_NO = C.TAG_NO AND A.VCH_SRNO = C.VCH_SRNO AND A.IT_CODE = C.IT_CODE)LEFT JOIN ITEM_MAST AS B ON A.CO_CODE = B.CO_CODE AND A.IT_CODE = B.IT_CODE)LEFT JOIN GROUP_MAST AS D ON B.CO_CODE = D.CO_CODE AND B.GR_CODE = D.GR_CODE WHERE A.CO_CODE = '" +
+        query = "SELECT B.IT_NAME,A.TAG_NO,A.IT_CODE,C.LBR_TYPE,C.DESIGN_NO,C.ITM_SIZE,C.ITM_WEST_PRC,C.ITM_PCS,C.ITM_GWT,C.VCH_SRNO,B.PR_CODE,B.GR_CODE,B.IT_WEST,B.ITM_FIX_WEST_PRC,(D.GR_RATE/10) As Rate,C.ITM_NWT AS TagNwt,C.ITM_FINE,C.LBR_AMT,C.OTH_AMT,C.LBR_PRC,C.ITM_GHT_PRC,C.ITM_GHT_WT as ITM_GHAT,C.ITM_MRP, C.LBR_RATE,C.VCH_DATE,C.ITM_TOUCH  from ((MAIN_STOCK AS A INNER JOIN BAR_DETL AS C ON A.CO_CODE = C.CO_CODE AND A.TAG_NO = C.TAG_NO AND A.VCH_SRNO = C.VCH_SRNO AND A.IT_CODE = C.IT_CODE)LEFT JOIN ITEM_MAST AS B ON A.CO_CODE = B.CO_CODE AND A.IT_CODE = B.IT_CODE)LEFT JOIN GROUP_MAST AS D ON B.CO_CODE = D.CO_CODE AND B.GR_CODE = D.GR_CODE WHERE A.CO_CODE = '" +
             coCode +
             "'  AND A.LC_CODE = '" +
             lcCode +
@@ -505,9 +624,9 @@ class AppDelegate: FlutterAppDelegate {
             year +
             "' AND A.TAG_NO = '" +
             tagNo +
-            "'  GROUP BY A.TAG_NO,A.IT_CODE,C.DESIGN_NO,C.ITM_SIZE,C.ITM_PCS,C.ITM_GWT,C.ITM_NWT,C.ITM_FINE,C.LBR_AMT,C.OTH_AMT,C.VCH_SRNO,B.PR_CODE,B.IT_NAME,B.GR_CODE,D.GR_RATE,C.LBR_PRC,C.ITM_GHT_PRC,C.ITM_GHT_WT,C.ITM_MRP, C.LBR_RATE,C.VCH_DATE HAVING SUM(CASE WHEN ITM_SIGN='+' THEN A.VCH_SRNO ELSE -A.VCH_SRNO END) > 0 ORDER BY C.VCH_DATE DESC"
+            "'  GROUP BY A.TAG_NO,A.IT_CODE,C.LBR_TYPE,C.DESIGN_NO,C.ITM_SIZE,C.ITM_WEST_PRC,C.ITM_PCS,C.ITM_GWT,C.ITM_NWT,C.ITM_FINE,C.LBR_AMT,C.OTH_AMT,C.VCH_SRNO,B.PR_CODE,B.IT_NAME,B.GR_CODE,B.IT_WEST,B.ITM_FIX_WEST_PRC,D.GR_RATE,C.LBR_PRC,C.ITM_GHT_PRC,C.ITM_GHT_WT,C.ITM_MRP, C.LBR_RATE,C.VCH_DATE,C.ITM_TOUCH HAVING SUM(CASE WHEN ITM_SIGN='+' THEN A.VCH_SRNO ELSE -A.VCH_SRNO END) > 0 ORDER BY C.VCH_DATE DESC"
         }else{
-        query = "SELECT B.IT_NAME,A.TAG_NO,A.IT_CODE,C.DESIGN_NO,C.ITM_SIZE,C.ITM_PCS,C.ITM_GWT,C.VCH_SRNO,B.PR_CODE,B.GR_CODE,(D.GR_RATE/10) As Rate,C.ITM_NWT AS TagNwt,C.ITM_FINE,C.LBR_AMT,C.OTH_AMT,C.LBR_PRC,C.ITM_GHT_PRC,C.ITM_GHT_WT as ITM_GHAT,C.ITM_MRP, C.LBR_RATE  from ((MAIN_STOCK AS A INNER JOIN BAR_DETL AS C ON A.CO_CODE = C.CO_CODE AND A.TAG_NO = C.TAG_NO AND A.VCH_SRNO = C.VCH_SRNO AND A.IT_CODE = C.IT_CODE)LEFT JOIN ITEM_MAST AS B ON A.CO_CODE = B.CO_CODE AND A.IT_CODE = B.IT_CODE)LEFT JOIN GROUP_MAST AS D ON B.CO_CODE = D.CO_CODE AND B.GR_CODE = D.GR_CODE WHERE A.CO_CODE = '" +
+        query = "SELECT B.IT_NAME,A.TAG_NO,A.IT_CODE,C.LBR_TYPE,C.DESIGN_NO,C.ITM_SIZE,C.ITM_WEST_PRC,C.ITM_PCS,C.ITM_GWT,C.VCH_SRNO,B.PR_CODE,B.GR_CODE,B.IT_WEST,B.ITM_FIX_WEST_PRC,(D.GR_RATE/10) As Rate,C.ITM_NWT AS TagNwt,C.ITM_FINE,C.LBR_AMT,C.OTH_AMT,C.LBR_PRC,C.ITM_GHT_PRC,C.ITM_GHT_WT as ITM_GHAT,C.ITM_MRP, C.LBR_RATE,C.ITM_TOUCH  from ((MAIN_STOCK AS A INNER JOIN BAR_DETL AS C ON A.CO_CODE = C.CO_CODE AND A.TAG_NO = C.TAG_NO AND A.VCH_SRNO = C.VCH_SRNO AND A.IT_CODE = C.IT_CODE)LEFT JOIN ITEM_MAST AS B ON A.CO_CODE = B.CO_CODE AND A.IT_CODE = B.IT_CODE)LEFT JOIN GROUP_MAST AS D ON B.CO_CODE = D.CO_CODE AND B.GR_CODE = D.GR_CODE WHERE A.CO_CODE = '" +
             coCode +
             "'  AND A.LC_CODE = '" +
             lcCode +
@@ -517,17 +636,17 @@ class AppDelegate: FlutterAppDelegate {
             tagNo +
             "'  AND A.VCH_SRNO = '" +
             VchsrNo +
-            "'  GROUP BY A.TAG_NO,A.IT_CODE,C.DESIGN_NO,C.ITM_SIZE,C.ITM_PCS,C.ITM_GWT,C.ITM_NWT,C.ITM_FINE,C.LBR_AMT,C.OTH_AMT,C.VCH_SRNO,B.PR_CODE,B.IT_NAME,B.GR_CODE,D.GR_RATE,C.LBR_PRC,C.ITM_GHT_PRC,C.ITM_GHT_WT,C.ITM_MRP, C.LBR_RATE HAVING SUM(CASE WHEN ITM_SIGN='+' THEN A.VCH_SRNO ELSE -A.VCH_SRNO END) > 0 "
+            "'  GROUP BY A.TAG_NO,A.IT_CODE,C.LBR_TYPE,C.DESIGN_NO,C.ITM_SIZE,C.ITM_WEST_PRC,C.ITM_PCS,C.ITM_GWT,C.ITM_NWT,C.ITM_FINE,C.LBR_AMT,C.OTH_AMT,C.VCH_SRNO,B.PR_CODE,B.IT_NAME,B.GR_CODE,B.IT_WEST,B.ITM_FIX_WEST_PRC,D.GR_RATE,C.LBR_PRC,C.ITM_GHT_PRC,C.ITM_GHT_WT,C.ITM_MRP, C.LBR_RATE,C.ITM_TOUCH HAVING SUM(CASE WHEN ITM_SIGN='+' THEN A.VCH_SRNO ELSE -A.VCH_SRNO END) > 0 "
         }
         print("query")
         sqlClient?.execute(query) { results in
             result(results)
         };
     }
-    private func getWhSalesReport(result: @escaping FlutterResult,coCode:String,lcCode:String,year:String,fromDate:String,toDate:String) {
+    private func getWhSalesReport(result: @escaping FlutterResult,coCode:String,lcCode:String,year:String,fromDate:String,toDate:String,selectedBook:String) {
         print("INside getWhSalesReport from xcode")
         sqlClient = SQLClient.sharedInstance()
-        sqlClient?.execute("SELECT A.CO_CODE,A.CO_YEAR,(convert(varchar(50),A.VCH_DATE,105)) as VCH_DATE,A.VCH_NO,A.CO_BOOK,B.BOOK_SNAME,C.AC_CODE,C.AC_NAME,C.AC_MOBILE, SUM(ITM_PCS) As Pcs,Sum(A.ITM_GWT) As Gwt,SUM(A.ITM_NWT) As Nwt, (Select D.TOT_FINE_DR From RATE_CUT_DATA AS D Where A.CO_CODE = D.CO_CODE AND A.CO_YEAR = D.CO_YEAR AND A.CO_BOOK = D.CO_BOOK  AND A.VCH_NO = D.VCH_NO ) As TotDrFine, (Select D.KSR_FINE_CR From RATE_CUT_DATA AS D Where A.CO_CODE = D.CO_CODE AND A.CO_YEAR = D.CO_YEAR AND A.CO_BOOK = D.CO_BOOK  AND A.VCH_NO = D.VCH_NO ) As KasarFine, (Select D.TOT_FINE_CR From RATE_CUT_DATA AS D Where A.CO_CODE = D.CO_CODE AND A.CO_YEAR = D.CO_YEAR AND A.CO_BOOK = D.CO_BOOK  AND A.VCH_NO = D.VCH_NO ) As TotRecFine, (Select D.TOT_FINE_DR-D.KSR_FINE_CR- D.TOT_FINE_CR From RATE_CUT_DATA AS D Where A.CO_CODE = D.CO_CODE AND A.CO_YEAR = D.CO_YEAR AND A.CO_BOOK = D.CO_BOOK  AND A.VCH_NO = D.VCH_NO ) As OsFine, (Select E.DR_AMT+E.SL_LBR_AMT+E.SL_OTH_AMT+E.SL_ITM_AMT From RATE_CUT_DATA AS E Where A.CO_CODE = E.CO_CODE AND A.CO_YEAR = E.CO_YEAR AND A.CO_BOOK = E.CO_BOOK  AND A.VCH_NO = E.VCH_NO ) As NetAmt, (Select H.SL_CHQ_AMT+H.SL_CARD_AMT+SL_CASH_AMT+SL_KASAR_AMT From RATE_CUT_DATA AS H Where A.CO_CODE = H.CO_CODE AND A.CO_YEAR = H.CO_YEAR AND A.CO_BOOK = H.CO_BOOK  AND A.VCH_NO = H.VCH_NO ) As TotRcvAmt, (Select M.SL_BILL_OS From RATE_CUT_DATA AS M Where A.CO_CODE = M.CO_CODE AND A.CO_YEAR = M.CO_YEAR AND A.CO_BOOK = M.CO_BOOK  AND A.VCH_NO = M.VCH_NO ) As BillOs from (MAIN_STOCK AS A LEFT JOIN BOOK_DATA AS B ON A.CO_CODE = B.CO_CODE AND A.LC_CODE = B.LC_CODE AND A.CO_BOOK = B.CO_BOOK) LEFT JOIN AC_MAST AS C ON A.CO_CODE = C.CO_CODE AND A.AC_CODE = C.AC_CODE WHERE A.CO_CODE = '" +
+        var query = "SELECT A.CO_CODE,A.CO_YEAR,(convert(varchar(50),A.VCH_DATE,105)) as VCH_DATE,A.VCH_NO,A.CO_BOOK,B.BOOK_SNAME,C.AC_CODE,C.AC_NAME,C.AC_MOBILE, SUM(ITM_PCS) As Pcs,Sum(A.ITM_GWT) As Gwt,SUM(A.ITM_NWT) As Nwt, (Select D.TOT_FINE_DR From RATE_CUT_DATA AS D Where A.CO_CODE = D.CO_CODE AND A.CO_YEAR = D.CO_YEAR AND A.CO_BOOK = D.CO_BOOK  AND A.VCH_NO = D.VCH_NO ) As TotDrFine, (Select D.KSR_FINE_CR From RATE_CUT_DATA AS D Where A.CO_CODE = D.CO_CODE AND A.CO_YEAR = D.CO_YEAR AND A.CO_BOOK = D.CO_BOOK  AND A.VCH_NO = D.VCH_NO ) As KasarFine, (Select D.TOT_FINE_CR From RATE_CUT_DATA AS D Where A.CO_CODE = D.CO_CODE AND A.CO_YEAR = D.CO_YEAR AND A.CO_BOOK = D.CO_BOOK  AND A.VCH_NO = D.VCH_NO ) As TotRecFine, (Select D.TOT_FINE_DR-D.KSR_FINE_CR- D.TOT_FINE_CR From RATE_CUT_DATA AS D Where A.CO_CODE = D.CO_CODE AND A.CO_YEAR = D.CO_YEAR AND A.CO_BOOK = D.CO_BOOK  AND A.VCH_NO = D.VCH_NO ) As OsFine, (Select E.DR_AMT+E.SL_LBR_AMT+E.SL_OTH_AMT+E.SL_ITM_AMT From RATE_CUT_DATA AS E Where A.CO_CODE = E.CO_CODE AND A.CO_YEAR = E.CO_YEAR AND A.CO_BOOK = E.CO_BOOK  AND A.VCH_NO = E.VCH_NO ) As NetAmt, (Select H.SL_CHQ_AMT+H.SL_CARD_AMT+SL_CASH_AMT+SL_KASAR_AMT From RATE_CUT_DATA AS H Where A.CO_CODE = H.CO_CODE AND A.CO_YEAR = H.CO_YEAR AND A.CO_BOOK = H.CO_BOOK  AND A.VCH_NO = H.VCH_NO ) As TotRcvAmt, (Select M.SL_BILL_OS From RATE_CUT_DATA AS M Where A.CO_CODE = M.CO_CODE AND A.CO_YEAR = M.CO_YEAR AND A.CO_BOOK = M.CO_BOOK  AND A.VCH_NO = M.VCH_NO ) As BillOs from (MAIN_STOCK AS A LEFT JOIN BOOK_DATA AS B ON A.CO_CODE = B.CO_CODE AND A.LC_CODE = B.LC_CODE AND A.CO_BOOK = B.CO_BOOK) LEFT JOIN AC_MAST AS C ON A.CO_CODE = C.CO_CODE AND A.AC_CODE = C.AC_CODE WHERE A.CO_CODE = '" +
                            coCode +
                            "' AND A.LC_CODE = '" +
                            lcCode +
@@ -537,7 +656,18 @@ class AppDelegate: FlutterAppDelegate {
                            fromDate +
                            "' AND A.VCH_DATE <= '" +
                            toDate +
-                           "' AND B.MAIN_BOOK IN ('WH SALES','TOUR SALES') GROUP BY A.CO_CODE,A.CO_YEAR,A.VCH_DATE,A.VCH_NO,A.CO_BOOK,B.BOOK_SNAME,C.AC_CODE,C.AC_NAME,C.AC_MOBILE ORDER BY A.VCH_DATE,A.CO_BOOK,A.VCH_NO") { results in
+                           "' "
+
+        query += "AND (REPLACE(B.MAIN_BOOK,' ','') IN ('WHSALES','TOURSALES') OR REPLACE(B.MAIN_BOOK,' ','') LIKE '%LABOUR%' OR REPLACE(B.MAIN_BOOK,' ','') LIKE '%LBR%') "
+
+        // Book pushed into the query, mirroring getSalesReport.
+        if selectedBook != "" {
+            query += "AND A.CO_BOOK = '"+selectedBook+"' "
+        }
+
+        query += "GROUP BY A.CO_CODE,A.CO_YEAR,A.VCH_DATE,A.VCH_NO,A.CO_BOOK,B.BOOK_SNAME,C.AC_CODE,C.AC_NAME,C.AC_MOBILE ORDER BY A.VCH_DATE,A.CO_BOOK,A.VCH_NO"
+
+        sqlClient?.execute(query) { results in
             result(results)
         };
     }
