@@ -1,3 +1,4 @@
+import 'package:DataCareUltra/utils/print_header.dart';
 import 'dart:async';
 import 'dart:convert';
 import 'dart:developer';
@@ -185,6 +186,17 @@ class _TagestimateScreenState extends State<TagestimateScreen> {
   /// that word here too. Falls back to [fallback] when the column is not
   /// configured — the receipt row is driven by the filter toggle, so it must
   /// still be printable without a COL_MAST entry.
+  /// The GST line's label, "GST 3%", carrying the rate the estimate applies
+  /// (the filter sheet's GST %, 3 by default) so the figure beside it is
+  /// never a mystery.
+  String get _gstLabel {
+    final pct = double.tryParse(fillterGst) ?? 3;
+    final text = pct == pct.roundToDouble()
+        ? pct.toInt().toString()
+        : pct.toStringAsFixed(2).replaceAll(RegExp(r'0+$'), '');
+    return 'GST $text%';
+  }
+
   String _ghatLabel(String colName, String fallback) {
     try {
       final match = printingLable.firstWhere(
@@ -2338,7 +2350,7 @@ class _TagestimateScreenState extends State<TagestimateScreen> {
                           _infoRow(
                             commonCompanyYearSelectionProvider.CoSname == "UAE"
                                 ? "VAT 5% (AED)"
-                                : "GST Tax",
+                                : _gstLabel,
                             productDetail == null
                                 ? "—"
                                 : double.parse(gstTax).toStringAsFixed(2),
@@ -2862,13 +2874,6 @@ class _TagestimateScreenState extends State<TagestimateScreen> {
       otherDetailsData = data[0];
     }
 
-    final blockedHddList = [
-      "VK289NEPH",
-      "VK103NEVK",
-      "VK061NEVK",
-      "HM208NEPK",
-      "AB000NEAB"
-    ];
 
     // Courier is a built-in PDF font, so it needs no asset and its fixed width
     // keeps the value column aligned down the receipt.
@@ -2954,7 +2959,7 @@ class _TagestimateScreenState extends State<TagestimateScreen> {
           crossAxisAlignment: pw.CrossAxisAlignment.stretch,
           mainAxisSize: pw.MainAxisSize.min,
           children: [
-            if (!blockedHddList.contains(hddNo)) ...[
+            if (!hidePrintHeader(hddNo)) ...[
               centered('${companyDetails["CO_NAME"]}', 9, bold: true),
               pw.SizedBox(height: 2),
               centered(
@@ -2972,10 +2977,12 @@ class _TagestimateScreenState extends State<TagestimateScreen> {
             row("Date", DateFormat("dd/MM/yyyy").format(DateTime.now())),
             row("Tag No", '${widget.tagNo ?? ''}'),
             if (itemName.isNotEmpty) row("Item", itemName),
+            if (slimReceipt(hddNo)) row("Rate", currency + fmt(itemRate, 2)),
             if (designNo.isNotEmpty && designNo != "null")
               row("Design", designNo),
             rule(),
-            row("Pcs", '${productDetail?["ITM_PCS"] ?? '-'}'),
+            if (!slimReceipt(hddNo))
+              row("Pcs", '${productDetail?["ITM_PCS"] ?? '-'}'),
             row("Gross Wt", fmt(productDetail?["ITM_GWT"], 3)),
             row("Net Wt", fmt(productDetail?["TagNwt"], 3)),
             // Ghat (wastage), each line switchable from the estimate filter
@@ -2983,10 +2990,18 @@ class _TagestimateScreenState extends State<TagestimateScreen> {
             // on-screen detail and the A4 estimate print, so the receipt
             // cannot disagree with them. A zero value is skipped even when
             // the option is on, matching how the labour lines behave.
-            if (showGhatWt && _isPositive(productDetail?["ITM_GHAT"]))
-              row(_ghatLabel("GhtWt", "Ghat Wt"),
+            // The slim receipt (see print_header.dart) always carries the
+            // ghat weight as "Wst", whatever the filter toggle says, and
+            // drops the ghat %, labour rate, labour amount and other amount
+            // lines.
+            if ((showGhatWt || slimReceipt(hddNo)) &&
+                _isPositive(productDetail?["ITM_GHAT"]))
+              row(
+                  slimReceipt(hddNo) ? "Wst" : _ghatLabel("GhtWt", "Ghat Wt"),
                   fmt(productDetail?["ITM_GHAT"], 3)),
-            if (showGhatPrc && _isPositive(productDetail?["ITM_GHT_PRC"]))
+            if (showGhatPrc &&
+                !slimReceipt(hddNo) &&
+                _isPositive(productDetail?["ITM_GHT_PRC"]))
               row(_ghatLabel("Ght%", "Ghat %"),
                   "${fmt(productDetail?["ITM_GHT_PRC"], 2)} %"),
             rule(),
@@ -2998,12 +3013,13 @@ class _TagestimateScreenState extends State<TagestimateScreen> {
             // a misleading "0.00". The amount always prints.
             if (_isPositive(lbrPrc))
               row(isUae ? "Making %" : "Labour %", "${fmt(lbrPrc, 2)} %"),
-            if (_isPositive(lbrRate))
+            if (_isPositive(lbrRate) && !slimReceipt(hddNo))
               row(isUae ? "Making Rate" : "Labour Rate",
                   currency + fmt(lbrRate, 2)),
-            row(isUae ? "Making Amt" : "Labour Amt",
-                currency + fmt(lbrAmmount, 2)),
-            if (_isPositive(othAmmount))
+            if (!slimReceipt(hddNo))
+              row(isUae ? "Making Amt" : "Labour Amt",
+                  currency + fmt(lbrAmmount, 2)),
+            if (_isPositive(othAmmount) && !slimReceipt(hddNo))
               row("Other Amt", currency + fmt(othAmmount, 2)),
             // Other details — hallmark, real stone, diamond and the like, each
             // carrying its own charge. Column names match the A4 estimate's
@@ -3050,7 +3066,7 @@ class _TagestimateScreenState extends State<TagestimateScreen> {
             rule(),
             row("Net Amt", currency + fmt(netAmmount, 2)),
             if (selectedGST && double.tryParse(gstTax) != 0)
-              row("GST Tax", currency + fmt(gstTax, 2)),
+              row(_gstLabel, currency + fmt(gstTax, 2)),
             rule(),
             row("TOTAL", currency + fmt(totalAmount, 2), bold: true),
             rule(),
@@ -3105,13 +3121,6 @@ class _TagestimateScreenState extends State<TagestimateScreen> {
     if (printImageInPdf && productImage.trim().isNotEmpty) {
       byteForImage = await getByteCode(productImage);
     }
-    final blockedHddList = [
-      "VK289NEPH",
-      "VK103NEVK",
-      "VK061NEVK",
-      "HM208NEPK",
-      "AB000NEAB"
-    ];
     final PdfColor accent = PdfColor.fromInt(0xFF006EB7);
     final PdfColor accentDark = PdfColor.fromInt(0xFF00456F);
     final PdfColor lineClr = PdfColor.fromInt(0xFFD5DEE8);
@@ -3128,7 +3137,7 @@ class _TagestimateScreenState extends State<TagestimateScreen> {
               child: pw.Column(
                 crossAxisAlignment: pw.CrossAxisAlignment.center,
                 children: [
-                  blockedHddList.contains(hddNo)
+                  hidePrintHeader(hddNo)
                       ? pw.SizedBox()
                       : pw.Container(
                           width: double.infinity,
@@ -4026,7 +4035,7 @@ class _TagestimateScreenState extends State<TagestimateScreen> {
                                                       .CoSname ==
                                                   "UAE"
                                               ? "Vat(AED) :"
-                                              : "Gst Tax :",
+                                              : "$_gstLabel :",
                                           style: pw.TextStyle(
                                               fontSize: 11,
                                               fontWeight: pw.FontWeight.bold,

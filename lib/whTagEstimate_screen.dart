@@ -2,6 +2,7 @@
 // detail fields are deliberately identical to TagestimateScreen; only the
 // rate/amount calculation is meant to differ, and that part is still the
 // retail logic copied over as a starting point.
+import 'package:DataCareUltra/utils/print_header.dart';
 import 'dart:async';
 import 'dart:convert';
 import 'dart:developer';
@@ -2870,13 +2871,6 @@ class _WhTagestimateScreenState extends State<WhTagestimateScreen> {
       otherDetailsData = data[0];
     }
 
-    final blockedHddList = [
-      "VK289NEPH",
-      "VK103NEVK",
-      "VK061NEVK",
-      "HM208NEPK",
-      "AB000NEAB"
-    ];
 
     // Courier is a built-in PDF font, so it needs no asset and its fixed width
     // keeps the value column aligned down the receipt.
@@ -2962,7 +2956,7 @@ class _WhTagestimateScreenState extends State<WhTagestimateScreen> {
           crossAxisAlignment: pw.CrossAxisAlignment.stretch,
           mainAxisSize: pw.MainAxisSize.min,
           children: [
-            if (!blockedHddList.contains(hddNo)) ...[
+            if (!hidePrintHeader(hddNo)) ...[
               centered('${companyDetails["CO_NAME"]}', 9, bold: true),
               pw.SizedBox(height: 2),
               centered(
@@ -2980,10 +2974,12 @@ class _WhTagestimateScreenState extends State<WhTagestimateScreen> {
             row("Date", DateFormat("dd/MM/yyyy").format(DateTime.now())),
             row("Tag No", '${widget.tagNo ?? ''}'),
             if (itemName.isNotEmpty) row("Item", itemName),
+            if (slimReceipt(hddNo) && _isPositive(itemRate))
+              row("Rate", currency + fmt(itemRate, 2)),
             if (designNo.isNotEmpty && designNo != "null")
               row("Design", designNo),
             rule(),
-            if (_isPositive(productDetail?["ITM_PCS"]))
+            if (_isPositive(productDetail?["ITM_PCS"]) && !slimReceipt(hddNo))
               row("Pcs", '${productDetail?["ITM_PCS"] ?? '-'}'),
             if (_isPositive(productDetail?["ITM_GWT"]))
               row("Gross Wt", fmt(productDetail?["ITM_GWT"], 3)),
@@ -3003,10 +2999,18 @@ class _WhTagestimateScreenState extends State<WhTagestimateScreen> {
             // on-screen detail and the A4 estimate print, so the receipt
             // cannot disagree with them. A zero value is skipped even when
             // the option is on, matching how the labour lines behave.
-            if (showGhatWt && _isPositive(productDetail?["ITM_GHAT"]))
-              row(_ghatLabel("GhtWt", "Ghat Wt"),
+            // The slim receipt (see print_header.dart) always carries the
+            // ghat weight as "Wst", whatever the filter toggle says, and
+            // drops the ghat %, labour rate, labour amount and other amount
+            // lines.
+            if ((showGhatWt || slimReceipt(hddNo)) &&
+                _isPositive(productDetail?["ITM_GHAT"]))
+              row(
+                  slimReceipt(hddNo) ? "Wst" : _ghatLabel("GhtWt", "Ghat Wt"),
                   fmt(productDetail?["ITM_GHAT"], 3)),
-            if (showGhatPrc && _isPositive(productDetail?["ITM_GHT_PRC"]))
+            if (showGhatPrc &&
+                !slimReceipt(hddNo) &&
+                _isPositive(productDetail?["ITM_GHT_PRC"]))
               row(_ghatLabel("Ght%", "Ghat %"),
                   "${fmt(productDetail?["ITM_GHT_PRC"], 2)} %"),
             // The weight the estimate is priced on — Item Amt below is this
@@ -3024,13 +3028,13 @@ class _WhTagestimateScreenState extends State<WhTagestimateScreen> {
             // entirely rather than printed as a misleading "0.00".
             if (_isPositive(lbrPrc))
               row(isUae ? "Making %" : "Labour %", "${fmt(lbrPrc, 2)} %"),
-            if (_isPositive(lbrRate))
+            if (_isPositive(lbrRate) && !slimReceipt(hddNo))
               row(isUae ? "Making Rate" : "Labour Rate",
                   currency + fmt(lbrRate, 2)),
-            if (_isPositive(lbrAmmount))
+            if (_isPositive(lbrAmmount) && !slimReceipt(hddNo))
               row(isUae ? "Making Amt" : "Labour Amt",
                   currency + fmt(lbrAmmount, 2)),
-            if (_isPositive(othAmmount))
+            if (_isPositive(othAmmount) && !slimReceipt(hddNo))
               row("Other Amt", currency + fmt(othAmmount, 2)),
             // Other details — hallmark, real stone, diamond and the like, each
             // carrying its own charge. Column names match the A4 estimate's
@@ -3130,13 +3134,6 @@ class _WhTagestimateScreenState extends State<WhTagestimateScreen> {
     if (printImageInPdf && productImage.trim().isNotEmpty) {
       byteForImage = await getByteCode(productImage);
     }
-    final blockedHddList = [
-      "VK289NEPH",
-      "VK103NEVK",
-      "VK061NEVK",
-      "HM208NEPK",
-      "AB000NEAB"
-    ];
     final PdfColor accent = PdfColor.fromInt(0xFF006EB7);
     final PdfColor accentDark = PdfColor.fromInt(0xFF00456F);
     final PdfColor lineClr = PdfColor.fromInt(0xFFD5DEE8);
@@ -3188,7 +3185,7 @@ class _WhTagestimateScreenState extends State<WhTagestimateScreen> {
               child: pw.Column(
                 crossAxisAlignment: pw.CrossAxisAlignment.center,
                 children: [
-                  blockedHddList.contains(hddNo)
+                  hidePrintHeader(hddNo)
                       ? pw.SizedBox()
                       : pw.Container(
                           width: double.infinity,

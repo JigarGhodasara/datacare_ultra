@@ -44,7 +44,64 @@ class ReportQueries {
     return jsonDecode(await _sql.queryDatabase(query)) as List;
   }
 
+  /// Runs a statement that returns no rows (INSERT / UPDATE / DELETE).
+  ///
+  /// Android goes through the plugin's write method, the same one the tag
+  /// image upload uses. iOS runs it through the raw-execute channel; that
+  /// side only logs server errors, so callers that need to be sure re-read
+  /// what they wrote.
+  Future<void> execute(String statement) async {
+    if (!Platform.isAndroid) {
+      await MySQLService().getPrintLable(statement);
+      return;
+    }
+    await _sql.updateData(statement);
+  }
+
   double _num(dynamic v) => double.tryParse('${v ?? ''}') ?? 0;
+
+  /// Every group of the company with its type (G gold, S silver, O other,
+  /// E imitation, R store), its touch and tax %, and whether it is one the
+  /// home page's rate box displays. Used to build the rate entry form.
+  Future<List<dynamic>> rateGroups() => _run(
+      "SELECT GR_CODE,GR_NAME,GR_TYPE,RATE_DISPLAY,GR_TOUCH,TAX_PRC "
+      "FROM GROUP_MAST WHERE CO_CODE = '$coCode' ORDER BY GR_CODE");
+
+  /// The columns of [table]'s primary key, in key order. Lets a write fill a
+  /// key column the app did not know about (`RATE_MAST` turned out to carry
+  /// a serial number in its key) instead of guessing its name.
+  Future<List<String>> primaryKeyColumns(String table) async {
+    final rows = await _run(
+        "SELECT K.COLUMN_NAME FROM INFORMATION_SCHEMA.TABLE_CONSTRAINTS AS T "
+        "INNER JOIN INFORMATION_SCHEMA.KEY_COLUMN_USAGE AS K "
+        "ON T.CONSTRAINT_NAME = K.CONSTRAINT_NAME AND T.TABLE_NAME = K.TABLE_NAME "
+        "WHERE T.TABLE_NAME = '$table' AND T.CONSTRAINT_TYPE = 'PRIMARY KEY' "
+        "ORDER BY K.ORDINAL_POSITION");
+    return [
+      for (final r in rows)
+        if (r is Map) '${r['COLUMN_NAME'] ?? ''}'.trim(),
+    ];
+  }
+
+  /// The highest value of [column] among `RATE_MAST` rows of [dateSql] in
+  /// this company, location and year; 0 when there are none.
+  Future<int> rateMaxSerial(String column, String dateSql) async {
+    final rows = await _run("SELECT MAX($column) AS MaxNo FROM RATE_MAST "
+        "WHERE CO_CODE = '$coCode' AND LC_CODE = '$lcCode' "
+        "AND CO_YEAR = '$year' AND VCH_DATE = '$dateSql'");
+    if (rows.isEmpty || rows[0] is! Map) return 0;
+    return _num(rows[0]['MaxNo']).toInt();
+  }
+
+  /// The most recent `RATE_MAST` row of each group at this location, on any
+  /// date. Supplies each group's touch and tax % to the entry form.
+  Future<List<dynamic>> latestRates() => _run(
+      "SELECT A.GR_CODE,A.GR_TOUCH,A.GR_RATE,A.GR_TAX_PRC,A.GR_TAX_RATE,"
+      "A.FINE_GL_RATE,A.FINE_SL_RATE FROM RATE_MAST AS A "
+      "WHERE A.CO_CODE = '$coCode' AND A.LC_CODE = '$lcCode' "
+      "AND A.VCH_DATE = (SELECT MAX(B.VCH_DATE) FROM RATE_MAST AS B "
+      "WHERE B.CO_CODE = A.CO_CODE AND B.LC_CODE = A.LC_CODE "
+      "AND B.GR_CODE = A.GR_CODE)");
 
   /// Cash in hand at the close of [date]: `SUM(CR − DR)` on the cash account,
   /// positive when there is cash. Same figure the dashboard's cash box shows.

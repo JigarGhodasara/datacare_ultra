@@ -6,6 +6,9 @@ import 'package:DataCareUltra/mySql_services.dart';
 import 'package:DataCareUltra/provider/commonCompanyYearSelectionProvider.dart';
 import 'package:DataCareUltra/provider/loading_provider.dart';
 import 'package:DataCareUltra/utils/images.dart';
+import 'package:DataCareUltra/utils/rate_entry.dart';
+import 'package:DataCareUltra/utils/rate_entry_sheet.dart';
+import 'package:DataCareUltra/utils/report_queries.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -89,6 +92,168 @@ class _DailyrateScreenState extends State<DailyrateScreen> {
       loadingProvider.stopLoading();
       if (mounted) setState(() {});
     }
+  }
+
+  // ── Add / update ───────────────────────────────────────────────────────────
+
+  ReportQueries get _queries =>
+      ReportQueries(coCode: co_code, lcCode: lc_code, year: year);
+
+  Set<String> get _todayCodes => {
+        for (final r in dailyRate)
+          if (r is Map) '${r['GR_CODE'] ?? ''}'.trim(),
+      };
+
+  /// Opens the entry form: the shop types the fine gold and silver rates,
+  /// every group's rate follows from its stored touch, and the result is
+  /// saved and re-read to confirm.
+  Future<void> _openRateEntry() async {
+    final bool updating = dailyRate.isNotEmpty;
+
+    List<RateLine> lines;
+    ({double gold, double silver}) fine;
+    loadingProvider.startLoading();
+    try {
+      final groupRows = await _queries.rateGroups();
+      final latest = await _queries.latestRates();
+      final groups = [
+        for (final r in groupRows)
+          if (r is Map && _text(r['GR_CODE']).isNotEmpty)
+            RateGroup(_text(r['GR_CODE']), _text(r['GR_NAME']),
+                display: _text(r['RATE_DISPLAY']).toUpperCase() == 'Y',
+                touch: double.tryParse(_text(r['GR_TOUCH'])),
+                taxPrc: double.tryParse(_text(r['TAX_PRC'])),
+                metal: metalFromType(_text(r['GR_TYPE']))),
+      ];
+      lines = prefillLines(
+          groups: groups, todayRows: dailyRate, latestRows: latest);
+      fine = prefillFine(todayRows: dailyRate, latestRows: latest);
+    } catch (e) {
+      log('Error preparing rate entry: $e');
+      if (mounted) _toast("Could not load groups. Please try again.");
+      return;
+    } finally {
+      loadingProvider.stopLoading();
+    }
+    if (!mounted) return;
+    if (lines.isEmpty) {
+      _toast("No groups found for this company.");
+      return;
+    }
+
+    final draft = await showRateEntrySheet(
+      context: context,
+      title: updating ? "Update today's rate" : "Add today's rate",
+      dateLabel: _today,
+      lines: lines,
+      fineGold: fine.gold,
+      fineSilver: fine.silver,
+    );
+    if (draft == null || !mounted) return;
+
+    final existing = _todayCodes;
+    final rated = draft.rated;
+    final int adds = rated.where((l) => !existing.contains(l.code)).length;
+    final int updates = rated.length - adds;
+    final confirmed = await _confirmSave(adds: adds, updates: updates);
+    if (confirmed != true || !mounted) return;
+
+    loadingProvider.startLoading();
+    String? failure;
+    try {
+      // The table's key carries a serial number the app does not read, so
+      // find it on the server and number today's new rows after the last.
+      String? serialColumn;
+      var firstSerial = 1;
+      if (adds > 0) {
+        serialColumn =
+            rateSerialColumn(await _queries.primaryKeyColumns('RATE_MAST'));
+        if (serialColumn != null) {
+          firstSerial =
+              await _queries.rateMaxSerial(serialColumn, _todaySql) + 1;
+        }
+      }
+      final statements = rateSaveStatements(
+        coCode: co_code,
+        lcCode: lc_code,
+        coYear: year,
+        dateSql: _todaySql,
+        draft: draft,
+        existingCodes: existing,
+        serialColumn: serialColumn,
+        firstSerial: firstSerial,
+      );
+      for (final s in statements) {
+        log("rate save: $s");
+        await _queries.execute(s);
+      }
+    } catch (e) {
+      failure = e.toString();
+      log('Error saving rates: $e');
+    } finally {
+      loadingProvider.stopLoading();
+    }
+
+    // Re-read the day. iOS only logs server errors, so the re-read is the
+    // one check that works on both platforms.
+    await getWHSalesReportData();
+    if (!mounted) return;
+    final saved = _todayCodes;
+    final missing = rated.where((l) => !saved.contains(l.code)).toList();
+    if (failure == null && missing.isEmpty) {
+      _toast(updating ? "Rates updated" : "Rates saved");
+    } else {
+      final why = failure == null
+          ? "${missing.length} group(s) did not save"
+          : _shortError(failure);
+      _toast("Could not save rates: $why");
+    }
+  }
+
+  /// The server's message is what tells us which column is missing, so keep
+  /// its first line rather than hiding it behind a generic toast.
+  static String _shortError(String e) {
+    final line = e.split('\n').first.trim();
+    return line.length > 140 ? '${line.substring(0, 140)}…' : line;
+  }
+
+  Future<bool?> _confirmSave({required int adds, required int updates}) {
+    final parts = <String>[
+      if (adds > 0) "add $adds group${adds == 1 ? '' : 's'}",
+      if (updates > 0) "update $updates group${updates == 1 ? '' : 's'}",
+    ];
+    return showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        shape:
+            RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+        title: Text("Save rates for $_today?",
+            style: GoogleFonts.plusJakartaSans(
+                fontSize: 17, fontWeight: FontWeight.w700)),
+        content: Text(
+          "This will ${parts.join(' and ')} for "
+          "${companyName.trim().isEmpty ? 'this company' : companyName.trim()}. "
+          "Tag estimates will use the new rates.",
+          style: GoogleFonts.plusJakartaSans(
+              fontSize: 13.5, fontWeight: FontWeight.w500, height: 1.4),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: Text("Cancel",
+                style: GoogleFonts.plusJakartaSans(
+                    fontWeight: FontWeight.w600, color: _textSecondary)),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(context, true),
+            style: FilledButton.styleFrom(backgroundColor: _cta),
+            child: Text("Save",
+                style:
+                    GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w700)),
+          ),
+        ],
+      ),
+    );
   }
 
   // ── Helpers ────────────────────────────────────────────────────────────────
@@ -288,6 +453,13 @@ class _DailyrateScreenState extends State<DailyrateScreen> {
               ],
             ),
           ),
+          if (dailyRate.isNotEmpty)
+            IconButton(
+              tooltip: "Update rates",
+              onPressed: _openRateEntry,
+              icon: const Icon(Icons.edit_rounded,
+                  color: Colors.white, size: 21),
+            ),
           if (dailyRate.isNotEmpty)
             IconButton(
               tooltip: "Share all rates",
@@ -570,7 +742,22 @@ class _DailyrateScreenState extends State<DailyrateScreen> {
                   fontSize: 13,
                   fontWeight: FontWeight.w500,
                   color: _textSecondary)),
-          const SizedBox(height: 16),
+          const SizedBox(height: 20),
+          FilledButton.icon(
+            onPressed: _openRateEntry,
+            style: FilledButton.styleFrom(
+              backgroundColor: _cta,
+              foregroundColor: Colors.white,
+              minimumSize: const Size(200, 48),
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(14)),
+            ),
+            icon: const Icon(Icons.add_rounded, size: 20),
+            label: Text("Add today's rate",
+                style: GoogleFonts.plusJakartaSans(
+                    fontSize: 14, fontWeight: FontWeight.w700)),
+          ),
+          const SizedBox(height: 6),
           TextButton.icon(
             onPressed: getWHSalesReportData,
             icon: Icon(Icons.refresh_rounded, size: 18, color: _cta),
